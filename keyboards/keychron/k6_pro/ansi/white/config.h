@@ -72,4 +72,12 @@
 /* Set LED driver current */
 #    define CKLED2001_CURRENT_TUNE  { 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60 }
 
+#define BOTH_SHIFTS_TURNS_ON_CAPS_WORD
+#define LEADER_NO_TIMEOUT
+#define LEADER_TIMEOUT 300
+
+/* Mod Tap*/
+#define TAPPING_TERM 300
+#define HOLD_ON_OTHER_KEY_PRESS
+
 #endif
