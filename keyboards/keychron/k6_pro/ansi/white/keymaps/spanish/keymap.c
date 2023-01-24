@@ -34,9 +34,11 @@ enum custom_keycodes {
   MC_EMAIL,
   AF_SKY_PMF,
   AF_SKY_VCHR,
-  FIX_QUOT,
-  FIX_SCLN,
-  FIX_QUES
+  CSTM_QUOT,
+  CSTM_SCLN,
+  CSTM_QUES,
+  CSTM_DOT,
+  CSTM_COMM,
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -49,9 +51,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 [COLEMAK] = LAYOUT_ansi_68(
      MO(MACROS),   ES_1,     ES_2,     ES_3,     ES_4,     ES_5,     ES_6,     ES_7,     ES_8,     ES_9,     ES_0,     ES_MINS,  ES_EQL,   KC_BSPC, BL_STEP,
-     LT(NUMPAD, KC_TAB),   ES_Q,     ES_W,     ES_F,     ES_P,     ES_B,     ES_J,     ES_L,     ES_U,     ES_Y,     FIX_SCLN,    ES_ACUT,    KC_NO,    ES_BSLS, KC_PSCR,
-     CTL_T(KC_ESC),  ES_A,     ES_R,     ES_S,     ES_T,     ES_G,     ES_M,     ES_N,     ES_E,     ES_I,     ES_O,     FIX_QUOT,            KC_ENT,  KC_PGUP,
-     KC_LSFT,  ES_X,     ES_C,     ES_D,     ES_V,     ES_Z,     ES_K,     ES_H,     ES_COMM,   ES_DOT,   FIX_QUES,  KC_RSFT,  KC_UP,    KC_PGDN,
+     LT(NUMPAD, KC_TAB),   ES_Q,     ES_W,     ES_F,     ES_P,     ES_B,     ES_J,     ES_L,     ES_U,     ES_Y,     CSTM_SCLN,    ES_ACUT,    KC_NO,    ES_BSLS, KC_PSCR,
+     CTL_T(KC_ESC),  ES_A,     ES_R,     ES_S,     ES_T,     ES_G,     ES_M,     ES_N,     ES_E,     ES_I,     ES_O,     CSTM_QUOT,            KC_ENT,  KC_PGUP,
+     KC_LSFT,  ES_X,     ES_C,     ES_D,     ES_V,     ES_Z,     ES_K,     ES_H,     CSTM_COMM,   CSTM_DOT,   CSTM_QUES,  KC_RSFT,  KC_UP,    KC_PGDN,
      KC_NO,  KC_LGUI,  ALT_T(KC_BSPC),                      KC_SPC,                       LT(SYMBOLS, KC_ENT),MO(FUNCTIONS),KC_NO,  KC_LEFT,  KC_DOWN, KC_RGHT),
 
 [SYMBOLS] = LAYOUT_ansi_68(
@@ -135,7 +137,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case KC_RSFT:
       is_shift_pressed = record->event.pressed;
       break;
-    case ES_TILD:
     case ES_GRV:
     case ES_CIRC:
         if (!record->event.pressed) {
@@ -144,26 +145,33 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           return false;
         }
       break;
-    case FIX_QUOT:
+    case CSTM_QUOT:
         if (record->event.pressed) {
           SEND_STRING(is_shift_pressed ? "\"" : "'");
           return false;
         }
       break;
-    case FIX_SCLN:
+    case CSTM_SCLN:
         if (record->event.pressed) {
           SEND_STRING(is_shift_pressed ? ":" : ";");
           return false;
         }
       break;
-    case FIX_QUES:
+    case CSTM_DOT:
         if (record->event.pressed) {
-          if(is_shift_pressed) {
-            SEND_STRING("?");
-          } else {
-            tap_code16(ES_IQUE);
-          }
-
+          SEND_STRING(is_shift_pressed ? "/" : ".");
+          return false;
+        }
+      break;
+    case CSTM_COMM:
+        if (record->event.pressed) {
+          SEND_STRING(is_shift_pressed ? "_" : ",");
+          return false;
+        }
+      break;
+    case CSTM_QUES:
+        if (record->event.pressed) {
+          SEND_STRING(is_shift_pressed ? "?" : "-");
           return false;
         }
       break;
@@ -206,3 +214,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return true;
 };
+
+bool caps_word_press_user(uint16_t keycode) {
+    switch (keycode) {
+        case KC_A...KC_Z:
+            add_weak_mods(MOD_BIT(KC_LSFT));  // Apply shift to next key.
+            return true;
+        case KC_1...KC_0:
+        case KC_BSPC:
+        case KC_DEL:
+        case KC_LSFT:
+        case CSTM_COMM:
+        case KC_UNDS:
+            return true;
+
+        default:
+            return false;  // Deactivate Caps Word.
+    }
+}
