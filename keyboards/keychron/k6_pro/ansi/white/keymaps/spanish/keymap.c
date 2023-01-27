@@ -25,6 +25,7 @@ enum layers{
   NUMPAD,
   FUNCTIONS,
   MACROS,
+  MOUSE,
 };
 
 enum custom_keycodes {
@@ -49,7 +50,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 [COLEMAK] = LAYOUT_ansi_68(
      MO(MACROS),   ES_1,     ES_2,     ES_3,     ES_4,     ES_5,     ES_6,     ES_7,     ES_8,     ES_9,     ES_0,     ES_MINS,  ES_EQL,   KC_BSPC, BL_STEP,
-     LT(NUMPAD, KC_TAB),   ES_Q,     ES_W,     ES_F,     ES_P,     ES_B,     ES_J,     ES_L,     ES_U,     ES_Y,     CSTM_SCLN,    ES_ACUT,    KC_NO,    ES_BSLS, KC_PSCR,
+     LT(NUMPAD, KC_TAB),   ES_Q,     ES_W,     ES_F,     ES_P,     ES_B,     ES_J,     ES_L,     ES_U,     ES_Y,     CSTM_SCLN,    ES_ACUT,    KC_NO,  TG(MOUSE), KC_PSCR,
      CTL_T(KC_ESC),  ES_A,     ES_R,     ES_S,     ES_T,     ES_G,     ES_M,     ES_N,     ES_E,     ES_I,     ES_O,     CSTM_QUOT,            KC_ENT,  KC_PGUP,
      KC_LSFT,  ES_X,     ES_C,     ES_D,     ES_V,     ES_Z,     ES_K,     ES_H,     ES_COMM,   ES_DOT,   CSTM_QUES,  KC_RSFT,  KC_UP,    KC_PGDN,
      KC_NO,  KC_LGUI,  ALT_T(KC_BSPC),                      KC_SPC,                       LT(SYMBOLS, KC_ENT),MO(FUNCTIONS),KC_NO,  KC_LEFT,  KC_DOWN, KC_RGHT),
@@ -73,13 +74,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      KC_TRNS,  BT_HST1,  BT_HST2,  BT_HST3,  KC_TRNS,  DT_PRNT,  DT_DOWN,  DT_UP,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,
      KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,            KC_TRNS,  KC_TRNS,
      KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  BAT_LVL,  KC_TRNS,  DB_TOGG,  QK_RBT,  QK_MAKE,  QK_BOOT,  KC_TRNS,  KC_TRNS,  KC_TRNS,
-     KC_TRNS,  KC_TRNS,  KC_TRNS,                                KC_TRNS,                      KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS),
+    KC_TRNS,  KC_TRNS,  KC_TRNS,                                KC_TRNS,                      KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS),
 [MACROS] = LAYOUT_ansi_68(
   KC_TRNS, MC_TEST, MC_RUT,  MC_PHONE, MC_EMAIL, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
   KC_TRNS, AF_SKY_PMF, AF_SKY_VCHR, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS),
+[MOUSE] = LAYOUT_ansi_68(
+  _______, KC_MS_ACCEL0, KC_MS_ACCEL1, KC_MS_ACCEL2, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+  _______, KC_BTN4, KC_MS_U, KC_BTN5, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_WH_U, XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX,
+  _______, KC_MS_L, KC_MS_D, KC_MS_R, XXXXXXX, XXXXXXX, XXXXXXX, KC_BTN1, KC_WH_D, KC_BTN2, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+  _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX,
+  _______, _______, _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 };
 
 bool is_shift_pressed = false;
@@ -156,11 +163,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
       break;
     case CSTM_QUES:
+        if(record->event.pressed) {
           if(is_shift_pressed) {
             SEND_STRING("?");
           } else {
             tap_code16(ES_IQUE);
           }
+          return false;
+        }
       break;
     case MC_TEST:
         if (record->event.pressed) {
