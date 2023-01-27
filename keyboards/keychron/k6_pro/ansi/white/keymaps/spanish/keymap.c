@@ -35,9 +35,6 @@ enum custom_keycodes {
   MC_EMAIL,
   AF_SKY_PMF,
   AF_SKY_VCHR,
-  CSTM_QUOT,
-  CSTM_SCLN,
-  CSTM_QUES,
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -50,9 +47,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 [COLEMAK] = LAYOUT_ansi_68(
      MO(MACROS),   ES_1,     ES_2,     ES_3,     ES_4,     ES_5,     ES_6,     ES_7,     ES_8,     ES_9,     ES_0,     ES_MINS,  ES_EQL,   KC_BSPC, BL_STEP,
-     LT(NUMPAD, KC_TAB),   ES_Q,     ES_W,     ES_F,     ES_P,     ES_B,     ES_J,     ES_L,     ES_U,     ES_Y,     CSTM_SCLN,    ES_ACUT,    KC_NO,  TG(MOUSE), KC_PSCR,
-     CTL_T(KC_ESC),  ES_A,     ES_R,     ES_S,     ES_T,     ES_G,     ES_M,     ES_N,     ES_E,     ES_I,     ES_O,     CSTM_QUOT,            KC_ENT,  KC_PGUP,
-     KC_LSFT,  ES_X,     ES_C,     ES_D,     ES_V,     ES_Z,     ES_K,     ES_H,     ES_COMM,   ES_DOT,   CSTM_QUES,  KC_RSFT,  KC_UP,    KC_PGDN,
+     LT(NUMPAD, KC_TAB),   ES_Q,     ES_W,     ES_F,     ES_P,     ES_B,     ES_J,     ES_L,     ES_U,     ES_Y,     ES_SCLN,    ES_ACUT,    KC_NO,  TG(MOUSE), KC_PSCR,
+     CTL_T(KC_ESC),  ES_A,     ES_R,     ES_S,     ES_T,     ES_G,     ES_M,     ES_N,     ES_E,     ES_I,     ES_O,     ES_QUOT,            KC_ENT,  KC_PGUP,
+     KC_LSFT,  ES_X,     ES_C,     ES_D,     ES_V,     ES_Z,     ES_K,     ES_H,     ES_COMM,   ES_DOT,   ES_IQUE,  KC_RSFT,  KC_UP,    KC_PGDN,
      KC_NO,  KC_LGUI,  ALT_T(KC_BSPC),                      KC_SPC,                       LT(SYMBOLS, KC_ENT),MO(FUNCTIONS),KC_NO,  KC_LEFT,  KC_DOWN, KC_RGHT),
 
 [SYMBOLS] = LAYOUT_ansi_68(
@@ -150,28 +147,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           return false;
         }
       break;
-    case CSTM_QUOT:
-        if (record->event.pressed) {
-          SEND_STRING(is_shift_pressed ? "\"" : "'");
-          return false;
-        }
-      break;
-    case CSTM_SCLN:
-        if (record->event.pressed) {
-          SEND_STRING(is_shift_pressed ? ":" : ";");
-          return false;
-        }
-      break;
-    case CSTM_QUES:
-        if(record->event.pressed) {
-          if(is_shift_pressed) {
-            SEND_STRING("?");
-          } else {
-            tap_code16(ES_IQUE);
-          }
-          return false;
-        }
-      break;
     case MC_TEST:
         if (record->event.pressed) {
           SEND_STRING(last_name);
@@ -210,6 +185,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         break;
     }
     return true;
+};
+
+const key_override_t quotes_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_QUOT, ES_DQUO);
+const key_override_t colons_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_SCLN, ES_COLN);
+const key_override_t question_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_IQUE, ES_QUES);
+
+const key_override_t **key_overrides = (const key_override_t *[]){
+    &quotes_key_override,
+    &colons_key_override,
+    &question_key_override,
+    NULL // Null terminate the array of overrides!
 };
 
 bool caps_word_press_user(uint16_t keycode) {
