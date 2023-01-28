@@ -55,14 +55,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [SYMBOLS] = LAYOUT_ansi_68(
      KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    BL_TOGG,
      KC_TRNS,  ES_TILD,  ES_DLR,   ES_LBRC,  ES_RBRC,  ES_CIRC,  KC_NO,    ES_PERC,  ES_PLUS,  ES_MINS,  ES_ASTR,  KC_NO,    KC_NO,    KC_NO,    KC_NO,
-     KC_TRNS,  ES_GRV,   ES_UNDS,  ES_LCBR,  ES_RCBR,  ES_PIPE,  KC_NO,    ES_LPRN,  ES_RPRN,  ES_EQL,  KC_NO,    KC_NO,              KC_NO,    KC_NO,
+     KC_TRNS,  ES_GRV,   ES_UNDS,  ES_LCBR,  ES_RCBR,  ES_PIPE,  KC_NO,    ES_LPRN,  ES_RPRN,  ES_EQL,  ES_NTIL,    KC_NO,              KC_NO,    KC_NO,
      KC_TRNS,  ES_AT,    ES_AMPR,   ES_DOT,  ES_SLSH,  ES_BSLS,  ES_EXLM,  ES_LABK,  ES_RABK,  ES_HASH,  KC_NO,    KC_NO,    KC_NO,    KC_NO,
      KC_TRNS,  KC_TRNS,  KC_TRNS,                                KC_TRNS,                      KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS),
 
 [NUMPAD] = LAYOUT_ansi_68(
      KC_NO,    KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,    KC_F12,    KC_NO,    BL_TOGG,
      KC_TRNS,  KC_HOME,  KC_UP,    KC_END,   KC_PGUP,  KC_NO,    ES_SLSH,  ES_7,     ES_8,     ES_9,     ES_ASTR,  ES_MINS,    KC_NO,  KC_NO,  KC_NO,
-     KC_TRNS,  KC_LEFT,  KC_DOWN,  KC_RIGHT, KC_BSPC,  KC_NO,    KC_NO,  ES_4,     ES_5,     ES_6,     ES_PLUS,  ES_COMM,  KC_TRNS,            KC_TRNS,
+     KC_TRNS,  KC_LEFT,  KC_DOWN,  KC_RIGHT, KC_BSPC,  KC_NO,    ES_EQL,  ES_4,     ES_5,     ES_6,     ES_PLUS,  ES_COMM,  KC_TRNS,            KC_TRNS,
      KC_TRNS,  KC_NO,    KC_DEL,   KC_PGDN,  KC_NO,    KC_NO,    ES_0,     ES_1,     ES_2,     ES_3,     ES_DOT,    KC_RSFT,    KC_NO,    KC_NO,
      KC_TRNS,  KC_TRNS,  KC_TRNS,                                KC_TRNS,                      KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS),
 
@@ -190,11 +190,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 const key_override_t quotes_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_QUOT, ES_DQUO);
 const key_override_t colons_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_SCLN, ES_COLN);
 const key_override_t question_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_IQUE, ES_QUES);
+const key_override_t comm_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_COMM, ES_IEXL);
+const key_override_t dot_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_DOT, ES_EXLM);
+const key_override_t enie_key_override = ko_make_with_layers(MOD_MASK_SHIFT, ES_LPRN, ES_NTIL, SYMBOLS);
 
 const key_override_t **key_overrides = (const key_override_t *[]){
     &quotes_key_override,
     &colons_key_override,
     &question_key_override,
+    &comm_key_override,
+    &dot_key_override,
+    &enie_key_override,
     NULL // Null terminate the array of overrides!
 };
 
