@@ -39,54 +39,53 @@ enum custom_keycodes {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [QWERTY] = LAYOUT_ansi_68(
-     KC_ESC,   ES_1,     ES_2,     ES_3,     ES_4,     ES_5,     ES_6,     ES_7,     ES_8,     ES_9,     ES_0,     ES_MINS,  ES_EQL,   KC_BSPC, BL_STEP,
-     KC_TAB,   ES_Q,     ES_W,     ES_E,     ES_R,     ES_T,     ES_Y,     ES_U,     ES_I,     ES_O,     ES_P,     ES_LBRC,  ES_RBRC,  ES_BSLS, KC_HOME,
-     KC_CAPS,  ES_A,     ES_S,     ES_D,     ES_F,     ES_G,     ES_H,     ES_J,     ES_K,     ES_L,     ES_SCLN,  ES_QUOT,            KC_ENT,  KC_PGUP,
-     KC_LSFT,  ES_Z,     ES_X,     ES_C,     ES_V,     ES_B,     ES_N,     ES_M,     ES_COMM,  ES_DOT,   ES_SLSH,  KC_RSFT,  KC_UP,    KC_PGDN,
-     KC_LCTL,  KC_LGUI,  KC_LALT,                                KC_SPC,                       KC_RALT,MO(NUMPAD),MO(FUNCTIONS),  KC_LEFT,  KC_DOWN, KC_RGHT),
+    KC_ESC,  ES_1,    ES_2,   ES_3,  ES_4,  ES_5,  ES_6,  ES_7, ES_8,     ES_9,     ES_0,       ES_MINS,  ES_EQL,     KC_BSPC,    BL_STEP,
+    KC_TAB,  ES_Q,    ES_W,   ES_E,  ES_R,  ES_T,  ES_Y,  ES_U, ES_I,     ES_O,     ES_P,       ES_LBRC,  ES_RBRC,    ES_BSLS,    KC_HOME,
+    KC_CAPS, ES_A,    ES_S,   ES_D,  ES_F,  ES_G,  ES_H,  ES_J, ES_K,     ES_L,     ES_SCLN,    ES_QUOT,         KC_ENT,          KC_PGUP,
+    KC_LSFT, ES_Z,    ES_X,   ES_C,  ES_V,  ES_B,  ES_N,  ES_M, ES_COMM,  ES_DOT,   ES_SLSH,           KC_RSFT,          KC_UP,   KC_PGDN,
+    KC_LCTL, KC_LGUI, KC_LALT,                     KC_SPC,                KC_RALT,  MO(NUMPAD), MO(FUNCTIONS), KC_LEFT,  KC_DOWN, KC_RGHT),
 
 [COLEMAK] = LAYOUT_ansi_68(
-     MO(MACROS),   ES_1,     ES_2,     ES_3,     ES_4,     ES_5,     ES_6,     ES_7,     ES_8,     ES_9,     ES_0,     ES_MINS,  ES_EQL,   KC_BSPC, BL_STEP,
-     LT(NUMPAD, KC_TAB),   ES_Q,     ES_W,     ES_F,     ES_P,     ES_B,     ES_J,     ES_L,     ES_U,     ES_Y,     ES_SCLN,    ES_ACUT,    KC_NO,  TG(MOUSE), KC_PSCR,
-     CTL_T(KC_ESC),  ES_A,     ES_R,     ES_S,     ES_T,     ES_G,     ES_M,     ES_N,     ES_E,     ES_I,     ES_O,     ES_QUOT,            KC_ENT,  KC_PGUP,
-     KC_LSFT,  ES_X,     ES_C,     ES_D,     ES_V,     ES_Z,     ES_K,     ES_H,     ES_COMM,   ES_DOT,   ES_IQUE,  KC_RSFT,  KC_UP,    KC_PGDN,
-     KC_NO,  KC_LGUI,  ALT_T(KC_BSPC),                      KC_SPC,                       LT(SYMBOLS, KC_ENT),MO(FUNCTIONS),KC_NO,  KC_LEFT,  KC_DOWN, KC_RGHT),
+    MO(MACROS),         ES_1,  ES_2,  ES_3,  ES_4,  ES_5,  ES_6,  ES_7,  ES_8,    ES_9,   ES_0,     ES_MINS,  ES_EQL,   KC_BSPC,   BL_STEP,
+    LT(NUMPAD, KC_TAB), ES_Q,  ES_W,  ES_F,  ES_P,  ES_B,  ES_J,  ES_L,  ES_U,    ES_Y,   ES_SCLN,  ES_ACUT,  XXXXXXX,  TG(MOUSE), KC_PSCR,
+    CTL_T(KC_ESC),      ES_A,  ES_R,  ES_S,  ES_T,  ES_G,  ES_M,  ES_N,  ES_E,    ES_I,   ES_O,     ES_QUOT,       KC_ENT,         KC_PGUP,
+    KC_LSFT,            ES_X,  ES_C,  ES_D,  ES_V,  ES_Z,  ES_K,  ES_H,  ES_COMM, ES_DOT, ES_IQUE,          KC_RSFT,        KC_UP, KC_PGDN,
+    XXXXXXX,   KC_LGUI, ALT_T(KC_BSPC),           KC_SPC,           LT(SYMBOLS, KC_ENT), MO(FUNCTIONS), XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT),
 
 [SYMBOLS] = LAYOUT_ansi_68(
-     KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    BL_TOGG,
-     KC_TRNS,  ES_TILD,  ES_DLR,   ES_LBRC,  ES_RBRC,  ES_CIRC,  KC_NO,    ES_PERC,  ES_PLUS,  ES_MINS,  ES_ASTR,  KC_NO,    KC_NO,    KC_NO,    KC_NO,
-     KC_TRNS,  ES_GRV,   ES_UNDS,  ES_LCBR,  ES_RCBR,  ES_PIPE,  KC_NO,    ES_LPRN,  ES_RPRN,  ES_EQL,  ES_NTIL,    KC_NO,              KC_NO,    KC_NO,
-     KC_TRNS,  ES_AT,    ES_AMPR,   ES_DOT,  ES_SLSH,  ES_BSLS,  ES_EXLM,  ES_LABK,  ES_RABK,  ES_HASH,  KC_NO,    KC_NO,    KC_NO,    KC_NO,
-     KC_TRNS,  KC_TRNS,  KC_TRNS,                                KC_TRNS,                      KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS),
+    XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  BL_TOGG,
+    _______,  ES_TILD,  ES_DLR,   ES_LBRC,  ES_RBRC,  ES_CIRC,  XXXXXXX,  ES_PERC,  ES_PLUS,  ES_MINS,  ES_ASTR,  XXXXXXX,  XXXXXXX,   XXXXXXX, XXXXXXX,
+    _______,  ES_GRV,   ES_UNDS,  ES_LCBR,  ES_RCBR,  ES_PIPE,  XXXXXXX,  ES_LPRN,  ES_RPRN,  ES_EQL,   ES_NTIL,  XXXXXXX,        _______,      XXXXXXX,
+    _______,  ES_AT,    ES_AMPR,  ES_DOT,   ES_SLSH,  ES_BSLS,  ES_EXLM,  ES_LABK,  ES_RABK,  ES_HASH,  XXXXXXX,       _______,       XXXXXXX,  XXXXXXX,
+    _______,  _______,  _______,                              _______,                        _______,  _______,  _______,  _______,  _______,  _______),
 
 [NUMPAD] = LAYOUT_ansi_68(
-     KC_NO,    KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,    KC_F12,    KC_NO,    BL_TOGG,
-     KC_TRNS,  KC_HOME,  KC_UP,    KC_END,   KC_PGUP,  KC_NO,    ES_SLSH,  ES_7,     ES_8,     ES_9,     ES_ASTR,  ES_MINS,    KC_NO,  KC_NO,  KC_NO,
-     KC_TRNS,  KC_LEFT,  KC_DOWN,  KC_RIGHT, KC_BSPC,  KC_NO,    ES_EQL,  ES_4,     ES_5,     ES_6,     ES_PLUS,  ES_COMM,  KC_TRNS,            KC_TRNS,
-     KC_TRNS,  KC_NO,    KC_DEL,   KC_PGDN,  KC_NO,    KC_NO,    ES_0,     ES_1,     ES_2,     ES_3,     ES_DOT,    KC_RSFT,    KC_NO,    KC_NO,
-     KC_TRNS,  KC_TRNS,  KC_TRNS,                                KC_TRNS,                      KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS),
+    XXXXXXX,  KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,  KC_F8,  KC_F9,  KC_F10,   KC_F11,   KC_F12,      XXXXXXX,     BL_TOGG,
+    _______,  KC_HOME,  KC_UP,    KC_END,   KC_PGUP,  XXXXXXX,  ES_SLSH,  ES_7,   ES_8,   ES_9,   ES_ASTR,  ES_MINS,  XXXXXXX,     XXXXXXX,     XXXXXXX,
+    _______,  KC_LEFT,  KC_DOWN,  KC_RIGHT, KC_BSPC,  XXXXXXX,  ES_EQL,   ES_4,   ES_5,   ES_6,   ES_PLUS,  ES_COMM,         _______,           _______,
+    _______,  XXXXXXX,  KC_DEL,   KC_PGDN,  XXXXXXX,  XXXXXXX,  ES_0,     ES_1,   ES_2,   ES_3,   ES_DOT,         KC_RSFT,          XXXXXXX,    XXXXXXX,
+    _______,  _______,  _______,                                _______,                      _______,  _______,  _______,  _______,  _______,  _______),
 
 [FUNCTIONS] = LAYOUT_ansi_68(
-     ES_TILD,  KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_CALC,    KC_F6,    KC_MPRV,  KC_MPLY,    KC_MNXT,    KC_MUTE,   KC_VOLD,   KC_VOLU,   KC_TRNS,  BL_TOGG,
-     KC_TRNS,  BT_HST1,  BT_HST2,  BT_HST3,  KC_TRNS,  DT_PRNT,  DT_DOWN,  DT_UP,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,
-     KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,            KC_TRNS,  KC_TRNS,
-     KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  BAT_LVL,  KC_TRNS,  DB_TOGG,  QK_RBT,  QK_MAKE,  QK_BOOT,  KC_TRNS,  KC_TRNS,  KC_TRNS,
-    KC_TRNS,  KC_TRNS,  KC_TRNS,                                KC_TRNS,                      KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS),
+    ES_TILD,  KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_CALC,  KC_F6,    KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE, KC_VOLD,   KC_VOLU,     _______,    BL_TOGG,
+    _______,  BT_HST1,  BT_HST2,  BT_HST3,  _______,  DT_PRNT,  DT_DOWN,  DT_UP,    _______,  _______,  _______,  _______,  _______,     _______,    _______,
+    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,       _______,
+    _______,  _______,  _______,  _______,  _______,  BAT_LVL,  _______,  DB_TOGG,  QK_RBT,  QK_MAKE,  QK_BOOT,          _______,          _______,  _______,
+    _______,  _______,  _______,                                 _______,                          _______,  _______,  _______,  _______,  _______,  _______),
 [MACROS] = LAYOUT_ansi_68(
-  KC_TRNS, MC_TEST, MC_RUT,  MC_PHONE, MC_EMAIL, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-  KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-  KC_TRNS, AF_SKY_PMF, AF_SKY_VCHR, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-  KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
-  KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS),
+    XXXXXXX,  MC_TEST,    MC_RUT,      MC_PHONE, MC_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+    XXXXXXX,  XXXXXXX,    XXXXXXX,     XXXXXXX,  XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+    XXXXXXX,  AF_SKY_PMF, AF_SKY_VCHR, XXXXXXX,  XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX,
+    XXXXXXX,  XXXXXXX,    XXXXXXX,     XXXXXXX,  XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
+    XXXXXXX,  XXXXXXX,    XXXXXXX,                               XXXXXXX,                         XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 [MOUSE] = LAYOUT_ansi_68(
-  _______, KC_MS_ACCEL0, KC_MS_ACCEL1, KC_MS_ACCEL2, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  _______, KC_BTN4, KC_MS_U, KC_BTN5, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_WH_U, XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX,
-  _______, KC_MS_L, KC_MS_D, KC_MS_R, XXXXXXX, XXXXXXX, XXXXXXX, KC_BTN1, KC_WH_D, KC_BTN2, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX,
-  _______, _______, _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
+    _______,  KC_MS_ACCEL0, KC_MS_ACCEL1, KC_MS_ACCEL2, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX,
+    _______,  KC_BTN4,      KC_MS_U,      KC_BTN5,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_WH_U, XXXXXXX, XXXXXXX, XXXXXXX,    _______, XXXXXXX,
+    _______,  KC_MS_L,      KC_MS_D,      KC_MS_R,      XXXXXXX, XXXXXXX, XXXXXXX, KC_BTN1, KC_WH_D, KC_BTN2, XXXXXXX, XXXXXXX,        XXXXXXX,      XXXXXXX,
+    _______,  XXXXXXX,      XXXXXXX,      XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         _______,     XXXXXXX, XXXXXXX,
+    _______,  _______,      _______,                                _______,                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 };
 
-bool is_shift_pressed = false;
 
 char first_name[8] = "Alberto";
 char last_name[5] = "Test";
@@ -135,10 +134,6 @@ void sky_autofill_voucher_form(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-    case KC_LSFT:
-    case KC_RSFT:
-      is_shift_pressed = record->event.pressed;
-      break;
     case ES_GRV:
     case ES_CIRC:
         if (!record->event.pressed) {
