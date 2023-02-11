@@ -32,7 +32,10 @@ enum custom_keycodes {
   MC_TEST = SAFE_RANGE,
   MC_RUT,
   MC_PHONE,
-  MC_EMAIL,
+  MC_SKY_EMAIL,
+  MC_EPD_EMAIL,
+  MC_AFIP_CUIT,
+  MC_AFIP_PASS,
   AF_SKY_PMF,
   AF_SKY_VCHR,
 };
@@ -73,11 +76,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______,  _______,  _______,  _______,  _______,  BAT_LVL,  _______,  DB_TOGG,  QK_RBT,  QK_MAKE,  QK_BOOT,          _______,          _______,  _______,
     _______,  _______,  _______,                                 _______,                          _______,  _______,  _______,  _______,  _______,  _______),
 [MACROS] = LAYOUT_ansi_68(
-    XXXXXXX,  MC_TEST,    MC_RUT,      MC_PHONE, MC_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
-    XXXXXXX,  XXXXXXX,    XXXXXXX,     XXXXXXX,  XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
-    XXXXXXX,  AF_SKY_PMF, AF_SKY_VCHR, XXXXXXX,  XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX,
-    XXXXXXX,  XXXXXXX,    XXXXXXX,     XXXXXXX,  XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
-    XXXXXXX,  XXXXXXX,    XXXXXXX,                               XXXXXXX,                         XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
+    XXXXXXX,  MC_TEST,      MC_RUT,       MC_PHONE, MC_SKY_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+    XXXXXXX,  MC_AFIP_CUIT, MC_AFIP_PASS, XXXXXXX,  MC_EPD_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+    XXXXXXX,  AF_SKY_PMF,   AF_SKY_VCHR,  XXXXXXX,  XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX,
+    XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,  XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
+    XXXXXXX,  XXXXXXX,      XXXXXXX,                               XXXXXXX,                              XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 [MOUSE] = LAYOUT_ansi_68(
     _______,  KC_MS_ACCEL0, KC_MS_ACCEL1, KC_MS_ACCEL2, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX,
     _______,  KC_BTN4,      KC_MS_U,      KC_BTN5,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_WH_U, XXXXXXX, XXXXXXX, XXXXXXX,    _______, XXXXXXX,
@@ -91,9 +94,12 @@ char first_name[8] = "Alberto";
 char last_name[5] = "Test";
 char rut[10] = "111111111";
 char phone[10] = "321232123";
-char email[27] = "user_acid49@skyairline.com";
-char voucher_code[7] = "F7PSJN";
-char voucher_pin[7] = "7MBMT2";
+char sky_email[27] = "user_acid49@skyairline.com";
+char voucher_code[7] = "PY99HK";
+char voucher_pin[7] = "5QQ78K";
+char epd_email[31] = "albertop@epidataconsulting.com";
+char afip_cuit[12] = "27049902072";
+char afip_pass[12] = "Afip1234567";
 
 void sky_autofill_passenger_form(void) {
   SEND_STRING(first_name);
@@ -117,7 +123,7 @@ void sky_autofill_passenger_form(void) {
   SEND_STRING(SS_TAP(X_TAB));
   SEND_STRING(phone);
   SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(email);
+  SEND_STRING(sky_email);
   SEND_STRING(SS_TAP(X_TAB));
   SEND_STRING(SS_TAP(X_ENTER));
   SEND_STRING(SS_TAP(X_DOWN));
@@ -160,9 +166,27 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           return false;
         }
         break;
-    case MC_EMAIL:
+    case MC_SKY_EMAIL:
         if (record->event.pressed) {
-          SEND_STRING(email);
+          SEND_STRING(sky_email);
+          return false;
+        }
+        break;
+    case MC_EPD_EMAIL:
+        if (record->event.pressed) {
+          SEND_STRING(epd_email);
+          return false;
+        }
+        break;
+    case MC_AFIP_CUIT:
+        if (record->event.pressed) {
+          SEND_STRING(afip_cuit);
+          return false;
+        }
+        break;
+    case MC_AFIP_PASS:
+        if (record->event.pressed) {
+          SEND_STRING(afip_pass);
           return false;
         }
         break;
