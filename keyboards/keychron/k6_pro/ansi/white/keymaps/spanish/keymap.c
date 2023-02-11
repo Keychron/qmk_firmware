@@ -38,6 +38,7 @@ enum custom_keycodes {
   MC_AFIP_PASS,
   AF_SKY_PMF,
   AF_SKY_VCHR,
+  AF_SKY_WP,
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -76,11 +77,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______,  _______,  _______,  _______,  _______,  BAT_LVL,  _______,  DB_TOGG,  QK_RBT,  QK_MAKE,  QK_BOOT,          _______,          _______,  _______,
     _______,  _______,  _______,                                 _______,                          _______,  _______,  _______,  _______,  _______,  _______),
 [MACROS] = LAYOUT_ansi_68(
-    XXXXXXX,  MC_TEST,      MC_RUT,       MC_PHONE, MC_SKY_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
-    XXXXXXX,  MC_AFIP_CUIT, MC_AFIP_PASS, XXXXXXX,  MC_EPD_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
-    XXXXXXX,  AF_SKY_PMF,   AF_SKY_VCHR,  XXXXXXX,  XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX,
-    XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,  XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
-    XXXXXXX,  XXXXXXX,      XXXXXXX,                               XXXXXXX,                              XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
+    XXXXXXX,  MC_TEST,      MC_RUT,       MC_PHONE,  MC_SKY_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+    XXXXXXX,  MC_AFIP_CUIT, MC_AFIP_PASS, XXXXXXX,   MC_EPD_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+    XXXXXXX,  AF_SKY_PMF,   AF_SKY_VCHR,  AF_SKY_WP, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX,
+    XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,   XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
+    XXXXXXX,  XXXXXXX,      XXXXXXX,                                XXXXXXX,                              XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 [MOUSE] = LAYOUT_ansi_68(
     _______,  KC_MS_ACCEL0, KC_MS_ACCEL1, KC_MS_ACCEL2, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX,
     _______,  KC_BTN4,      KC_MS_U,      KC_BTN5,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_WH_U, XXXXXXX, XXXXXXX, XXXXXXX,    _______, XXXXXXX,
@@ -136,6 +137,15 @@ void sky_autofill_voucher_form(void) {
   SEND_STRING(voucher_pin);
   SEND_STRING(SS_TAP(X_TAB));
   SEND_STRING(SS_TAP(X_ENTER));
+}
+
+void sky_autofill_webpay(void) {
+  SEND_STRING("4444333322221111");
+  SEND_STRING(SS_TAP(X_TAB));
+  SEND_STRING("1226");
+  SEND_STRING(SS_TAP(X_TAB));
+  SEND_STRING("123");
+  SEND_STRING(SS_DELAY(1000) SS_TAP(X_ENTER));
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -199,6 +209,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case AF_SKY_VCHR:
         if (record->event.pressed) {
           sky_autofill_voucher_form();
+          return false;
+        }
+        break;
+    case AF_SKY_WP:
+        if (record->event.pressed) {
+          sky_autofill_webpay();
           return false;
         }
         break;
