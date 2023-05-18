@@ -32,35 +32,36 @@ enum custom_keycodes {
   MC_TEST = SAFE_RANGE,
   MC_RUT,
   MC_PHONE,
+  MC_EMAIL,
+  MC_PASSP,
   MC_SKY_EMAIL,
   MC_EPD_EMAIL,
-  MC_AFIP_CUIT,
-  MC_AFIP_PASS,
   AF_SKY_PMF,
-  AF_SKY_VCHR,
   AF_SKY_WP,
+  MC_PWM,
+  MC_PW1
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [QWERTY] = LAYOUT_ansi_68(
     KC_ESC,  ES_1,    ES_2,   ES_3,  ES_4,  ES_5,  ES_6,  ES_7, ES_8,     ES_9,     ES_0,       ES_MINS,  ES_EQL,     KC_BSPC,    BL_STEP,
     KC_TAB,  ES_Q,    ES_W,   ES_E,  ES_R,  ES_T,  ES_Y,  ES_U, ES_I,     ES_O,     ES_P,       ES_LBRC,  ES_RBRC,    ES_BSLS,    KC_HOME,
-    KC_CAPS, ES_A,    ES_S,   ES_D,  ES_F,  ES_G,  ES_H,  ES_J, ES_K,     ES_L,     ES_SCLN,    ES_QUOT,         KC_ENT,          KC_PGUP,
+    KC_CAPS, ES_A,    ES_S,   ES_D,  ES_F,  ES_G,  ES_H,  ES_J, ES_K,     ES_L,     ES_NTIL,    ES_ACUT,         KC_ENT,          KC_PGUP,
     KC_LSFT, ES_Z,    ES_X,   ES_C,  ES_V,  ES_B,  ES_N,  ES_M, ES_COMM,  ES_DOT,   ES_SLSH,           KC_RSFT,          KC_UP,   KC_PGDN,
     KC_LCTL, KC_LGUI, KC_LALT,                     KC_SPC,                KC_RALT,  MO(NUMPAD), MO(FUNCTIONS), KC_LEFT,  KC_DOWN, KC_RGHT),
 
 [COLEMAK] = LAYOUT_ansi_68(
     MO(MACROS),         ES_1,  ES_2,  ES_3,  ES_4,  ES_5,  ES_6,  ES_7,  ES_8,    ES_9,   ES_0,     ES_MINS,  ES_EQL,   KC_BSPC,   BL_STEP,
-    LT(NUMPAD, KC_TAB), ES_Q,  ES_W,  ES_F,  ES_P,  ES_B,  ES_J,  ES_L,  ES_U,    ES_Y,   ES_SCLN,  ES_ACUT,  XXXXXXX,  TG(MOUSE), KC_PSCR,
+    LT(NUMPAD, KC_TAB), ES_Q,  ES_W,  ES_F,  ES_P,  ES_B,  ES_J,  ES_L,  ES_U,    ES_Y,   ES_COLN,  ES_ACUT,  XXXXXXX,  TG(MOUSE), KC_PSCR,
     CTL_T(KC_ESC),      ES_A,  ES_R,  ES_S,  ES_T,  ES_G,  ES_M,  ES_N,  ES_E,    ES_I,   ES_O,     ES_QUOT,       KC_ENT,         KC_PGUP,
-    KC_LSFT,            ES_X,  ES_C,  ES_D,  ES_V,  ES_Z,  ES_K,  ES_H,  ES_COMM, ES_DOT, ES_IQUE,          KC_RSFT,        KC_UP, KC_PGDN,
+    KC_LSFT,            ES_X,  ES_C,  ES_D,  ES_V,  ES_Z,  ES_K,  ES_H,  ES_COMM, ES_DOT, ES_SCLN,          KC_RSFT,        KC_UP, KC_PGDN,
     XXXXXXX,   KC_LGUI, ALT_T(KC_BSPC),           KC_SPC,           LT(SYMBOLS, KC_ENT), MO(FUNCTIONS), XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT),
 
 [SYMBOLS] = LAYOUT_ansi_68(
     XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  BL_TOGG,
     _______,  ES_TILD,  ES_DLR,   ES_LBRC,  ES_RBRC,  ES_CIRC,  XXXXXXX,  ES_PERC,  ES_PLUS,  ES_MINS,  ES_ASTR,  XXXXXXX,  XXXXXXX,   XXXXXXX, XXXXXXX,
     _______,  ES_GRV,   ES_UNDS,  ES_LCBR,  ES_RCBR,  ES_PIPE,  XXXXXXX,  ES_LPRN,  ES_RPRN,  ES_EQL,   ES_NTIL,  XXXXXXX,        _______,      XXXXXXX,
-    _______,  ES_AT,    ES_AMPR,  ES_DOT,   ES_SLSH,  ES_BSLS,  ES_EXLM,  ES_LABK,  ES_RABK,  ES_HASH,  XXXXXXX,       _______,       XXXXXXX,  XXXXXXX,
+    _______,  ES_AT,    ES_AMPR,  ES_DOT,   ES_SLSH,  ES_BSLS,  ES_EXLM,  ES_LABK,  ES_RABK,  ES_HASH,  ES_QUES,       _______,       XXXXXXX,  XXXXXXX,
     _______,  _______,  _______,                              _______,                        _______,  _______,  _______,  _______,  _______,  _______),
 
 [NUMPAD] = LAYOUT_ansi_68(
@@ -77,17 +78,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______,  _______,  _______,  _______,  _______,  BAT_LVL,  _______,  DB_TOGG,  QK_RBT,  QK_MAKE,  QK_BOOT,          _______,          _______,  _______,
     _______,  _______,  _______,                                 _______,                          _______,  _______,  _______,  _______,  _______,  _______),
 [MACROS] = LAYOUT_ansi_68(
-    XXXXXXX,  MC_TEST,      MC_RUT,       MC_PHONE,  MC_SKY_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
-    XXXXXXX,  MC_AFIP_CUIT, MC_AFIP_PASS, XXXXXXX,   MC_EPD_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
-    XXXXXXX,  AF_SKY_PMF,   AF_SKY_VCHR,  AF_SKY_WP, XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX,
+    XXXXXXX,  MC_TEST,      MC_RUT,       MC_PHONE,  MC_SKY_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, MC_PWM,    XXXXXXX,   XXXXXXX,
+    XXXXXXX,  MC_PASSP,     XXXXXXX,      XXXXXXX,   MC_EPD_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, MC_PW1,  XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+    XXXXXXX,  AF_SKY_PMF,   XXXXXXX,      AF_SKY_WP, XXXXXXX,      XXXXXXX, XXXXXXX, MC_EMAIL,XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,         XXXXXXX,      XXXXXXX,
     XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,   XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
     XXXXXXX,  XXXXXXX,      XXXXXXX,                                XXXXXXX,                              XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 [MOUSE] = LAYOUT_ansi_68(
-    _______,  KC_MS_ACCEL0, KC_MS_ACCEL1, KC_MS_ACCEL2, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX,
-    _______,  KC_BTN4,      KC_MS_U,      KC_BTN5,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_WH_U, XXXXXXX, XXXXXXX, XXXXXXX,    _______, XXXXXXX,
-    _______,  KC_MS_L,      KC_MS_D,      KC_MS_R,      XXXXXXX, XXXXXXX, XXXXXXX, KC_BTN1, KC_WH_D, KC_BTN2, XXXXXXX, XXXXXXX,        XXXXXXX,      XXXXXXX,
-    _______,  XXXXXXX,      XXXXXXX,      XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         _______,     XXXXXXX, XXXXXXX,
-    _______,  _______,      _______,                                _______,                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
+    MO(MACROS),  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX,
+    _______,     KC_BTN4, KC_MS_U, KC_BTN5, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_WH_U, XXXXXXX, XXXXXXX, XXXXXXX,    _______, XXXXXXX,
+    _______,     KC_MS_L, KC_MS_D, KC_MS_R, XXXXXXX, XXXXXXX, XXXXXXX, KC_BTN1, KC_WH_D, KC_BTN2, XXXXXXX, XXXXXXX,        XXXXXXX,      XXXXXXX,
+    KC_ACL2,     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         _______,     XXXXXXX, XXXXXXX,
+    _______,     _______,      _______,                       KC_ACL0,                      _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 };
 
 
@@ -95,12 +96,12 @@ char first_name[8] = "Alberto";
 char last_name[5] = "Test";
 char rut[10] = "111111111";
 char phone[10] = "321232123";
+char passport[10] = "";
+char email[24] = "pedron.albert@gmail.com";
 char sky_email[27] = "user_acid49@skyairline.com";
-char voucher_code[7] = "PY99HK";
-char voucher_pin[7] = "5QQ78K";
 char epd_email[31] = "albertop@epidataconsulting.com";
-char afip_cuit[12] = "27049902072";
-char afip_pass[12] = "Afip1234567";
+char pwm[41] = "";
+char pw1[11] = "";
 
 void sky_autofill_passenger_form(void) {
   SEND_STRING(first_name);
@@ -131,16 +132,8 @@ void sky_autofill_passenger_form(void) {
   SEND_STRING(SS_TAP(X_ENTER));
 }
 
-void sky_autofill_voucher_form(void) {
-  SEND_STRING(voucher_code);
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(voucher_pin);
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(SS_TAP(X_ENTER));
-}
-
 void sky_autofill_webpay(void) {
-  SEND_STRING("4444333322221111");
+  SEND_STRING_DELAY("4444333322221111", 10);
   SEND_STRING(SS_TAP(X_TAB));
   SEND_STRING("1226");
   SEND_STRING(SS_TAP(X_TAB));
@@ -176,6 +169,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           return false;
         }
         break;
+    case MC_EMAIL:
+        if (record->event.pressed) {
+          SEND_STRING_DELAY(email, 10);
+          return false;
+        }
+        break;
+    case MC_PASSP:
+        if (record->event.pressed) {
+          SEND_STRING_DELAY(passport, 10);
+          return false;
+        }
+        break;
     case MC_SKY_EMAIL:
         if (record->event.pressed) {
           SEND_STRING(sky_email);
@@ -188,27 +193,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           return false;
         }
         break;
-    case MC_AFIP_CUIT:
+    case MC_PWM:
         if (record->event.pressed) {
-          SEND_STRING(afip_cuit);
+          SEND_STRING_DELAY(pwm, 10);
           return false;
         }
         break;
-    case MC_AFIP_PASS:
+    case MC_PW1:
         if (record->event.pressed) {
-          SEND_STRING(afip_pass);
+          SEND_STRING_DELAY(pw1, 10);
           return false;
         }
         break;
     case AF_SKY_PMF:
         if (record->event.pressed) {
           sky_autofill_passenger_form();
-          return false;
-        }
-        break;
-    case AF_SKY_VCHR:
-        if (record->event.pressed) {
-          sky_autofill_voucher_form();
           return false;
         }
         break;
