@@ -34,6 +34,7 @@ enum custom_keycodes {
   MC_PHONE,
   MC_EMAIL,
   MC_PASSP,
+  MC_RETU,
   MC_SKY_EMAIL,
   MC_EPD_EMAIL,
   AF_SKY_PMF,
@@ -44,14 +45,14 @@ enum custom_keycodes {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [QWERTY] = LAYOUT_ansi_68(
-    KC_ESC,  ES_1,    ES_2,   ES_3,  ES_4,  ES_5,  ES_6,  ES_7, ES_8,     ES_9,     ES_0,       ES_MINS,  ES_EQL,     KC_BSPC,    BL_STEP,
+    KC_ESC,  ES_1,    ES_2,   ES_3,  ES_4,  ES_5,  ES_6,  ES_7, ES_8,     ES_9,     ES_0,       MC_RETU,  ES_EQL,     KC_BSPC,    BL_STEP,
     KC_TAB,  ES_Q,    ES_W,   ES_E,  ES_R,  ES_T,  ES_Y,  ES_U, ES_I,     ES_O,     ES_P,       ES_LBRC,  ES_RBRC,    ES_BSLS,    KC_HOME,
     KC_CAPS, ES_A,    ES_S,   ES_D,  ES_F,  ES_G,  ES_H,  ES_J, ES_K,     ES_L,     ES_NTIL,    ES_ACUT,         KC_ENT,          KC_PGUP,
     KC_LSFT, ES_Z,    ES_X,   ES_C,  ES_V,  ES_B,  ES_N,  ES_M, ES_COMM,  ES_DOT,   ES_SLSH,           KC_RSFT,          KC_UP,   KC_PGDN,
     KC_LCTL, KC_LGUI, KC_LALT,                     KC_SPC,                KC_RALT,  MO(NUMPAD), MO(FUNCTIONS), KC_LEFT,  KC_DOWN, KC_RGHT),
 
 [COLEMAK] = LAYOUT_ansi_68(
-    MO(MACROS),         ES_1,  ES_2,  ES_3,  ES_4,  ES_5,  ES_6,  ES_7,  ES_8,    ES_9,   ES_0,     ES_MINS,  ES_EQL,   KC_BSPC,   BL_STEP,
+    MO(MACROS),         ES_1,  ES_2,  ES_3,  ES_4,  ES_5,  ES_6,  ES_7,  ES_8,    ES_9,   ES_0,     MC_RETU,  ES_EQL,   KC_BSPC,   BL_STEP,
     LT(NUMPAD, KC_TAB), ES_Q,  ES_W,  ES_F,  ES_P,  ES_B,  ES_J,  ES_L,  ES_U,    ES_Y,   ES_COLN,  ES_ACUT,  XXXXXXX,  TG(MOUSE), KC_PSCR,
     CTL_T(KC_ESC),      ES_A,  ES_R,  ES_S,  ES_T,  ES_G,  ES_M,  ES_N,  ES_E,    ES_I,   ES_O,     ES_QUOT,       KC_ENT,         KC_PGUP,
     KC_LSFT,            ES_X,  ES_C,  ES_D,  ES_V,  ES_Z,  ES_K,  ES_H,  ES_COMM, ES_DOT, ES_SCLN,          KC_RSFT,        KC_UP, KC_PGDN,
@@ -59,8 +60,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 [SYMBOLS] = LAYOUT_ansi_68(
     XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  BL_TOGG,
-    _______,  ES_TILD,  ES_DLR,   ES_LBRC,  ES_RBRC,  ES_CIRC,  XXXXXXX,  ES_PERC,  ES_PLUS,  ES_MINS,  ES_ASTR,  XXXXXXX,  XXXXXXX,   XXXXXXX, XXXXXXX,
-    _______,  ES_GRV,   ES_UNDS,  ES_LCBR,  ES_RCBR,  ES_PIPE,  XXXXXXX,  ES_LPRN,  ES_RPRN,  ES_EQL,   ES_NTIL,  XXXXXXX,        _______,      XXXXXXX,
+    _______,  ES_TILD,  ES_DLR,   ES_LBRC,  ES_RBRC,  ES_CIRC,  ES_IEXL,  ES_PERC,  ES_PLUS,  ES_MINS,  ES_ASTR,  XXXXXXX,  XXXXXXX,   XXXXXXX, XXXXXXX,
+    _______,  ES_GRV,   ES_UNDS,  ES_LCBR,  ES_RCBR,  ES_PIPE,  ES_IQUE,  ES_LPRN,  ES_RPRN,  ES_EQL,   ES_NTIL,  XXXXXXX,        _______,      XXXXXXX,
     _______,  ES_AT,    ES_AMPR,  ES_DOT,   ES_SLSH,  ES_BSLS,  ES_EXLM,  ES_LABK,  ES_RABK,  ES_HASH,  ES_QUES,       _______,       XXXXXXX,  XXXXXXX,
     _______,  _______,  _______,                              _______,                        _______,  _______,  _______,  _______,  _______,  _______),
 
@@ -96,7 +97,7 @@ char first_name[8] = "Alberto";
 char last_name[5] = "Test";
 char rut[10] = "111111111";
 char phone[10] = "321232123";
-char passport[10] = "";
+char passport[10] = "155514669";
 char email[24] = "pedron.albert@gmail.com";
 char sky_email[27] = "user_acid49@skyairline.com";
 char epd_email[31] = "albertop@epidataconsulting.com";
@@ -205,6 +206,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           return false;
         }
         break;
+    case MC_RETU:
+        if (record->event.pressed) {
+          SEND_STRING_DELAY("../", 10);
+          return false;
+        }
+        break;
     case AF_SKY_PMF:
         if (record->event.pressed) {
           sky_autofill_passenger_form();
@@ -222,18 +229,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 };
 
 const key_override_t quotes_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_QUOT, ES_DQUO);
-const key_override_t colons_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_SCLN, ES_COLN);
-const key_override_t question_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_IQUE, ES_QUES);
-const key_override_t comm_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_COMM, ES_IEXL);
-const key_override_t dot_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_DOT, ES_EXLM);
 const key_override_t enie_key_override = ko_make_with_layers(MOD_MASK_SHIFT, ES_LPRN, ES_NTIL, SYMBOLS);
 
 const key_override_t **key_overrides = (const key_override_t *[]){
     &quotes_key_override,
-    &colons_key_override,
-    &question_key_override,
-    &comm_key_override,
-    &dot_key_override,
     &enie_key_override,
     NULL // Null terminate the array of overrides!
 };
