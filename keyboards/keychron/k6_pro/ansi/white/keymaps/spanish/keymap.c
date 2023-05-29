@@ -230,10 +230,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 const key_override_t quotes_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_QUOT, ES_DQUO);
 const key_override_t enie_key_override = ko_make_with_layers(MOD_MASK_SHIFT, ES_LPRN, ES_NTIL, SYMBOLS);
+const key_override_t iexcl_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_COMM, ES_IEXL);
+const key_override_t excl_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_DOT, ES_EXLM);
+const key_override_t iqmark_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_COLN, ES_IQUE);
+const key_override_t qmark_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_SCLN, ES_QUES);
 
 const key_override_t **key_overrides = (const key_override_t *[]){
     &quotes_key_override,
     &enie_key_override,
+    &iexcl_key_override,
+    &excl_key_override,
+    &iqmark_key_override,
+    &qmark_key_override,
     NULL // Null terminate the array of overrides!
 };
 
