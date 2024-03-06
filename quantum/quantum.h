@@ -212,6 +212,10 @@ extern layer_state_t layer_state;
 #    include "digitizer.h"
 #endif
 
+#ifdef OPENRGB_ENABLE
+#    include "openrgb.h"
+#endif
+
 #ifdef VIA_ENABLE
 #    include "via.h"
 #endif

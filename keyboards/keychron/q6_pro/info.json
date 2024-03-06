@@ -43,7 +43,8 @@
             "solid_reactive_multiwide": true,
             "solid_reactive_multinexus": true,
             "splash": true,
-            "solid_splash": true
+            "solid_splash": true,
+            "openrgb_direct": true
         }
     },
     "matrix_pins": {

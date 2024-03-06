@@ -477,25 +477,7 @@ void indicator_task(void) {
 
 #if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
 __attribute__((weak)) void os_state_indicate(void) {
-#    if defined(NUM_LOCK_INDEX)
-    if (host_keyboard_led_state().num_lock) {
-        SET_LED_ON(NUM_LOCK_INDEX);
-    }
-#    endif
-#    if defined(CAPS_LOCK_INDEX)
-    if (host_keyboard_led_state().caps_lock) {
-#        if defined(DIM_CAPS_LOCK)
-        SET_LED_OFF(CAPS_LOCK_INDEX);
-#        else
-        SET_LED_ON(CAPS_LOCK_INDEX);
-#        endif
-    }
-#    endif
-#    if defined(SCROLL_LOCK_INDEX)
-    if (host_keyboard_led_state().scroll_lock) {
-        SET_LED_ON(SCROLL_LOCK_INDEX);
-    }
-#    endif
+
 #    if defined(COMPOSE_LOCK_INDEX)
     if (host_keyboard_led_state().compose) {
         SET_LED_ON(COMPOSE_LOCK_INDEX);
@@ -585,15 +567,7 @@ void LED_NONE_INDICATORS_KB(void) {
 
 #    if defined(LED_MATRIX_DRIVER_SHUTDOWN_ENABLE) || defined(RGB_MATRIX_DRIVER_SHUTDOWN_ENABLE)
 bool LED_DRIVER_ALLOW_SHUTDOWN(void) {
-#        if defined(NUM_LOCK_INDEX)
-    if (host_keyboard_led_state().num_lock) return false;
-#        endif
-#        if defined(CAPS_LOCK_INDEX) && !defined(DIM_CAPS_LOCK)
-    if (host_keyboard_led_state().caps_lock) return false;
-#        endif
-#        if defined(SCROLL_LOCK_INDEX)
-    if (host_keyboard_led_state().scroll_lock) return false;
-#        endif
+
 #        if defined(COMPOSE_LOCK_INDEX)
     if (host_keyboard_led_state().compose) return false;
 #        endif

@@ -17,6 +17,7 @@
 #pragma once
 
 #include "quantum.h"
+
 #ifdef VIA_ENABLE
 #    include "via.h"
 #endif
