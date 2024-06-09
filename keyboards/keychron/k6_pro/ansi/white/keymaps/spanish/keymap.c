@@ -13,18 +13,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "sendstring_spanish.h"
 #include QMK_KEYBOARD_H
+#include <time.h>
 
 // clang-format off
 enum layers{
   QWERTY,
   COLEMAK,
+  // COLEMAK_WITH_MIRRORING,
+  // COLEMAK_MIRROR,
   SYMBOLS,
   NUMPAD,
   FUNCTIONS,
   MACROS,
+  MACROS_2,
   MOUSE,
 };
 
@@ -36,11 +39,14 @@ enum custom_keycodes {
   MC_PASSP,
   MC_RETU,
   MC_SKY_EMAIL,
-  MC_EPD_EMAIL,
-  AF_SKY_PMF,
-  AF_SKY_WP,
   MC_PWM,
-  MC_PW1
+  MC_PW1,
+  MC_DATE,
+  MC_MG_SORT,
+  MC_HTTP,
+  MC_HTTPS,
+  MC_LOCH,
+  MC_SKCOM,
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -49,14 +55,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_TAB,  ES_Q,    ES_W,   ES_E,  ES_R,  ES_T,  ES_Y,  ES_U, ES_I,     ES_O,     ES_P,       ES_LBRC,  ES_RBRC,    ES_BSLS,    KC_HOME,
     KC_CAPS, ES_A,    ES_S,   ES_D,  ES_F,  ES_G,  ES_H,  ES_J, ES_K,     ES_L,     ES_NTIL,    ES_ACUT,         KC_ENT,          KC_PGUP,
     KC_LSFT, ES_Z,    ES_X,   ES_C,  ES_V,  ES_B,  ES_N,  ES_M, ES_COMM,  ES_DOT,   ES_SLSH,           KC_RSFT,          KC_UP,   KC_PGDN,
-    KC_LCTL, KC_LGUI, KC_LALT,                     KC_SPC,                KC_RALT,  MO(NUMPAD), MO(FUNCTIONS), KC_LEFT,  KC_DOWN, KC_RGHT),
+    KC_LCTL, KC_LGUI, KC_LALT,                     KC_SPC,                KC_RALT,  MO(FUNCTIONS), MO(SYMBOLS), KC_LEFT,  KC_DOWN, KC_RGHT),
 
 [COLEMAK] = LAYOUT_ansi_68(
     MO(MACROS),         ES_1,  ES_2,  ES_3,  ES_4,  ES_5,  ES_6,  ES_7,  ES_8,    ES_9,   ES_0,     MC_RETU,  ES_EQL,   KC_BSPC,   BL_STEP,
     LT(NUMPAD, KC_TAB), ES_Q,  ES_W,  ES_F,  ES_P,  ES_B,  ES_J,  ES_L,  ES_U,    ES_Y,   ES_COLN,  ES_ACUT,  XXXXXXX,  TG(MOUSE), KC_PSCR,
     CTL_T(KC_ESC),      ES_A,  ES_R,  ES_S,  ES_T,  ES_G,  ES_M,  ES_N,  ES_E,    ES_I,   ES_O,     ES_QUOT,       KC_ENT,         KC_PGUP,
     KC_LSFT,            ES_X,  ES_C,  ES_D,  ES_V,  ES_Z,  ES_K,  ES_H,  ES_COMM, ES_DOT, ES_SCLN,          KC_RSFT,        KC_UP, KC_PGDN,
-    XXXXXXX,   KC_LGUI, ALT_T(KC_BSPC),           KC_SPC,           LT(SYMBOLS, KC_ENT), MO(FUNCTIONS), XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT),
+    XXXXXXX,   KC_LGUI, ALT_T(KC_BSPC),    KC_SPC,   LT(SYMBOLS, KC_ENT), MO(FUNCTIONS), XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT),
+
+// [COLEMAK_WITH_MIRRORING] = LAYOUT_ansi_68(
+//     _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
+//     _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
+//     _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______,     _______,
+//     _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,      _______,     _______, _______,
+//     _______, _______, _______,              LT(COLEMAK_MIRROR, KC_SPC),             _______, _______, _______, _______, _______, _______),
+
+// [COLEMAK_MIRROR] = LAYOUT_ansi_68(
+//     MO(MACROS),         ES_1,  ES_2,  ES_3,  ES_4,  ES_5,  ES_6,  ES_7,  ES_8,    ES_9,   ES_0,     MC_RETU,  ES_EQL,   KC_BSPC,   BL_STEP,
+//     ES_ACUT, ES_COLN,  ES_Y,  ES_U,  ES_L,  ES_J,  ES_B,  ES_P,  ES_F,    ES_W,   ES_Q,  KC_TAB,  XXXXXXX,  TG(MOUSE), KC_PSCR,
+//     ES_QUOT,  ES_O,  ES_I,  ES_E,  ES_N,  ES_M,  ES_G,  ES_T,  ES_S,    ES_R,   ES_A,     KC_LSFT,       KC_ENT,         KC_PGUP,
+//     KC_SCLN,            ES_DOT,  ES_COMM,  ES_H,  ES_K,  ES_Z,  ES_V,  ES_D,  ES_C, ES_X, KC_LSFT,          KC_RSFT,        KC_UP, KC_PGDN,
+//     XXXXXXX,   KC_LGUI, ALT_T(KC_BSPC),           KC_SPC,           LT(SYMBOLS, KC_ENT), MO(FUNCTIONS), XXXXXXX, KC_LEFT, KC_DOWN, KC_RGHT),
 
 [SYMBOLS] = LAYOUT_ansi_68(
     XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  BL_TOGG,
@@ -79,10 +99,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______,  _______,  _______,  _______,  _______,  BAT_LVL,  _______,  DB_TOGG,  QK_RBT,  QK_MAKE,  QK_BOOT,          _______,          _______,  _______,
     _______,  _______,  _______,                                 _______,                          _______,  _______,  _______,  _______,  _______,  _______),
 [MACROS] = LAYOUT_ansi_68(
-    XXXXXXX,  MC_TEST,      MC_RUT,       MC_PHONE,  MC_SKY_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, MC_PWM,    XXXXXXX,   XXXXXXX,
-    XXXXXXX,  MC_PASSP,     XXXXXXX,      XXXXXXX,   MC_EPD_EMAIL, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, MC_PW1,  XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
-    XXXXXXX,  AF_SKY_PMF,   XXXXXXX,      AF_SKY_WP, XXXXXXX,      XXXXXXX, XXXXXXX, MC_EMAIL,XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,         XXXXXXX,      XXXXXXX,
-    XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,   XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
+    XXXXXXX,  MC_TEST,      MC_RUT,       MC_PHONE,  MC_SKY_EMAIL,  MC_SKCOM, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, MC_PWM, XXXXXXX,      XXXXXXX,
+    XXXXXXX,  MC_PASSP,     XXXXXXX,      XXXXXXX,   MC_EMAIL,      XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, MC_PW1,  XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+    XXXXXXX,  XXXXXXX,      XXXXXXX,      MC_LOCH,   MC_HTTP,  MC_MG_SORT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,         XXXXXXX,     XXXXXXX,
+    XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,   XXXXXXX,       XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
+    XXXXXXX,  XXXXXXX,      MO(MACROS_2),                                XXXXXXX,                              XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
+[MACROS_2] = LAYOUT_ansi_68(
+    XXXXXXX,  XXXXXXX,      XXXXXXX,       XXXXXXX,  XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, MC_PWM, XXXXXXX,      XXXXXXX,
+    XXXXXXX,  XXXXXXX,     XXXXXXX,      XXXXXXX,   XXXXXXX,      XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+    XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,   MC_HTTPS,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,         XXXXXXX,     XXXXXXX,
+    XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,   XXXXXXX,       XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
     XXXXXXX,  XXXXXXX,      XXXXXXX,                                XXXXXXX,                              XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 [MOUSE] = LAYOUT_ansi_68(
     MO(MACROS),  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX,
@@ -91,142 +117,75 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_ACL2,     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,         _______,     XXXXXXX, XXXXXXX,
     _______,     _______,      _______,                       KC_ACL0,                      _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 };
+// [EMPTY] = LAYOUT_ansi_68(
+//     XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,  XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, MC_PWM, XXXXXXX,      XXXXXXX,
+//     XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX,   XXXXXXX,   XXXXXXX,
+//     XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,         XXXXXXX,     XXXXXXX,
+//     XXXXXXX,  XXXXXXX,      XXXXXXX,      XXXXXXX,   XXXXXXX,       XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX,         XXXXXXX,      XXXXXXX, XXXXXXX,
+//     XXXXXXX,  XXXXXXX,      XXXXXXX,                                XXXXXXX,                              XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX),
 
 
 char first_name[8] = "Alberto";
 char last_name[5] = "Test";
 char rut[10] = "111111111";
 char phone[10] = "321232123";
-char passport[10] = "155514669";
+char passport[10] = "";
 char email[24] = "pedron.albert@gmail.com";
 char sky_email[27] = "user_acid49@skyairline.com";
-char epd_email[31] = "albertop@epidataconsulting.com";
 char pwm[41] = "";
 char pw1[11] = "";
 
-void sky_autofill_passenger_form(void) {
-  SEND_STRING(first_name);
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(last_name);
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(SS_TAP(X_DOWN));
-  SEND_STRING(SS_TAP(X_ENTER));
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(SS_TAP(X_DOWN));
-  SEND_STRING(SS_TAP(X_ENTER));
-  SEND_STRING(SS_TAP(X_TAB));
-  for (int i = 0; i < 26; i++) {
-    SEND_STRING(SS_TAP(X_DOWN));
-  }
-  SEND_STRING(SS_TAP(X_ENTER));
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(rut);
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(phone);
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(sky_email);
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING(SS_TAP(X_ENTER));
-  SEND_STRING(SS_TAP(X_DOWN));
-  SEND_STRING(SS_TAP(X_ENTER));
-}
+// void send_current_date(void) {
+//   // char s[100];
+//   // time_t temp;
+//   // struct tm *timeptr;
 
-void sky_autofill_webpay(void) {
-  SEND_STRING_DELAY("4444333322221111", 10);
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING("1226");
-  SEND_STRING(SS_TAP(X_TAB));
-  SEND_STRING("123");
-  SEND_STRING(SS_DELAY(1000) SS_TAP(X_ENTER));
-}
+//   // temp = time(NULL);
+//   // timeptr = localtime(&temp);
+
+//   // strftime(s,sizeof(s),"Today is %A, %b %d.Time:  %r", timeptr);
+
+//   // SEND_STRING(s);
+// }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-    case ES_GRV:
-    case ES_CIRC:
-        if (!record->event.pressed) {
-          unregister_code16(keycode);
-          tap_code(KC_SPC);
-          return false;
+    if (!record->event.pressed) {
+        if (keycode == ES_GRV || keycode == ES_CIRC) {
+            unregister_code16(keycode);
+            tap_code(KC_SPC);
+            return false;
         }
-      break;
-    case MC_TEST:
-        if (record->event.pressed) {
-          SEND_STRING(last_name);
-          return false;
-        }
-        break;
-    case MC_RUT:
-        if (record->event.pressed) {
-          SEND_STRING(rut);
-          return false;
-        }
-        break;
-    case MC_PHONE:
-        if (record->event.pressed) {
-          SEND_STRING(phone);
-          return false;
-        }
-        break;
-    case MC_EMAIL:
-        if (record->event.pressed) {
-          SEND_STRING_DELAY(email, 10);
-          return false;
-        }
-        break;
-    case MC_PASSP:
-        if (record->event.pressed) {
-          SEND_STRING_DELAY(passport, 10);
-          return false;
-        }
-        break;
-    case MC_SKY_EMAIL:
-        if (record->event.pressed) {
-          SEND_STRING(sky_email);
-          return false;
-        }
-        break;
-    case MC_EPD_EMAIL:
-        if (record->event.pressed) {
-          SEND_STRING(epd_email);
-          return false;
-        }
-        break;
-    case MC_PWM:
-        if (record->event.pressed) {
-          SEND_STRING_DELAY(pwm, 10);
-          return false;
-        }
-        break;
-    case MC_PW1:
-        if (record->event.pressed) {
-          SEND_STRING_DELAY(pw1, 10);
-          return false;
-        }
-        break;
-    case MC_RETU:
-        if (record->event.pressed) {
-          SEND_STRING_DELAY("../", 10);
-          return false;
-        }
-        break;
-    case AF_SKY_PMF:
-        if (record->event.pressed) {
-          sky_autofill_passenger_form();
-          return false;
-        }
-        break;
-    case AF_SKY_WP:
-        if (record->event.pressed) {
-          sky_autofill_webpay();
-          return false;
-        }
-        break;
+        return true;
     }
+
+    const char* sendStr = NULL;
+    uint8_t delay = 10; // Default delay
+
+    switch (keycode) {
+        case MC_TEST: sendStr = last_name; break;
+        case MC_RUT: sendStr = rut; break;
+        case MC_PHONE: sendStr = phone; break;
+        case MC_EMAIL: sendStr = email; break;
+        case MC_PASSP: sendStr = passport; break;
+        case MC_SKY_EMAIL: sendStr = sky_email; break; // Delay is the same for all, can be adjusted if needed
+        case MC_PWM: sendStr = pwm; break;
+        case MC_PW1: sendStr = pw1; break;
+        case MC_RETU: sendStr = "../"; break;
+        case MC_MG_SORT: sendStr = "{ _id: -1 }"; break;
+        case MC_HTTP: sendStr = "http://"; break;
+        case MC_HTTPS: sendStr = "https://"; break;
+        case MC_LOCH: sendStr = "localhost:"; break;
+        case MC_SKCOM: sendStr = "skyairline.com"; break;
+        default: return true;
+    }
+
+    if (sendStr != NULL) {
+        SEND_STRING_DELAY(sendStr, delay);
+        return false;
+    }
+
     return true;
-};
+}
 
 const key_override_t quotes_key_override = ko_make_basic(MOD_MASK_SHIFT, ES_QUOT, ES_DQUO);
 const key_override_t enie_key_override = ko_make_with_layers(MOD_MASK_SHIFT, ES_LPRN, ES_NTIL, SYMBOLS);
@@ -263,5 +222,14 @@ bool caps_word_press_user(uint16_t keycode) {
 
         default:
             return false;  // Deactivate Caps Word.
+    }
+}
+
+uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case LT(NUMPAD, KC_TAB):
+            return TAPPING_TERM + 400;
+        default:
+            return TAPPING_TERM;
     }
 }
