@@ -54,7 +54,7 @@
               "content": ["id_qmk_rgb_matrix_effect_speed", 3, 3]
             },
             {
-              "showIf": "{id_qmk_rgb_matrix_effect} != 0 && ( {id_qmk_rgb_matrix_effect} < 4 || {id_qmk_rgb_matrix_effect} == 18 || ({id_qmk_rgb_matrix_effect} > 17 && {id_qmk_rgb_matrix_effect} != 21) ) ",
+              "showIf": "{id_qmk_rgb_matrix_effect} != 0 && ( {id_qmk_rgb_matrix_effect} < 4 || {id_qmk_rgb_matrix_effect} == 18 || ({id_qmk_rgb_matrix_effect} > 15 && {id_qmk_rgb_matrix_effect} != 21) ) ",
               "label": "Color",
               "type": "color",
               "content": ["id_qmk_rgb_matrix_color", 3, 4]
