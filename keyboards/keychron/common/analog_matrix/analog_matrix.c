@@ -94,6 +94,7 @@ enum {
     AMC_SET_GAME_CONTROLLER_MODE,
 
     AMC_GET_REALTIME_TRAVEL = 0x30,
+    AMC_GET_REALTIME_TRAVEL_ALL,
 
     AMC_CALIBRATE = 0x40,
     AMC_GET_CALIBRATE_STATE,
@@ -786,6 +787,24 @@ bool get_realtime_travel(uint8_t *data) {
     return true;
 }
 
+bool get_realtime_travel_all(uint8_t *data) {
+    uint8_t i = 2;
+
+    for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
+        for (uint8_t c = 0; c < MATRIX_COLS; c++) {
+            data[i++] = analog_key_matrix[r][c].travel;
+            if (i == RAW_EPSIZE) {
+                // Ran out of space for this chunk.
+                raw_hid_send(data, RAW_EPSIZE);
+                i = 2;
+                memset(&data[2], 0, RAW_EPSIZE - 2);
+            }
+        }
+    }
+
+    return true;
+}
+
 void analog_matrix_task(void) {
     calibrate();
     profile_indication_timer_check();
@@ -897,6 +916,10 @@ void analog_matrix_rx(uint8_t *data, uint8_t length) {
 
         case AMC_GET_REALTIME_TRAVEL:
             success = get_realtime_travel(&data[2]);
+            break;
+
+        case AMC_GET_REALTIME_TRAVEL_ALL:
+            success = get_realtime_travel_all(data);
             break;
 
         case AMC_SAVE_PROFILE:
