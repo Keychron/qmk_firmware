@@ -1,0 +1,5 @@
+qmk clean && qmk compile -kb keychron/k9_pro/ansi/rgb -km via
+
+# hold ESC and plug in cable 
+
+qmk flash -kb keychron/k9_pro/ansi/rgb -km via
