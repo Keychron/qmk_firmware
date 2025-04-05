@@ -52,8 +52,8 @@
 #    define RGB_MATRIX_KEYPRESSES
 #    define RGB_MATRIX_FRAMEBUFFER_EFFECTS
 
-// WindowsのBIOSの影響でBluetoothモードのキー入力がおかしくなる問題への対策
-// QMK/VIAでPolling Rate（ポーリングレート）を下げる（最も有効な対策）
-#define USB_POLLING_INTERVAL_MS 8  // 8ms = 125Hz（16なら62.5Hz、2なら500Hz）
+// // WindowsのBIOSの影響でBluetoothモードのキー入力がおかしくなる問題への対策
+// // QMK/VIAでPolling Rate（ポーリングレート）を下げる（最も有効な対策）
+// #define USB_POLLING_INTERVAL_MS 8  // 8ms = 125Hz（16なら62.5Hz、2なら500Hz）
 
 #endif
