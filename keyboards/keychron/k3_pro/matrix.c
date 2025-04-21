@@ -23,6 +23,8 @@
 #define HC595_SHCP A1
 #define HC595_DS A7
 
+#define DIRECT_COL_NUM 1
+
 pin_t row_pins[MATRIX_ROWS] = MATRIX_ROW_PINS;
 pin_t col_pins[MATRIX_COLS] = MATRIX_COL_PINS;
 

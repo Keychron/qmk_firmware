@@ -49,7 +49,7 @@
 #    define CONNECTED_BACKLIGHT_OFF_DELAY_TIME 600
 #endif
 
-#ifdef BAT_LOW_LED_PIN
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
 /* Uint: ms */
 #    ifndef LOW_BAT_LED_BLINK_PERIOD
 #        define LOW_BAT_LED_BLINK_PERIOD 1000
@@ -106,6 +106,7 @@ void indicator_stop(void);
 void indicator_eeconfig_reload(void);
 bool indicator_is_enabled(void);
 bool indicator_is_running(void);
+void os_state_indicate(void);
 
 #ifdef BAT_LOW_LED_PIN
 void indicator_battery_low_enable(bool enable);

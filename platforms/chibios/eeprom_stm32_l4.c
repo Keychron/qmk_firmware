@@ -523,7 +523,7 @@ void eeprom_read_block(void *buf, const void *addr, size_t len) {
     /* Check word alignment */
     if (len && (uint32_t)src % 2) {
         /* Read the unaligned first byte */
-        *dest++ = EEPROM_ReadDataByte((const uintptr_t)((uint16_t *)src));
+        *dest++ = EEPROM_ReadDataByte((const uintptr_t)((uint16_t *)src++));
         --len;
     }
 

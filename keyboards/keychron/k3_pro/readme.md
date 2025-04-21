@@ -1,6 +1,6 @@
 # Keychron K3 Pro
 
-![Keychron K3 Pro](https://cdn.shopify.com/s/files/1/0059/0630/1017/t/5/assets/keychronk3proqmkvialowprofilewirelessmechanicalkeyboardwithanultraslimbodyandhotswappable-1665930065228.jpg?v=1665930068)
+![Keychron K3 Pro](https://github.com/Keychron/ProductImage/blob/main/K_Pro/k3_pro.jpg?raw=true)
 
 A customizable 84 keys TKL keyboard.
 

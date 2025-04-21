@@ -34,7 +34,7 @@ static uint8_t  bat_state;
 static uint8_t  power_on_sample = 0;
 
 void battery_init(void) {
-    bat_state                = BAT_NOT_CHARGING;
+    bat_state = BAT_NOT_CHARGING;
 }
 __attribute__((weak)) void battery_measure(void) {
     ckbt51_read_state_reg(0x05, 0x02);
@@ -76,7 +76,7 @@ void battery_check_empty(void) {
     if (voltage < EMPTY_VOLTAGE_VALUE) {
         if (bat_empty <= BATTERY_EMPTY_COUNT) {
             if (++bat_empty > BATTERY_EMPTY_COUNT) {
-#ifdef BAT_LOW_LED_PIN
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
                 indicator_battery_low_enable(true);
 #endif
 #if defined(LOW_BAT_IND_INDEX)
@@ -130,7 +130,7 @@ void battery_task(void) {
     if ((bat_empty || critical_low) && usb_power_connected()) {
         bat_empty    = false;
         critical_low = false;
-#ifdef BAT_LOW_LED_PIN
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
         indicator_battery_low_enable(false);
 #endif
 #if defined(LOW_BAT_IND_INDEX)

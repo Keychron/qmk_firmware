@@ -1,2 +1,1 @@
-LED_MATRIX_ENABLE = yes
-LED_MATRIX_DRIVER = CKLED2001
+# This file intentionally blank

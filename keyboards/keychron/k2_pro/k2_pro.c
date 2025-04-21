@@ -48,7 +48,7 @@ key_combination_t key_comb_list[4] = {
 };
 
 #ifdef KC_BLUETOOTH_ENABLE
-bool firstDisconnect = true;
+bool                   firstDisconnect  = true;
 bool                   bt_factory_reset = false;
 static virtual_timer_t pairing_key_timer;
 extern uint8_t         g_pwm_buffer[DRIVER_COUNT][192];
@@ -85,14 +85,6 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
                 unregister_code(mac_keycode[keycode - KC_LOPTN]);
             }
             return false; // Skip all further processing of this key)
-        case KC_MCTL:
-            /* Mission Control */
-            host_consumer_send(record->event.pressed ? 0x29F : 0);
-            return false; // Skip all further processing of this key
-        case KC_LNPD:
-            /* Lanuchpad */
-            host_consumer_send(record->event.pressed ? 0x2A0 : 0);
-            return false; // Skip all further processing of this key
         case KC_TASK:
         case KC_FILE:
         case KC_SNAP:
@@ -154,11 +146,10 @@ void keyboard_post_init_kb(void) {
 
     ckbt51_init(false);
     bluetooth_init();
-#    endif
+#endif
 
     power_on_indicator_timer_buffer = sync_timer_read32() | 1;
     writePin(BAT_LOW_LED_PIN, BAT_LOW_LED_PIN_ON_STATE);
-    writePin(LED_CAPS_LOCK_PIN, LED_PIN_ON_STATE);
 
     keyboard_post_init_user();
 }
@@ -182,14 +173,15 @@ void matrix_scan_kb(void) {
 
 #ifdef FACTORY_RESET_TASK
     FACTORY_RESET_TASK();
-#    endif
+#endif
     matrix_scan_user();
 }
 
 #ifdef KC_BLUETOOTH_ENABLE
 static void ckbt51_param_init(void) {
     /* Set bluetooth device name */
-    ckbt51_set_local_name(STR(PRODUCT));
+    // ckbt51_set_local_name(STR(PRODUCT));
+    ckbt51_set_local_name(PRODUCT);
     /* Set bluetooth parameters */
     module_param_t param = {.event_mode             = 0x02,
                             .connected_idle_timeout = 7200,
@@ -201,6 +193,7 @@ static void ckbt51_param_init(void) {
                             .verndor_id             = 0, // Must be 0x3434
                             .product_id             = PRODUCT_ID};
     ckbt51_set_param(&param);
+    (void)param;
 }
 
 void bluetooth_enter_disconnected_kb(uint8_t host_idx) {
@@ -214,6 +207,21 @@ void bluetooth_enter_disconnected_kb(uint8_t host_idx) {
         ckbt51_param_init();
         bluetooth_connect();
         firstDisconnect = false;
+    }
+}
+
+void ckbt51_default_ack_handler(uint8_t *data, uint8_t len) {
+    if (data[1] == 0x45) {
+        module_param_t param = {.event_mode             = 0x02,
+                                .connected_idle_timeout = 7200,
+                                .pairing_timeout        = 180,
+                                .pairing_mode           = 0,
+                                .reconnect_timeout      = 5,
+                                .report_rate            = 90,
+                                .vendor_id_source       = 1,
+                                .verndor_id             = 0, // Must be 0x3434
+                                .product_id             = PRODUCT_ID};
+        ckbt51_set_param(&param);
     }
 }
 

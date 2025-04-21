@@ -25,6 +25,7 @@
 api_data/v1
 quantum/version.h
 *.bin
+!keyboards/keychron/*/firmware/*.bin
 *.eep
 *.hex
 *.qmk

@@ -1,6 +1,6 @@
 # Keychron K8 Pro
 
-![Keychron K8 Pro](https://cdn.shopify.com/s/files/1/0059/0630/1017/t/5/assets/keychronk8proqmkviawirelessmechanicalkeyboardformacwindowsosaprofilepbtkeycapspcbscrewinstabilizerwithhotswappablegaterongpromechanicalswitchcompatiblewithmxcherrypandakailhwithrgbbacklightaluminumframe-1645094681965.jpg)
+![Keychron K8 Pro](https://github.com/Keychron/ProductImage/blob/main/K_Pro/k8_pro.jpg?raw=true)
 
 A customizable 87 keys TKL keyboard.
 
@@ -11,10 +11,20 @@ A customizable 87 keys TKL keyboard.
 Make example for this keyboard (after setting up your build environment):
 
     make keychron/k8_pro/ansi/rgb:default
+    make keychron/k8_pro/ansi/white:default
+    make keychron/k8_pro/iso/rgb:default
+    make keychron/k8_pro/iso/white:default
+    make keychron/k8_pro/jis/rgb:default
+    make keychron/k8_pro/jis/white:default
 
 Flashing example for this keyboard:
 
     make keychron/k8_pro/ansi/rgb:default:flash
+    make keychron/k8_pro/ansi/white:default:flash
+    make keychron/k8_pro/iso/rgb:default:flash
+    make keychron/k8_pro/iso/white:default:flash
+    make keychron/k8_pro/jis/rgb:default:flash
+    make keychron/k8_pro/jis/white:default:flash
 
 **Reset Key**: Connect the USB cable, toggle mode switch to "Off", hold down the *Esc* key or reset button underneath space bar, then toggle then switch to "Cable".
 

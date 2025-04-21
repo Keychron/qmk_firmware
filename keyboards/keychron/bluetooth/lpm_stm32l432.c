@@ -31,6 +31,7 @@
 #include "battery.h"
 #include "report_buffer.h"
 #include "stm32_bd.inc"
+#include "debounce.h"
 
 extern pin_t                 row_pins[MATRIX_ROWS];
 extern void                  select_all_cols(void);
@@ -140,7 +141,6 @@ bool lpm_set(pm_t mode) {
 }
 
 static inline void enter_low_power_mode_prepare(void) {
-
 #if defined(KEEP_USB_CONNECTION_IN_BLUETOOTH_MODE)
     /* Usb unit is actived and running, stop and disconnect first */
     usbStop(&USBD1);
@@ -204,15 +204,15 @@ static inline void lpm_wakeup(void) {
 #ifdef USB_POWER_SENSE_PIN
     palDisableLineEvent(USB_POWER_SENSE_PIN);
 
-#if defined(KEEP_USB_CONNECTION_IN_BLUETOOTH_MODE)
+#    if defined(KEEP_USB_CONNECTION_IN_BLUETOOTH_MODE)
     if (usb_power_connected()) {
         hsi48_init();
         /* Remove USB isolation.*/
-        //PWR->CR2 |= PWR_CR2_USV; /* PWR_CR2_USV is available on STM32L4x2xx and STM32L4x3xx devices only. */
+        // PWR->CR2 |= PWR_CR2_USV; /* PWR_CR2_USV is available on STM32L4x2xx and STM32L4x3xx devices only. */
         usb_power_connect();
         usb_start(&USBD1);
     }
-#endif
+#    endif
 
 #endif
 
@@ -249,6 +249,12 @@ void enter_power_mode(pm_t mode) {
     lpm_wakeup();
     lpm_timer_reset();
     report_buffer_init();
+
+    /* Call debounce_free() to avoid memory leak as debounce_init() invoked in matrix_init() allocates
+     * new memory when using per row/key debounce
+     */
+    debounce_free();
+    matrix_init();
     power_mode = PM_RUN;
 }
 
@@ -277,7 +283,7 @@ void stm32_clock_fast_init(void) {
     pll_init();
     pllsai1_init();
     pllsai2_init();
-/* clang-format off */
+    /* clang-format off */
     /* Other clock-related settings (dividers, MCO etc).*/
   RCC->CFGR = STM32_MCOPRE | STM32_MCOSEL | STM32_STOPWUCK |
               STM32_PPRE2  | STM32_PPRE1  | STM32_HPRE;
@@ -289,7 +295,7 @@ void stm32_clock_fast_init(void) {
                      STM32_I2C3SEL   | STM32_I2C2SEL   | STM32_I2C1SEL   |
                      STM32_UART5SEL  | STM32_UART4SEL  | STM32_USART3SEL |
                      STM32_USART2SEL | STM32_USART1SEL | STM32_LPUART1SEL;
-/* clang-format on */					 
+/* clang-format on */
 #    if STM32_SAI2SEL != STM32_SAI2SEL_OFF
         ccipr |= STM32_SAI2SEL;
 #    endif

@@ -1,6 +1,6 @@
 # Keychron K2 Pro
 
-![Keychron K2 Pro](https://cdn.shopify.com/s/files/1/0059/0630/1017/t/5/assets/keychronk8proqmkviawirelessmechanicalkeyboard4-1670300101659.jpg?v=1670300103)
+![Keychron K2 Pro](https://github.com/Keychron/ProductImage/blob/main/K_Pro/k2_pro.jpg?raw=true)
 
 A customizable 84 keys TKL keyboard.
 

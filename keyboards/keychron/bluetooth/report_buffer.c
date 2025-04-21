@@ -29,7 +29,7 @@
  *        sizeof(report_buffer_t) * 256 = 34* 256  =  8704 bytes
  */
 #ifndef REPORT_BUFFER_QUEUE_SIZE
-#    define REPORT_BUFFER_QUEUE_SIZE 256
+#    define REPORT_BUFFER_QUEUE_SIZE 512
 #endif
 
 extern bluetooth_transport_t bluetooth_transport;
@@ -45,8 +45,8 @@ uint8_t report_interval = DEFAULT_REPORT_INVERVAL_MS;
 static uint32_t report_timer_buffer = 0;
 uint32_t        retry_time_buffer   = 0;
 report_buffer_t report_buffer_queue[REPORT_BUFFER_QUEUE_SIZE];
-uint8_t         report_buffer_queue_head;
-uint8_t         report_buffer_queue_tail;
+uint16_t         report_buffer_queue_head;
+uint16_t         report_buffer_queue_tail;
 report_buffer_t kb_rpt;
 uint8_t         retry = 0;
 
@@ -60,7 +60,7 @@ void report_buffer_init(void) {
 }
 
 bool report_buffer_enqueue(report_buffer_t *report) {
-    uint8_t next = (report_buffer_queue_head + 1) % REPORT_BUFFER_QUEUE_SIZE;
+    uint16_t next = (report_buffer_queue_head + 1) % REPORT_BUFFER_QUEUE_SIZE;
     if (next == report_buffer_queue_tail) {
         return false;
     }

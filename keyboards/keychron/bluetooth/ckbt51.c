@@ -14,6 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
 #include "quantum.h"
 #include "ckbt51.h"
 #include "bluetooth.h"
@@ -31,7 +32,7 @@
 
 /* CKBT51 disable its uart peripheral to save power if uart inactivity for 3s, need to
  * assert this pin and wait some time for its uart getting ready before sending  data*/
-#define CKBT51_WAKE_WAIT_TIME 3000  // us
+#define CKBT51_WAKE_WAIT_TIME 3000 // us
 
 enum {
     /* HID Report  */
@@ -150,15 +151,17 @@ void ckbt51_send_cmd(uint8_t* payload, uint8_t len, bool ack_enable, bool retry)
 
     systime_t start = 0;
 
-    for (i=0; i< 3; i++) {
+    for (i = 0; i < 3; i++) {
         writePin(CKBT51_INT_INPUT_PIN, i % 2);
         start = chVTGetSystemTime();
-        while (chTimeI2US(chVTTimeElapsedSinceX(start)) < CKBT51_WAKE_WAIT_TIME / 3) {};
+        while (chTimeI2US(chVTTimeElapsedSinceX(start)) < CKBT51_WAKE_WAIT_TIME / 3) {
+        };
     }
     writePinHigh(CKBT51_INT_INPUT_PIN);
 
     uint16_t checksum = 0;
-    for (i = 0; i < len; i++) checksum += payload[i];
+    for (i = 0; i < len; i++)
+        checksum += payload[i];
 
     i        = 0;
     pkt[i++] = 0xAA;
@@ -190,7 +193,7 @@ void ckbt51_send_nkro(uint8_t* report) {
     memset(payload, 0, PACKET_MAX_LEN);
 
     payload[i++] = CKBT51_CMD_SEND_KB_NKRO;
-    memcpy(payload + i, report, 20);         // NKRO report lenght is limited to 20 bytes
+    memcpy(payload + i, report, 20); // NKRO report lenght is limited to 20 bytes
     i += 20;
 
     ckbt51_send_cmd(payload, i, true, false);
@@ -203,17 +206,20 @@ void ckbt51_send_consumer(uint16_t report) {
     payload[i++] = CKBT51_CMD_SEND_CONSUMER;
     payload[i++] = report & 0xFF;
     payload[i++] = ((report) >> 8) & 0xFF;
-    i += 4;   // QMK doesn't send multiple consumer reports, just skip 2nd and 3rd consumer reports
+    i += 4; // QMK doesn't send multiple consumer reports, just skip 2nd and 3rd consumer reports
 
     ckbt51_send_cmd(payload, i, true, false);
 }
 
 void ckbt51_send_system(uint16_t report) {
+    /* CKBT51 supports only System Sleep */
+    if ((report & 0xFF) != 0x82) return;
+
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
     payload[i++] = CKBT51_CMD_SEND_SYSTEM;
-    payload[i++] = report & 0xFF;
+    payload[i++] = 0x01 << ((report & 0xFF) - 0x82);
 
     ckbt51_send_cmd(payload, i, true, false);
 }
@@ -222,14 +228,14 @@ void ckbt51_send_mouse(uint8_t* report) {
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
-    payload[i++] = CKBT51_CMD_SEND_MOUSE;		// Cmd type
-    payload[i++] = report[1];       // Button
-    payload[i++] = report[2];       // X
+    payload[i++] = CKBT51_CMD_SEND_MOUSE;            // Cmd type
+    payload[i++] = report[1];                        // Button
+    payload[i++] = report[2];                        // X
     payload[i++] = (report[2] & 0x80) ? 0xff : 0x00; // ckbt51 use 16bit report, set high byte
-    payload[i++] = report[3];       // Y
+    payload[i++] = report[3];                        // Y
     payload[i++] = (report[3] & 0x80) ? 0xff : 0x00; // ckbt51 use 16bit report, set high byte
-    payload[i++] = report[4];       // V wheel
-    payload[i++] = report[5];       // H wheel
+    payload[i++] = report[4];                        // V wheel
+    payload[i++] = report[5];                        // H wheel
 
     ckbt51_send_cmd(payload, i, false, false);
 }
@@ -255,13 +261,13 @@ void ckbt51_become_discoverable(uint8_t host_idx, void* param) {
     }
     pairing_param_t* p = (pairing_param_t*)param;
 
-    payload[i++] = CKBT51_CMD_PAIRING;  // Cmd type
-    payload[i++] = host_idx;            // Host Index
-    payload[i++] = p->timeout & 0xFF;   // Timeout
+    payload[i++] = CKBT51_CMD_PAIRING; // Cmd type
+    payload[i++] = host_idx;           // Host Index
+    payload[i++] = p->timeout & 0xFF;  // Timeout
     payload[i++] = (p->timeout >> 8) & 0xFF;
     payload[i++] = p->pairingMode;
-    payload[i++] = p->BRorLE;           // BR/LE
-    payload[i++] = p->txPower;          // LE TX POWER
+    payload[i++] = p->BRorLE;  // BR/LE
+    payload[i++] = p->txPower; // LE TX POWER
     if (p->leName) {
         memcpy(&payload[i], p->leName, strlen(p->leName));
         i += strlen(p->leName);
@@ -276,8 +282,8 @@ void ckbt51_connect(uint8_t hostIndex, uint16_t timeout) {
     memset(payload, 0, PACKET_MAX_LEN);
 
     payload[i++] = CKBT51_CMD_CONNECT;
-    payload[i++] = hostIndex;           // Host index
-    payload[i++] = timeout & 0xFF;      // Timeout
+    payload[i++] = hostIndex;      // Host index
+    payload[i++] = timeout & 0xFF; // Timeout
     payload[i++] = (timeout >> 8) & 0xFF;
 
     ckbt51_send_cmd(payload, i, true, false);
@@ -288,7 +294,7 @@ void ckbt51_disconnect(void) {
     memset(payload, 0, PACKET_MAX_LEN);
 
     payload[i++] = CKBT51_CMD_DISCONNECT;
-    payload[i++] = 0;                      // Sleep mode
+    payload[i++] = 0; // Sleep mode
 
     ckbt51_send_cmd(payload, i, true, false);
 }
@@ -331,7 +337,7 @@ void ckbt51_set_param(module_param_t* param) {
     memcpy(payload + i, param, sizeof(module_param_t));
     i += sizeof(module_param_t);
 
-    ckbt51_send_cmd(payload, i, false, false);
+    ckbt51_send_cmd(payload, i, true, false);
 }
 
 void ckbt51_get_param(module_param_t* param) {
@@ -351,7 +357,7 @@ void ckbt51_set_local_name(const char* name) {
     payload[i++] = CKBT51_CMD_SET_NAME;
     memcpy(payload + i, name, len);
     i += len;
-    ckbt51_send_cmd(payload, i, false, false);
+    ckbt51_send_cmd(payload, i, true, false);
 }
 
 void ckbt51_get_local_name(void) {
@@ -406,7 +412,8 @@ void ckbt51_dfu_tx(uint8_t rsp, uint8_t* data, uint8_t len, uint8_t sn) {
     memcpy(&buf[i], data, len);
     i += len;
 
-    for (uint8_t k = 0; k < i; k++) checksum += buf[i];
+    for (uint8_t k = 0; k < i; k++)
+        checksum += buf[i];
 
     raw_hid_send(buf, RAW_EPSIZE);
 
@@ -440,7 +447,7 @@ void ckbt51_dfu_rx(uint8_t* data, uint8_t length) {
 
         bool retry = true;
         if (sn != data[4]) {
-            sn = data[4];
+            sn    = data[4];
             retry = false;
         }
 
@@ -449,6 +456,8 @@ void ckbt51_dfu_rx(uint8_t* data, uint8_t length) {
         }
     }
 }
+
+__attribute__((weak)) void ckbt51_default_ack_handler(uint8_t* data, uint8_t len){};
 
 static void ack_handler(uint8_t* data, uint8_t len) {
     switch (data[1]) {
@@ -471,12 +480,13 @@ static void ack_handler(uint8_t* data, uint8_t len) {
                     break;
             }
             break;
-        default: break;
+        default:
+            ckbt51_default_ack_handler(data, len);
+            break;
     }
 }
 
 static void query_rsp_handler(uint8_t* data, uint8_t len) {
-
     if (data[2]) return;
 
     switch (data[1]) {
@@ -593,13 +603,13 @@ void ckbt51_task(void) {
 
         for (uint8_t i = 0; i < len; i++) {
             buf[i] = sdGetTimeout(&BT_DRIVER, TIME_IMMEDIATE);
-
         }
 
         wait_for_new_pkt = true;
 
         uint16_t checksum = 0;
-        for (int i = 0; i < len - 2; i++) checksum += buf[i];
+        for (int i = 0; i < len - 2; i++)
+            checksum += buf[i];
 
         if ((checksum & 0xff) == buf[len - 2] && ((checksum >> 8) & 0xff) == buf[len - 1]) {
             ckbt51_event_handler(buf[0], buf + 1, len - 3, sn);

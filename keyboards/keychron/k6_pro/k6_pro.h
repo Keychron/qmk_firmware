@@ -24,7 +24,7 @@
 #define ___ KC_NO
 
 #ifdef VIA_ENABLE
-#    define USER_START USER00
+#    define USER_START QK_KB_0
 #else
 #    define USER_START SAFE_RANGE
 #endif
@@ -35,8 +35,6 @@ enum {
     KC_ROPTN,
     KC_LCMMD,
     KC_RCMMD,
-    KC_MCTL,
-    KC_LNPD,
     KC_TASK,
     KC_FILE,
     KC_SNAP,
@@ -46,35 +44,12 @@ enum {
     BT_HST1,
     BT_HST2,
     BT_HST3,
-#endif
     BAT_LVL,
+#else
+    BT_HST1 = KC_TRNS,
+    BT_HST2 = KC_TRNS,
+    BT_HST3 = KC_TRNS,
+    BAT_LVL = KC_TRNS,
+#endif
+	NEW_SAFE_RANGE
 };
-
-#define LAYOUT_ansi_68( \
-	K00, K01, K02, K03, K04, K05, K06, K07, K08, K09, K0A, K0B, K0C, K0D, K0E, \
-	K10, K11, K12, K13, K14, K15, K16, K17, K18, K19, K1A, K1B, K1C, K1D, K1E, \
-	K20, K21, K22, K23, K24, K25, K26, K27, K28, K29, K2A, K2B,      K2D, K2E, \
-	K30,      K32, K33, K34, K35, K36, K37, K38, K39, K3A, K3B, K3C, K3D, K3E, \
-	K40, K41, K42,                K46,           K49, K4A, K4B, K4C, K4D, K4E \
-) { \
-	{ K00, K01, K02, K03, K04, K05, K06, K07, K08, K09, K0A, K0B, K0C, K0D, K0E }, \
-	{ K10, K11, K12, K13, K14, K15, K16, K17, K18, K19, K1A, K1B, K1C, K1D, K1E }, \
-	{ K20, K21, K22, K23, K24, K25, K26, K27, K28, K29, K2A, K2B, ___, K2D, K2E }, \
-	{ K30, ___, K32, K33, K34, K35, K36, K37, K38, K39, K3A, K3B, K3C, K3D, K3E }, \
-	{ K40, K41, K42, ___, ___, ___, K46, ___, ___, K49, K4A, K4B, K4C, K4D, K4E }, \
-}
-
-#define LAYOUT_iso_69( \
-	K00, K01, K02, K03, K04, K05, K06, K07, K08, K09, K0A, K0B, K0C, K0D, K0E, \
-	K10, K11, K12, K13, K14, K15, K16, K17, K18, K19, K1A, K1B, K1C, K1D, K1E, \
-	K20, K21, K22, K23, K24, K25, K26, K27, K28, K29, K2A, K2B,      K2D, K2E, \
-	K30, K31, K32, K33, K34, K35, K36, K37, K38, K39, K3A, K3B, K3C, K3D, K3E, \
-	K40, K41, K42,                K46,           K49, K4A, K4B, K4C, K4D, K4E \
-) { \
-	{ K00, K01, K02, K03, K04, K05, K06, K07, K08, K09, K0A, K0B, K0C, K0D, K0E }, \
-	{ K10, K11, K12, K13, K14, K15, K16, K17, K18, K19, K1A, K1B, K1C, K2D, K1E }, \
-	{ K20, K21, K22, K23, K24, K25, K26, K27, K28, K29, K2A, K2B, ___, K1D, K2E }, \
-	{ K30, K31, K32, K33, K34, K35, K36, K37, K38, K39, K3A, K3B, K3C, K3D, K3E }, \
-	{ K40, K41, K42, ___, ___, ___, K46, ___, ___, K49, K4A, K4B, K4C, K4D, K4E }, \
-}
-

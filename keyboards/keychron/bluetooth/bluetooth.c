@@ -14,6 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "action.h"
 #include "quantum.h"
 #include "bluetooth.h"
 #include "report_buffer.h"
@@ -37,15 +38,15 @@ static uint8_t host_index = 0;
 static uint8_t led_state  = 0;
 
 extern bluetooth_transport_t bluetooth_transport;
-static bluetooth_state_t bt_state                  = BLUETOOTH_RESET;
-static bool              pincodeEntry              = false;
-uint8_t                  bluetooth_report_protocol = true;
+static bluetooth_state_t     bt_state                  = BLUETOOTH_RESET;
+static bool                  pincodeEntry              = false;
+uint8_t                      bluetooth_report_protocol = true;
 
 /* declarations */
 uint8_t bluetooth_keyboard_leds(void);
 void    bluetooth_send_keyboard(report_keyboard_t *report);
 void    bluetooth_send_mouse(report_mouse_t *report);
-void    bluetooth_send_extra(report_extra_t         *report);
+void    bluetooth_send_extra(report_extra_t *report);
 
 /* host struct */
 host_driver_t bluetooth_driver = {bluetooth_keyboard_leds, bluetooth_send_keyboard, bluetooth_send_mouse, bluetooth_send_extra};
@@ -99,6 +100,11 @@ void bluetooth_init(void) {
 
     lpm_init();
     rtc_timer_init();
+
+#ifdef BLUETOOTH_NKRO_ENABLE
+    keymap_config.raw = eeconfig_read_keymap();
+    nkro.bluetooth    = keymap_config.nkro;
+#endif
 }
 
 /*
@@ -162,7 +168,6 @@ void bluetooth_disconnect(void) {
     if (bluetooth_transport.disconnect) bluetooth_transport.disconnect();
 }
 
-
 /* Called when the BT device is reset. */
 static void bluetooth_enter_reset(uint8_t reason) {
     bt_state = BLUETOOTH_RESET;
@@ -210,7 +215,7 @@ static void bluetooth_enter_connected(uint8_t host_idx) {
 #endif
 
     bluetooth_enter_connected_kb(host_idx);
-#ifdef BAT_LOW_LED_PIN
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
     if (battery_is_empty()) {
         indicator_battery_low_enable(true);
     }
@@ -236,7 +241,7 @@ static void bluetooth_enter_disconnected(uint8_t host_idx) {
 #endif
     retry = 0;
     bluetooth_enter_disconnected_kb(host_idx);
-#ifdef BAT_LOW_LED_PIN
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
     indicator_battery_low_enable(false);
 #endif
 #if defined(LOW_BAT_IND_INDEX)
@@ -256,9 +261,9 @@ static void bluetooth_enter_pin_code_entry(void) {
 /* Exit pin code entry state. */
 static void bluetooth_exit_pin_code_entry(void) {
 #if defined(NKRO_ENABLE)
-        keymap_config.nkro = true;
+    keymap_config.nkro = true;
 #endif
-    pincodeEntry              = false;
+    pincodeEntry = false;
     bluetooth_exit_pin_code_entry_kb();
 }
 
@@ -289,10 +294,10 @@ void bluetooth_send_keyboard(report_keyboard_t *report) {
     if (bt_state == BLUETOOTH_PARING && !pincodeEntry) return;
 
     if (bt_state == BLUETOOTH_CONNECTED || (bt_state == BLUETOOTH_PARING && pincodeEntry)) {
-#    if defined(NKRO_ENABLE)
+#if defined(NKRO_ENABLE)
         if (bluetooth_report_protocol && keymap_config.nkro) {
             if (bluetooth_transport.send_nkro) {
-#        ifndef DISABLE_REPORT_BUFFER
+#    ifndef DISABLE_REPORT_BUFFER
                 bool firstBuffer = false;
                 if (report_buffer_is_empty() && report_buffer_next_inverval() && report_buffer_get_retry() == 0) {
                     firstBuffer = true;
@@ -307,16 +312,16 @@ void bluetooth_send_keyboard(report_keyboard_t *report) {
                     report_buffer_set_retry(0);
                     report_buffer_task();
                 }
-#        else
+#    else
                 bluetooth_transport.send_nkro(&report->nkro.mods);
-#        endif
+#    endif
             }
         } else
-#    endif
+#endif
         {
-            //#ifdef KEYBOARD_SHARED_EP
+            // #ifdef KEYBOARD_SHARED_EP
             if (bluetooth_transport.send_keyboard) {
-#    ifndef DISABLE_REPORT_BUFFER
+#ifndef DISABLE_REPORT_BUFFER
                 if (report_buffer_is_empty() && report_buffer_next_inverval()) {
                     bluetooth_transport.send_keyboard(&report->mods);
                     report_buffer_update_timer();
@@ -326,11 +331,11 @@ void bluetooth_send_keyboard(report_keyboard_t *report) {
                     memcpy(&report_buffer.keyboard, report, sizeof(report_keyboard_t));
                     report_buffer_enqueue(&report_buffer);
                 }
-#    else
+#else
                 bluetooth_transport.send_keyboard(&report->mods);
-#    endif
+#endif
             }
-            //#endif
+            // #endif
         }
 
     } else if (bt_state != BLUETOOTH_RESET) {
@@ -374,22 +379,24 @@ void bluetooth_send_consumer(uint16_t data) {
     }
 }
 
-void bluetooth_send_extra(report_extra_t         *report) {
+void bluetooth_send_extra(report_extra_t *report) {
     if (report->report_id == REPORT_ID_SYSTEM) {
         bluetooth_send_system(report->usage);
-    }
-    else if (report->report_id == REPORT_ID_CONSUMER) {
+    } else if (report->report_id == REPORT_ID_CONSUMER) {
         bluetooth_send_consumer(report->usage);
     }
 }
 
 void bluetooth_low_battery_shutdown(void) {
-#ifdef BAT_LOW_LED_PIN
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
     indicator_battery_low_enable(false);
 #endif
 #if defined(LOW_BAT_IND_INDEX)
     indicator_battery_low_backlit_enable(false);
 #endif
+    clear_keyboard();
+    send_keyboard_report();
+
     bluetooth_disconnect();
 }
 
@@ -435,7 +442,6 @@ void bluetooth_event_queue_task(void) {
 }
 
 void bluetooth_task(void) {
-
     bluetooth_transport.task();
     bluetooth_event_queue_task();
 #ifndef DISABLE_REPORT_BUFFER
@@ -450,7 +456,9 @@ bluetooth_state_t bluetooth_get_state(void) {
     return bt_state;
 };
 
-__attribute__((weak)) bool process_record_kb_bt(uint16_t keycode, keyrecord_t *record) { return true;};
+__attribute__((weak)) bool process_record_kb_bt(uint16_t keycode, keyrecord_t *record) {
+    return true;
+};
 
 bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
     if (!process_record_user(keycode, record)) {
@@ -462,7 +470,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 
 #if defined(BAT_LOW_LED_PIN) || defined(LOW_BAT_IND_INDEX)
         if (battery_is_empty() && bluetooth_get_state() == BLUETOOTH_CONNECTED && record->event.pressed) {
-#    if defined(BAT_LOW_LED_PIN)
+#    if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
             indicator_battery_low_enable(true);
 #    endif
 #    if defined(LOW_BAT_IND_INDEX)

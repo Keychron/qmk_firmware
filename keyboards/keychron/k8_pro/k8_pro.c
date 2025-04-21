@@ -36,9 +36,10 @@ typedef struct PACKED {
     uint8_t keycode[3];
 } key_combination_t;
 
-static uint32_t power_on_indicator_timer_buffer;
-static uint32_t siri_timer_buffer = 0;
-static uint8_t  mac_keycode[4]    = {KC_LOPT, KC_ROPT, KC_LCMD, KC_RCMD};
+static uint32_t factory_timer_buffer            = 0;
+static uint32_t power_on_indicator_timer_buffer = 0;
+static uint32_t siri_timer_buffer               = 0;
+static uint8_t  mac_keycode[4]                  = {KC_LOPT, KC_ROPT, KC_LCMD, KC_RCMD};
 
 key_combination_t key_comb_list[4] = {
     {2, {KC_LWIN, KC_TAB}},        // Task (win)
@@ -48,7 +49,7 @@ key_combination_t key_comb_list[4] = {
 };
 
 #ifdef KC_BLUETOOTH_ENABLE
-bool firstDisconnect = true;
+bool                   firstDisconnect  = true;
 bool                   bt_factory_reset = false;
 static virtual_timer_t pairing_key_timer;
 extern uint8_t         g_pwm_buffer[DRIVER_COUNT][192];
@@ -60,7 +61,11 @@ static void pairing_key_timer_cb(void *arg) {
 
 bool dip_switch_update_kb(uint8_t index, bool active) {
     if (index == 0) {
+#ifdef INVERT_OS_SWITCH_STATE
+        default_layer_set(1UL << (!active ? 2 : 0));
+#else
         default_layer_set(1UL << (active ? 2 : 0));
+#endif
     }
     dip_switch_update_user(index, active);
 
@@ -85,14 +90,6 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
                 unregister_code(mac_keycode[keycode - KC_LOPTN]);
             }
             return false; // Skip all further processing of this key)
-        case KC_MCTL:
-            /* Mission Control */
-            host_consumer_send(record->event.pressed ? 0x29F : 0);
-            return false; // Skip all further processing of this key
-        case KC_LNPD:
-            /* Lanuchpad */
-            host_consumer_send(record->event.pressed ? 0x2A0 : 0);
-            return false; // Skip all further processing of this key
         case KC_TASK:
         case KC_FILE:
         case KC_SNAP:
@@ -145,7 +142,9 @@ void keyboard_post_init_kb(void) {
 
 #ifdef KC_BLUETOOTH_ENABLE
     /* Currently we don't use this reset pin */
-    palSetLineMode(CKBT51_RESET_PIN, PAL_MODE_UNCONNECTED);
+    // palSetLineMode(CKBT51_RESET_PIN, PAL_MODE_UNCONNECTED);
+    palSetLineMode(CKBT51_RESET_PIN, PAL_MODE_OUTPUT_PUSHPULL);
+    palWriteLine(CKBT51_RESET_PIN, PAL_HIGH);
 
     /* IMPORTANT: DO NOT enable internal pull-up resistor
      * as there is an external pull-down resistor.
@@ -154,19 +153,29 @@ void keyboard_post_init_kb(void) {
 
     ckbt51_init(false);
     bluetooth_init();
-#    endif
+#endif
 
     power_on_indicator_timer_buffer = sync_timer_read32() | 1;
     writePin(BAT_LOW_LED_PIN, BAT_LOW_LED_PIN_ON_STATE);
     writePin(LED_CAPS_LOCK_PIN, LED_PIN_ON_STATE);
-#    ifdef KC_BLUETOOTH_ENABLE
+#ifdef KC_BLUETOOTH_ENABLE
     writePin(H3, HOST_LED_PIN_ON_STATE);
-#    endif
+#endif
 
     keyboard_post_init_user();
 }
 
 void matrix_scan_kb(void) {
+    if (factory_timer_buffer && timer_elapsed32(factory_timer_buffer) > 2000) {
+        factory_timer_buffer = 0;
+        if (bt_factory_reset) {
+            bt_factory_reset = false;
+            palWriteLine(CKBT51_RESET_PIN, PAL_LOW);
+            wait_ms(5);
+            palWriteLine(CKBT51_RESET_PIN, PAL_HIGH);
+        }
+    }
+
     if (power_on_indicator_timer_buffer) {
         if (sync_timer_elapsed32(power_on_indicator_timer_buffer) > POWER_ON_LED_DURATION) {
             power_on_indicator_timer_buffer = 0;
@@ -189,14 +198,16 @@ void matrix_scan_kb(void) {
 
 #ifdef FACTORY_RESET_TASK
     FACTORY_RESET_TASK();
-#    endif
+#endif
     matrix_scan_user();
 }
 
 #ifdef KC_BLUETOOTH_ENABLE
 static void ckbt51_param_init(void) {
     /* Set bluetooth device name */
-    ckbt51_set_local_name(STR(PRODUCT));
+    // ckbt51_set_local_name(STR(PRODUCT));
+    ckbt51_set_local_name(PRODUCT);
+    wait_ms(10);
     /* Set bluetooth parameters */
     module_param_t param = {.event_mode             = 0x02,
                             .connected_idle_timeout = 7200,
@@ -208,12 +219,13 @@ static void ckbt51_param_init(void) {
                             .verndor_id             = 0, // Must be 0x3434
                             .product_id             = PRODUCT_ID};
     ckbt51_set_param(&param);
+    wait_ms(10);
 }
 
 void bluetooth_enter_disconnected_kb(uint8_t host_idx) {
     if (bt_factory_reset) {
-        bt_factory_reset = false;
         ckbt51_param_init();
+        factory_timer_buffer = timer_read32();
     }
     /* CKBT51 bluetooth module boot time is slower, it enters disconnected after boot,
        so we place initialization here. */
@@ -221,6 +233,21 @@ void bluetooth_enter_disconnected_kb(uint8_t host_idx) {
         ckbt51_param_init();
         bluetooth_connect();
         firstDisconnect = false;
+    }
+}
+
+void ckbt51_default_ack_handler(uint8_t *data, uint8_t len) {
+    if (data[1] == 0x45) {
+        module_param_t param = {.event_mode             = 0x02,
+                                .connected_idle_timeout = 7200,
+                                .pairing_timeout        = 180,
+                                .pairing_mode           = 0,
+                                .reconnect_timeout      = 5,
+                                .report_rate            = 90,
+                                .vendor_id_source       = 1,
+                                .verndor_id             = 0, // Must be 0x3434
+                                .product_id             = PRODUCT_ID};
+        ckbt51_set_param(&param);
     }
 }
 

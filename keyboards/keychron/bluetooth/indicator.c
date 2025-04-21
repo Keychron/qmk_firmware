@@ -61,9 +61,12 @@ static uint16_t          next_period;
 static indicator_type_t  type;
 static uint32_t          indicator_timer_buffer = 0;
 
-#if defined(BAT_LOW_LED_PIN)
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
 static uint32_t bat_low_pin_indicator  = 0;
 static uint32_t bat_low_blink_duration = 0;
+#    ifdef BAT_LOW_LED_PIN_STATE
+bool bat_low_led_pin_state = false;
+#    endif
 #endif
 
 #if defined(LOW_BAT_IND_INDEX)
@@ -85,6 +88,7 @@ static pin_t host_led_pin_list[HOST_DEVICES_COUNT] = HOST_LED_PIN_LIST;
 #ifdef LED_MATRIX_ENABLE
 #    define LED_DRIVER led_matrix_driver
 #    define LED_INDICATORS_KB led_matrix_indicators_kb
+#    define LED_INDICATORS_USER led_matrix_indicators_user
 #    define LED_NONE_INDICATORS_KB led_matrix_none_indicators_kb
 #    define SET_ALL_LED_OFF() led_matrix_set_value_all(0)
 #    define SET_LED_OFF(idx) led_matrix_set_value(idx, 0)
@@ -107,6 +111,7 @@ static pin_t host_led_pin_list[HOST_DEVICES_COUNT] = HOST_LED_PIN_LIST;
 #ifdef RGB_MATRIX_ENABLE
 #    define LED_DRIVER rgb_matrix_driver
 #    define LED_INDICATORS_KB rgb_matrix_indicators_kb
+#    define LED_INDICATORS_USER rgb_matrix_indicators_user
 #    define LED_NONE_INDICATORS_KB rgb_matrix_none_indicators_kb
 #    define SET_ALL_LED_OFF() rgb_matrix_set_color_all(0, 0, 0)
 #    define SET_LED_OFF(idx) rgb_matrix_set_color(idx, 0, 0, 0)
@@ -172,7 +177,7 @@ void indicator_eeconfig_reload(void) {
 
 bool indicator_is_running(void) {
     return
-#if defined(BAT_LOW_LED_PIN)
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
         bat_low_blink_duration ||
 #endif
 #if defined(LOW_BAT_IND_INDEX)
@@ -367,15 +372,20 @@ void indicator_stop(void) {
     }
 }
 
-#ifdef BAT_LOW_LED_PIN
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
 void indicator_battery_low_enable(bool enable) {
     if (enable) {
         if (bat_low_blink_duration == 0) {
             bat_low_blink_duration = bat_low_pin_indicator = sync_timer_read32() | 1;
         } else
             bat_low_blink_duration = sync_timer_read32() | 1;
-    } else
+    } else {
+#    if defined(BAT_LOW_LED_PIN)
         writePin(BAT_LOW_LED_PIN, !BAT_LOW_LED_PIN_ON_STATE);
+#    else
+        bat_low_led_pin_state = false;
+#    endif
+    }
 }
 #endif
 
@@ -393,7 +403,7 @@ void indicator_battery_low_backlit_enable(bool enable) {
         }
         /* Indicating at first time or after the interval */
         if ((rtc_time == 0 || t - rtc_time > LOW_BAT_LED_TRIG_INTERVAL) && bat_low_ind_state == 0) {
-            bat_low_backlit_indicator = enable ? (timer_read32() | 1) : 0;
+            bat_low_backlit_indicator = enable ? (timer_read32() == 0 ? 1 : timer_read32()) : 0;
             rtc_time                  = rtc_timer_read_ms();
             bat_low_ind_state         = 1;
 
@@ -410,12 +420,20 @@ void indicator_battery_low_backlit_enable(bool enable) {
 #endif
 
 void indicator_battery_low(void) {
-#ifdef BAT_LOW_LED_PIN
+#if defined(BAT_LOW_LED_PIN) || defined(BAT_LOW_LED_PIN_STATE)
     if (bat_low_pin_indicator && sync_timer_elapsed32(bat_low_pin_indicator) > (LOW_BAT_LED_BLINK_PERIOD)) {
+#    if defined(BAT_LOW_LED_PIN)
         togglePin(BAT_LOW_LED_PIN);
+#    else
+        bat_low_led_pin_state = !bat_low_led_pin_state;
+#    endif
         bat_low_pin_indicator = sync_timer_read32() | 1;
         // Turn off low battery indication if we reach the duration
+#    if defined(BAT_LOW_LED_PIN)
         if (sync_timer_elapsed32(bat_low_blink_duration) > LOW_BAT_LED_BLINK_DURATION && palReadLine(BAT_LOW_LED_PIN) != BAT_LOW_LED_PIN_ON_STATE) {
+#    elif defined(BAT_LOW_LED_PIN_STATE)
+        if (sync_timer_elapsed32(bat_low_blink_duration) > LOW_BAT_LED_BLINK_DURATION) {
+#    endif
             bat_low_blink_duration = bat_low_pin_indicator = 0;
         }
     }
@@ -430,7 +448,7 @@ void indicator_battery_low(void) {
                 bat_low_ind_state |= 0x80;
             }
 
-            bat_low_backlit_indicator = sync_timer_read32() | 1;
+            bat_low_backlit_indicator = sync_timer_read32() == 0 ? 1 : sync_timer_read32();
 
             /*  Restore backligth state */
             if ((bat_low_ind_state & 0x0F) > (LOW_BAT_LED_BLINK_TIMES)) {
@@ -458,7 +476,7 @@ void indicator_task(void) {
 }
 
 #if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
-static void os_state_indicate(void) {
+__attribute__((weak)) void os_state_indicate(void) {
 #    if defined(NUM_LOCK_INDEX)
     if (host_keyboard_led_state().num_lock) {
         SET_LED_ON(NUM_LOCK_INDEX);
@@ -491,6 +509,10 @@ static void os_state_indicate(void) {
 }
 
 bool LED_INDICATORS_KB(void) {
+    if (!LED_INDICATORS_USER()) {
+        return false;
+    }
+
     if (get_transport() == TRANSPORT_BLUETOOTH) {
         /* Prevent backlight flash caused by key activities */
         if (battery_is_critical_low()) {
@@ -536,19 +558,25 @@ bool LED_INDICATORS_KB(void) {
    return false;
 }
 
-bool led_update_user(led_t led_state) {
-    if (!LED_DRIVER_IS_ENABLED()) {
-#    if defined(LED_MATRIX_DRIVER_SHUTDOWN_ENABLE) || defined(RGB_MATRIX_DRIVER_SHUTDOWN_ENABLE)
-        LED_DRIVER.exit_shutdown();
-#    endif
-        SET_ALL_LED_OFF();
-        os_state_indicate();
-        LED_DRIVER.flush();
-#    if defined(LED_MATRIX_DRIVER_SHUTDOWN_ENABLE) || defined(RGB_MATRIX_DRIVER_SHUTDOWN_ENABLE)
-        if (LED_DRIVER_ALLOW_SHUTDOWN()) LED_DRIVER.shutdown();
-#    endif
+bool led_update_kb(led_t led_state) {
+    bool res = led_update_user(led_state);
+    if (res) {
+        led_update_ports(led_state);
+
+        if (!LED_DRIVER_IS_ENABLED()) {
+    #    if defined(LED_MATRIX_DRIVER_SHUTDOWN_ENABLE) || defined(RGB_MATRIX_DRIVER_SHUTDOWN_ENABLE)
+            LED_DRIVER.exit_shutdown();
+    #    endif
+            SET_ALL_LED_OFF();
+            os_state_indicate();
+            LED_DRIVER.flush();
+    #    if defined(LED_MATRIX_DRIVER_SHUTDOWN_ENABLE) || defined(RGB_MATRIX_DRIVER_SHUTDOWN_ENABLE)
+            if (LED_DRIVER_ALLOW_SHUTDOWN()) LED_DRIVER.shutdown();
+    #    endif
+        }
     }
-    return true;
+
+    return res;
 }
 
 void LED_NONE_INDICATORS_KB(void) {

@@ -183,15 +183,9 @@ void usb_remote_wakeup(void) {
                 usb_wakeup(&USB_DRIVER);
             }
         }
+        wait_ms(500);
         /* Woken up */
         // variables has been already cleared by the wakeup hook
         send_keyboard_report();
     }
 }
-
-#ifdef BLUETOOTH_NKRO_ENABLE
-void keyboard_post_init_user(void) {
-    keymap_config.raw = eeconfig_read_keymap();
-    nkro.bluetooth = keymap_config.nkro;
-}
-#endif

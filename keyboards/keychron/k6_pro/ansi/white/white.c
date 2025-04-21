@@ -89,6 +89,7 @@ const ckled2001_led g_ckled2001_leds[LED_MATRIX_LED_COUNT] = {
     {0, F_15},
     {0, F_14},
     {0, F_10},
+    {0, F_7},
     {0, F_6},
     {0, F_5},
     {0, F_4},
