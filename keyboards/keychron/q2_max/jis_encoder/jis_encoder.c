@@ -27,7 +27,7 @@ const snled27351_led_t g_snled27351_leds[RGB_MATRIX_LED_COUNT] = {
  *   |  |       |       B location
  *   |  |       |       | */
 
-    // 上から1段目：ESCキーのあるキー配列のLED
+    // First row from the top
     {0, A_15,   C_15,   B_15},          // esc
     {0, A_14,   C_14,   B_14},          // 1
     {0, A_13,   C_13,   B_13},          // 2
@@ -41,10 +41,10 @@ const snled27351_led_t g_snled27351_leds[RGB_MATRIX_LED_COUNT] = {
     {0, A_5,    C_5,    B_5},           // 0
     {0, A_4,    C_4,    B_4},           // -
     {0, A_3,    C_3,    B_3},           // ^
-    {0, A_2,    C_2,    B_2},           // ￥
+    {0, A_2,    C_2,    B_2},           // backslash key
     {0, A_1,    C_1,    B_1},           // backspace
 
-    //上から2段目：tabキーのあるキー配列のLED
+    //Second row from the top
     {0, D_15,   F_15,   E_15},          // tab
     {0, D_14,   F_14,   E_14},          // q
     {0, D_13,   F_13,   E_13},          // w
@@ -62,7 +62,7 @@ const snled27351_led_t g_snled27351_leds[RGB_MATRIX_LED_COUNT] = {
     {0, D_1,    F_1,    E_1},           // del
 
 
-    //上から3段目：capslockキーのあるキー配列のLED
+    //Third row from the top
     {1, A_15,   C_15,   B_15},          // capslock
     {1, A_14,   C_14,   B_14},          // a
     {1, A_13,   C_13,   B_13},          // s
@@ -77,12 +77,12 @@ const snled27351_led_t g_snled27351_leds[RGB_MATRIX_LED_COUNT] = {
     {1, A_4,    C_4,    B_4},           // :
     {1, A_3,    C_3,    B_3},           // ]
     {1, A_2,    C_2,    B_2},           // home
-    // {1, A_1,    C_1,    B_1},        // ※使用しない
+    // {1, A_1,    C_1,    B_1},        // (not used)
 
 
-    //上から4段目：左Shiftキーのあるキー配列のLED
+    //Fourth row from the top
     {1, G_15,   I_15,   H_15},          // shift
-    // {1, G_14,   I_14,   H_14},       // ※使用しない
+    // {1, G_14,   I_14,   H_14},       // (not used)
     {1, G_13,   I_13,   H_13},          // z
     {1, G_12,   I_12,   H_12},          // x
     {1, G_11,   I_11,   H_11},          // c
@@ -98,16 +98,16 @@ const snled27351_led_t g_snled27351_leds[RGB_MATRIX_LED_COUNT] = {
     {1, G_1,    I_1,    H_1},           // ↑
 
 
-    //上から5段目：左Ctrlキーのあるキー配列のLED
+    //5th row from the top
     {1, D_15,   F_15,   E_15},          // Control
     {1, D_14,   F_14,   E_14},          // Option
     {1, D_13,   F_13,   E_13},          // Command
-    {1, D_12,   F_12,   E_12},          // 変換
-    //{1, D_11,   F_11,   E_11},        // ※使用しない
-    //{1, D_10,   F_10,   E_10},        // ※使用しない
+    {1, D_12,   F_12,   E_12},          // IME Convert Key
+    //{1, D_11,   F_11,   E_11},        // (not used)
+    //{1, D_10,   F_10,   E_10},        // (not used)
     {1, D_9,    F_9,    E_9},           // Space
-    // {1, D_8,    F_8,    E_8},        // ※使用しない
-    {1, D_7,    F_7,    E_7},           // 無変換
+    // {1, D_8,    F_8,    E_8},        // (not used)
+    {1, D_7,    F_7,    E_7},           // IME Non-Convert Key
     {1, D_6,    F_6,    E_6},           // Command
     {1, D_5,    F_5,    E_5},           // fn1
     {1, D_4,    F_4,    E_4},           // fn2

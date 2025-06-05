@@ -19,7 +19,7 @@
 #ifdef RGB_MATRIX_ENABLE
 /* RGB Matrix driver configuration */
 #    define DRIVER_COUNT 2
-// ノブを除くキーの数を下記で指定する
+// Specify the number of keys excluding the knob below
 #    define RGB_MATRIX_LED_COUNT 70
 
 #    define SPI_SCK_PIN A5
@@ -44,16 +44,11 @@
 #    define RGB_MATRIX_BRIGHTNESS_TURN_OFF_VAL 32
 
 /* Indications */
-// Capslockとバッテリー残量低時のLED発光箇所を指定
 #    define CAPS_LOCK_INDEX 30
 #    define LOW_BAT_IND_INDEX \
         { 60 }
 
 #    define RGB_MATRIX_KEYPRESSES
 #    define RGB_MATRIX_FRAMEBUFFER_EFFECTS
-
-// // WindowsのBIOSの影響でBluetoothモードのキー入力がおかしくなる問題への対策
-// // QMK/VIAでPolling Rate（ポーリングレート）を下げる（最も有効な対策）
-// #define USB_POLLING_INTERVAL_MS 8  // 8ms = 125Hz（16なら62.5Hz、2なら500Hz）
 
 #endif

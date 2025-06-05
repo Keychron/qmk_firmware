@@ -25,7 +25,7 @@ enum layers {
     FN2,
 };
 
-// Keychron Q2 Maxの日本語 71キー配列キーマップを定義
+// Define the JIS keyboard layout for Keychron Q2 Max (71 keys)
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [MAC_BASE] = LAYOUT_jis_71(
         KC_ESC,  KC_1,     KC_2,     KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,        KC_MINS,     KC_EQL,   KC_INT3, KC_BSPC, KC_MUTE,

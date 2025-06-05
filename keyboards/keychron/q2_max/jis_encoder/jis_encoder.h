@@ -11,12 +11,7 @@
 #endif
 
 
-// Keychron Q2 Max日本語キー配列(71キー)を定義
-// ここで定義した配列の並びは default/keymap.c で影響を与える。
-
-// ※K15(ノブ)について
-// MATRIX_COLS 16を定義しているが、変更が反映されておらず15列になっている。(上手くいかない理由は不明)
-// そのため、K15(ノブ)を上から3段目に移動させている。
+// Define the JIS keyboard layout for Keychron Q2 Max (71 keys)
 #define LAYOUT_jis_71( \
     K00, K01, K02, K03, K04, K05, K06, K07, K08, K09, K10, K11, K12, K13, K14, K15, \
     K16, K17, K18, K19, K20, K21, K22, K23, K24, K25, K26, K27, K28, K29,      K30, \

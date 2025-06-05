@@ -17,119 +17,8 @@
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
 
-// // --------------------------------------------------------------------------------------
-// // A custom macro definition example
-// // --------------------------------------------------------------------------------------
-// // Below is an example of code with custom macro definitions. Please use it as needed.
-// // ※以下オリジナルマクロ定義例。必要に応じて有効化して使ってキーマップに割り当ててください。
-
-// // ---------------------------------------------------------
-// // ■ オリジナルのマクロ定義
-// // ---------------------------------------------------------
-// enum custom_keycodes {
-//     // マクロ用のキーコードを定義する
-//     WIN_SCREEN_SHOT = SAFE_RANGE, //標準のキーコード (QMKにすでにあるキー) と衝突しないように、１つ目のキーコードにSAFE_RANGEを指定。それ以降の定義マクロを安全に識別させることができる。
-//     WIN_ONE_LINE_COPY ,
-//     WIN_ONE_LINE_SELECT ,
-//     WIN_SWAP_WINDOW_TO_ANOTHER_DISPLAY
-    
-// };
-
-// // 関数の説明メモ：
-// // ★ register_code関数：キーダウン
-// // ★ unregister_code関数：キーアップ
-
-// bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-//     switch (keycode) {
-
-//         // Windows専用
-//         // スクリーンショット
-//         // Shift + Win + S
-//         case WIN_SCREEN_SHOT:
-//             if (record->event.pressed) {
-//                 register_code(KC_RSFT);
-//                 register_code(KC_LWIN);
-//                 register_code(KC_S);
-//                 unregister_code(KC_S);
-//                 unregister_code(KC_LWIN);
-//                 unregister_code(KC_RSFT);
-//             }
-//             return false; // 処理を続行しない
-
-//         // 1行を選択後、コピーする
-//         case WIN_ONE_LINE_COPY:
-//             if (record->event.pressed) {
-//                 // 
-//                 register_code(KC_HOME);
-//                 unregister_code(KC_HOME);
-
-//                 register_code(KC_RSFT);
-//                 register_code(KC_END);
-//                 unregister_code(KC_END);
-//                 unregister_code(KC_RSFT);
-
-//                 register_code(KC_LCTL);
-//                 register_code(KC_C);
-//                 unregister_code(KC_C);
-//                 unregister_code(KC_LCTL);
-
-//                 register_code(KC_RGHT);
-//                 unregister_code(KC_RGHT);
-//             }
-//             return false; // 処理を続行しない
-
-//         // Windows専用
-//         // 1行を選択する
-//         // Home -> Shift + End
-//         case WIN_ONE_LINE_SELECT:
-//             if (record->event.pressed) {
-//                 // 
-//                 register_code(KC_HOME);
-//                 unregister_code(KC_HOME);
-
-//                 register_code(KC_RSFT);
-//                 register_code(KC_END);
-//                 unregister_code(KC_END);
-//                 unregister_code(KC_RSFT);
-//             }
-//             return false; // 処理を続行しない
-
-//         // Windows専用
-//         // 別のセカンドディスプレイへアプリケーションウインドウを移動させる
-//         // Win + Shift + 矢印
-//         case WIN_SWAP_WINDOW_TO_ANOTHER_DISPLAY:
-//             if (record->event.pressed) {
-//                 register_code(KC_LWIN);
-//                 register_code(KC_RSFT);
-//                 register_code(KC_RGHT);
-
-//                 unregister_code(KC_RGHT);
-//                 unregister_code(KC_RSFT);
-//                 unregister_code(KC_LWIN);
-//             }
-//             return false;   // 処理を続行しない
-//     }
-//     return true;            // 既存の処理を続行する
-// }
-
-
-
-// // ---------------------------------------------------------
-// // ■ キーマップで使う独自のキー定義
-// // ---------------------------------------------------------
-// // Windows(Macも？)にて、かな入力を強制させる「KANA」を定義
-// // 参考：https://www.okqubit.net/keyboards/ergodash.html
-// #define KANA KC_LNG1                                // かな入力の強制
-// #define LT_KANA_SHIFT LT(WIN_LONG_PRESS, KANA)      // 長押しで「WIN_LONG_PRESS」レイヤーにあるキーへ切り替え、単押しでKANAを呼び出す。LT( <レイヤー名>, <1回短押し時のキー>)
-
-
-
 // ---------------------------------------------------------
-// ■ キーマップレイヤーの定義
-// ※レイヤー追加方法：
-//   レイヤーを増やす場合には下記のlayers定数に任意の要素を追加し、
-// 　キーのマップである、keymaps定数や、
-// 　ロータリーエンコーダーのマップである、encoder_map定数にも同じ名称の配列を用意する。
+// Keymap layer definition
 // ---------------------------------------------------------
 enum layers {
     MAC_BASE,
@@ -140,7 +29,7 @@ enum layers {
 };
 
 
-// Keychron Q2 Maxの日本語 71キー配列キーマップを定義
+// Define the JIS keyboard layout for Keychron Q2 Max (71 keys)
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [MAC_BASE] = LAYOUT_jis_71(
         KC_ESC,  KC_1,     KC_2,     KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,        KC_MINS,     KC_EQL,   KC_INT3, KC_BSPC, KC_MUTE,
@@ -180,7 +69,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 // ---------------------------------------------------------
-// ■ ロータリーエンコーダーの設定
+// Rotary Encoder Settings
 // ---------------------------------------------------------
 
 #if defined(ENCODER_MAP_ENABLE)
