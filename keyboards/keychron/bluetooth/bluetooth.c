@@ -323,10 +323,10 @@ void bluetooth_send_nkro(report_nkro_t *report) {
     if (bt_state == BLUETOOTH_PARING && !pincodeEntry) return;
 
     if (bt_state == BLUETOOTH_CONNECTED || (bt_state == BLUETOOTH_PARING && pincodeEntry)) {
-        if (bluetooth_transport.send_keyboard) {
+        if (bluetooth_transport.send_nkro) {
 #ifndef DISABLE_REPORT_BUFFER
             if (report_buffer_is_empty() && report_buffer_next_inverval()) {
-                bluetooth_transport.send_keyboard(&report->mods);
+                bluetooth_transport.send_nkro(&report->mods);
                 report_buffer_update_timer();
             } else {
                 report_buffer_t report_buffer;
