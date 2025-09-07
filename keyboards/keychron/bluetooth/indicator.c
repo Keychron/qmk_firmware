@@ -42,6 +42,10 @@
 #    define DECIDE_TIME(t, duration) (duration == 0 ? RGB_MATRIX_TIMEOUT_INFINITE : ((t > duration) ? t : duration))
 #endif
 
+#define extra_key_led_1 16
+#define extra_key_led_2 17
+#define extra_key_led_3 18
+#define extra_key_led_4 19
 #define LED_ON 0x80
 #define INDICATOR_SET(s) memcpy(&indicator_config, &s##_config, sizeof(indicator_config_t));
 
@@ -486,16 +490,16 @@ __attribute__((weak)) void os_state_indicate(void) {
 	//Light up the 4 extra shape keys based on layer state, layer state is a bitarray and 0 when keyboard is started but quickly changed to default value
 	//must change LED_DRIVER_ALLOW_SHUTDOWN to always return false for this to work
 	//turn the 4 leds off
-	rgb_matrix_set_color(16, 0,0,0);
-	rgb_matrix_set_color(17, 0,0,0);
-	rgb_matrix_set_color(18, 0,0,0);
-	rgb_matrix_set_color(19, 0,0,0);
+	rgb_matrix_set_color(extra_key_led_1, 0,0,0);
+	rgb_matrix_set_color(extra_key_led_2, 0,0,0);
+	rgb_matrix_set_color(extra_key_led_3, 0,0,0);
+	rgb_matrix_set_color(extra_key_led_4, 0,0,0);
 	//turn them on based on layer_state, sometimes 2 can be on at the same times with fn
 	if (indicator_state != BLUETOOTH_SUSPEND && indicator_state != BLUETOOTH_DISCONNECTED){
-		if (layer_state & 1 || layer_state == 0 ) rgb_matrix_set_color(16, 255, 255, 255);
-		if (layer_state & 2) rgb_matrix_set_color(17, 255, 255, 255);
-		if (layer_state & 4) rgb_matrix_set_color(18, 255, 255, 255);
-		if (layer_state & 8) rgb_matrix_set_color(19, 255, 255, 255);
+		if (layer_state & 1 || layer_state == 0 ) rgb_matrix_set_color(extra_key_led_1, 255, 255, 255);
+		if (layer_state & 2) rgb_matrix_set_color(extra_key_led_2, 255, 255, 255);
+		if (layer_state & 4) rgb_matrix_set_color(extra_key_led_3, 255, 255, 255);
+		if (layer_state & 8) rgb_matrix_set_color(extra_key_led_4, 255, 255, 255);
 	}
 #    if defined(NUM_LOCK_INDEX)
     if (host_keyboard_led_state().num_lock) {

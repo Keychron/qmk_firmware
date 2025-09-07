@@ -27,6 +27,38 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "action_util.h"
 #include "modifiers.h"
 
+#define QK_TO_0 20992
+#define QK_TO_1 20993
+#define QK_TO_2 20994
+#define QK_TO_3 20995
+#define QK_TO_4 20996
+#define QK_TO_5 20997
+#define QK_TO_6 20998
+#define QK_TO_7 20999
+#define QK_TO_8 21000
+#define QK_TO_9 21001
+#define QK_TO_10 21002
+#define QK_TO_11 21003
+#define QK_TO_12 21004
+#define QK_TO_13 21005
+#define QK_TO_14 21006
+#define QK_TO_15 21007
+#define QK_TO_16 21008
+#define QK_TO_17 21009
+#define QK_TO_18 21010
+#define QK_TO_19 21011
+#define QK_TO_20 21012
+#define QK_TO_21 21013
+#define QK_TO_22 21014
+#define QK_TO_23 21015
+#define QK_TO_24 21016
+#define QK_TO_25 21017
+#define QK_TO_26 21018
+#define QK_TO_27 21019
+#define QK_TO_28 21020
+#define QK_TO_29 21021
+#define QK_TO_30 21022
+#define QK_TO_31 21023
 
 #ifdef ENCODER_MAP_ENABLE
 #    include "encoder.h"
@@ -109,14 +141,15 @@ action_t action_for_keycode(uint16_t keycode) {
 #ifndef NO_ACTION_LAYER
         case QK_TO ... QK_TO_MAX:;
 			
-			//TO(4) - TO(7), check if alt is held
-			if (keycode >= 20996 && keycode <= 20999){
+			//change to TO(x) past the first active layer to act like first one but they require alt to be held to work
+			//if you have 4 layers, TO(0-3) will be normal, TO(4-7) will be same as 0-3 but require alt to be held to work 
+			if (keycode >= QK_TO+DYNAMIC_KEYMAP_LAYER_COUNT && keycode < QK_TO+DYNAMIC_KEYMAP_LAYER_COUNT*2){
 				if (!(get_mods() & MOD_MASK_ALT)){
 					break;
 				}	
 			}
             // Layer set "GOTO"
-            action_layer = QK_TO_GET_LAYER(keycode) % 4;
+            action_layer = QK_TO_GET_LAYER(keycode) % DYNAMIC_KEYMAP_LAYER_COUNT;
             action.code  = ACTION_LAYER_GOTO(action_layer);
             break;
         case QK_MOMENTARY ... QK_MOMENTARY_MAX:;
