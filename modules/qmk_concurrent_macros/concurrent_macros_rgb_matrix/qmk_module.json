@@ -1,0 +1,8 @@
+{
+    "module_name": "Concurrent Macros RGB matrix animation",
+    "maintainer": "Corey Ashford (yeroca@gmail.com)",
+    "features": {
+        "rgb_matrix": true
+    }
+
+}

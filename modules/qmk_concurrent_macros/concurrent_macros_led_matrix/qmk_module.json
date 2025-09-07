@@ -1,0 +1,7 @@
+{
+    "module_name": "Concurrent Macros LED matrix animation",
+    "maintainer": "Corey Ashford (yeroca@gmail.com)",
+    "features": {
+        "led_matrix": true
+    }
+}

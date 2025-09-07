@@ -1,0 +1,9 @@
+{
+    "module_name": "Concurrent Macros",
+    "maintainer": "Corey Ashford (yeroca@gmail.com)",
+    "features": {
+        "via": true,
+        "deferred_exec": true,
+        "dynamic_keymap": true
+    }
+}
