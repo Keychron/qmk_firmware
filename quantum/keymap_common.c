@@ -24,6 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "debug.h"
 #include "keycode_config.h"
 #include "quantum_keycodes.h"
+#include "action_util.h"
+#include "modifiers.h"
+
 
 #ifdef ENCODER_MAP_ENABLE
 #    include "encoder.h"
@@ -105,8 +108,15 @@ action_t action_for_keycode(uint16_t keycode) {
             break;
 #ifndef NO_ACTION_LAYER
         case QK_TO ... QK_TO_MAX:;
+			
+			//TO(4) - TO(7), check if alt is held
+			if (keycode >= 20996 && keycode <= 20999){
+				if (!(get_mods() & MOD_MASK_ALT)){
+					break;
+				}	
+			}
             // Layer set "GOTO"
-            action_layer = QK_TO_GET_LAYER(keycode);
+            action_layer = QK_TO_GET_LAYER(keycode) % 4;
             action.code  = ACTION_LAYER_GOTO(action_layer);
             break;
         case QK_MOMENTARY ... QK_MOMENTARY_MAX:;
@@ -141,7 +151,10 @@ action_t action_for_keycode(uint16_t keycode) {
             action.code = ACTION_MODS_ONESHOT(mod);
 #endif // defined(NO_ACTION_TAPPING) || defined(NO_ACTION_ONESHOT)
             break;
+			
+
 #ifndef NO_ACTION_LAYER
+//comment out TT(x)
         case QK_LAYER_TAP_TOGGLE ... QK_LAYER_TAP_TOGGLE_MAX:
 #    ifndef NO_ACTION_TAPPING
             action.code = ACTION_LAYER_TAP_TOGGLE(QK_LAYER_TAP_TOGGLE_GET_LAYER(keycode));

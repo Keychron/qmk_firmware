@@ -25,3 +25,6 @@
 	path = lib/lvgl
 	url = https://github.com/qmk/lvgl.git
 	branch = release/v8.2
+[submodule "modules/qmk_concurrent_macros"]
+	path = modules/qmk_concurrent_macros
+	url = https://github.com/yeroca/qmk_concurrent_macros.git

@@ -602,6 +602,20 @@ void indicator_task(void) {
 
 #if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
 __attribute__((weak)) void os_state_indicate(void) {
+	
+   //Light up the 4 extra shape keys based on layer state, layer state is a bitarray and 0 when keyboard is started but quickly changed to default value
+   //must change LED_DRIVER_ALLOW_SHUTDOWN to always return false for this to work
+   //turn the 4 leds off
+   rgb_matrix_set_color(16, 0,0,0);
+   rgb_matrix_set_color(17, 0,0,0);
+   rgb_matrix_set_color(18, 0,0,0);
+   rgb_matrix_set_color(19, 0,0,0);
+   //turn them on based on layer_state, sometimes 2 can be on at the same times with fn
+    if (layer_state & 1 || layer_state == 0) rgb_matrix_set_color(16, 255, 255, 255);
+    if (layer_state & 2) rgb_matrix_set_color(17, 255, 255, 255);
+    if (layer_state & 4) rgb_matrix_set_color(18, 255, 255, 255);
+    if (layer_state & 8) rgb_matrix_set_color(19, 255, 255, 255);
+	
 #    if defined(RGB_MATRIX_SLEEP) || defined(LED_MATRIX_SLEEP)
     if (get_transport() == TRANSPORT_USB && USB_DRIVER.state == USB_SUSPENDED) return;
 #    endif
@@ -748,6 +762,8 @@ void LED_NONE_INDICATORS_KB(void) {
 
 #    if defined(LED_MATRIX_DRIVER_SHUTDOWN_ENABLE) || defined(RGB_MATRIX_DRIVER_SHUTDOWN_ENABLE)
 bool LED_DRIVER_ALLOW_SHUTDOWN(void) {
+//comment this out since we always have at least 1 led on to indicate layer state
+/*
 #        if defined(NUM_LOCK_INDEX)
     if (host_keyboard_led_state().num_lock) return false;
 #        endif
@@ -763,7 +779,8 @@ bool LED_DRIVER_ALLOW_SHUTDOWN(void) {
 #        if defined(KANA_LOCK_INDEX)
     if (host_keyboard_led_state().kana) return false;
 #        endif
-    return true;
+*/
+    return false;
 }
 #    endif
 

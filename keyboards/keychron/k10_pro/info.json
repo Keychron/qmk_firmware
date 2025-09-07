@@ -1,4 +1,7 @@
 {
+	"modules": [
+        "qmk_concurrent_macros/concurrent_macros",
+	],
     "keyboard_name": "Keychron K10 Pro",
     "manufacturer": "Keychron",
     "url": "https://github.com/Keychron",

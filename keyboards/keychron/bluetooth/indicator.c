@@ -308,12 +308,12 @@ void indicator_set(bluetooth_state_t state, uint8_t host_index) {
     /* Turn on backlight mode for indicator */
     indicator_enable();
     indicator_reset_backlit_time();
-
     switch (state) {
         case BLUETOOTH_DISCONNECTED:
 #ifdef BT_INDICATION_LED_PIN_LIST
             gpio_write_pin(bt_led_pin_list[host_index - 1], !BT_INDICATION_LED_ON_STATE);
 #endif
+
             INDICATOR_SET(disconnected);
             indicator_config.value = (indicator_config.type == INDICATOR_NONE) ? 0 : host_index;
             indicator_timer_cb((void *)&indicator_config.type);
@@ -324,6 +324,8 @@ void indicator_set(bluetooth_state_t state, uint8_t host_index) {
                 /* Set timer so that user has chance to turn on the backlight when is off */
                 indicator_set_backlit_timeout(DECIDE_TIME(DISCONNECTED_BACKLIGHT_DISABLE_TIMEOUT * 1000, indicator_config.duration));
             }
+			SET_ALL_LED_OFF();
+			rgb_matrix_driver.flush();
             break;
 
         case BLUETOOTH_CONNECTED:
@@ -354,6 +356,8 @@ void indicator_set(bluetooth_state_t state, uint8_t host_index) {
             indicator_config.value = (indicator_config.type == INDICATOR_NONE) ? 0 : host_index;
             indicator_timer_cb((void *)&indicator_config.type);
             indicator_set_backlit_timeout(100);
+			SET_ALL_LED_OFF();
+			rgb_matrix_driver.flush();
             break;
 
         default:
@@ -479,6 +483,20 @@ void indicator_task(void) {
 
 #if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
 __attribute__((weak)) void os_state_indicate(void) {
+	//Light up the 4 extra shape keys based on layer state, layer state is a bitarray and 0 when keyboard is started but quickly changed to default value
+	//must change LED_DRIVER_ALLOW_SHUTDOWN to always return false for this to work
+	//turn the 4 leds off
+	rgb_matrix_set_color(16, 0,0,0);
+	rgb_matrix_set_color(17, 0,0,0);
+	rgb_matrix_set_color(18, 0,0,0);
+	rgb_matrix_set_color(19, 0,0,0);
+	//turn them on based on layer_state, sometimes 2 can be on at the same times with fn
+	if (indicator_state != BLUETOOTH_SUSPEND && indicator_state != BLUETOOTH_DISCONNECTED){
+		if (layer_state & 1 || layer_state == 0 ) rgb_matrix_set_color(16, 255, 255, 255);
+		if (layer_state & 2) rgb_matrix_set_color(17, 255, 255, 255);
+		if (layer_state & 4) rgb_matrix_set_color(18, 255, 255, 255);
+		if (layer_state & 8) rgb_matrix_set_color(19, 255, 255, 255);
+	}
 #    if defined(NUM_LOCK_INDEX)
     if (host_keyboard_led_state().num_lock) {
         SET_LED_ON(NUM_LOCK_INDEX);
@@ -549,7 +567,8 @@ bool LED_INDICATORS_KB(void) {
             if (indicator_config.value & 0x80) {
                 SET_LED_BT(host_led_matrix_list[host_index - 1]);
             } else {
-                SET_LED_OFF(host_led_matrix_list[host_index - 1]);
+                
+				SET_LED_OFF(host_led_matrix_list[host_index - 1]);
             }
         } else
             os_state_indicate();
@@ -587,6 +606,8 @@ void LED_NONE_INDICATORS_KB(void) {
 
 #    if defined(LED_MATRIX_DRIVER_SHUTDOWN_ENABLE) || defined(RGB_MATRIX_DRIVER_SHUTDOWN_ENABLE)
 bool LED_DRIVER_ALLOW_SHUTDOWN(void) {
+//comment this out since we always have at least 1 led on to indicate layer state
+/*
 #        if defined(NUM_LOCK_INDEX)
     if (host_keyboard_led_state().num_lock) return false;
 #        endif
@@ -602,7 +623,10 @@ bool LED_DRIVER_ALLOW_SHUTDOWN(void) {
 #        if defined(KANA_LOCK_INDEX)
     if (host_keyboard_led_state().kana) return false;
 #        endif
+	if (layer_state != 0) return false;
     return true;
+	*/
+	return false;
 }
 #    endif
 

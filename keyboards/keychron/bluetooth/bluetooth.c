@@ -230,7 +230,6 @@ static void bluetooth_enter_connected(uint8_t host_idx) {
 static void bluetooth_enter_disconnected(uint8_t host_idx) {
     uint8_t previous_state = bt_state;
     bt_state               = BLUETOOTH_DISCONNECTED;
-
     if (previous_state == BLUETOOTH_CONNECTED) {
         lpm_timer_reset();
         indicator_set(BLUETOOTH_SUSPEND, host_idx);
@@ -450,6 +449,9 @@ void bluetooth_task(void) {
     indicator_task();
     battery_task();
     lpm_task();
+
+	
+	
 }
 
 void send_string_task(void) {
