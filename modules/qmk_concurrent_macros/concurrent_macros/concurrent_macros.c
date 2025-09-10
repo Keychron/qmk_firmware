@@ -8,6 +8,7 @@
 #include "send_string.h"
 #include "util.h"
 #include "keymap_introspection.h"
+#include "action_util.h"
 
 #ifndef DYNAMIC_KEYMAP_MACRO_DELAY
 #    define DYNAMIC_KEYMAP_MACRO_DELAY TAP_CODE_DELAY
@@ -20,13 +21,20 @@ typedef enum : uint8_t { CM_FREE, CM_IDLE, CM_DO_NEXT, CM_ERROR } concurrent_mac
 #define CM_FLAG_START_REPEAT (1 << 2)
 #define CM_FLAG_STOP (1 << 3)
 
-char loop_init[] = "l_init";
-char loop_go[] = "l_go";
-char loop_toggle[] = "l_toggle";
-char loop_stopall[] = "l_stopall";
-char loop_stop[] = "l_stop";
+char loop_init[] = "init";
+char loop_go[] = "loop";
+char loop_toggle[] = "toggle";
+char loop_stopall[] = "stopall";
+char loop_stop[] = "stop";
+char loop_alt[] = "alt";
+char loop_ctrl[] = "ctrl";
+char loop_shift[] = "shift";
+char loop_end[] = "end";
+
 char loop_check[20] = "";
+int16_t loop_value = 0;
 uint8_t count = 0;
+bool negative = false;
 
 #define CM_FLAG_REPEAT_UNTIL_MASK (CM_FLAG_REPEAT_UNTIL_TOGGLE_OFF | CM_FLAG_REPEAT_UNTIL_MACRO_KEY_UP)
 
@@ -184,7 +192,6 @@ static void concurrent_macros_stop(concurrent_macros_info_t *except_macro) {
         macro->keypos.row   = 0xff;
         macro->keypos.col   = 0xff;
     }
-    clear_keyboard();
 }
 
 
@@ -338,19 +345,55 @@ static uint32_t concurrent_macros_execute_one_step(uint32_t trigger_time, void *
                     }
                 } else {
 					//save offset
+					
 					macro->loop = macro->offset;
-					//check at least if the first letter is l to prevent this from happening every single letter that gets typed
-					if (data[0] == loop_go[0]){
+					//check at least if the first letter is [ to prevent this from happening every single letter that gets typed
+					if (data[0] == '['){
 						data[2]=data[0];
-						//attempt to load 11 char max
 						count = 0;
-						while (data[2] >= 20 && count <=11){
+						loop_value=0;
+						//attempt to load 9 char max
+						while (data[2] >= 20 && count <=9){
+							dynamic_keymap_macro_get_buffer(macro->offset++, 1, &data[2]); //load next character
 							loop_check[count] = (char)data[2];
-							dynamic_keymap_macro_get_buffer(macro->offset++, 1, &data[2]);
+							//if a ; shows up in the backet this indicate an offset jump
+							if (loop_check[count] == ';'){
+								loop_check[count] = '\0';
+								dynamic_keymap_macro_get_buffer(macro->offset++, 1, &data[2]);
+								//check if the jump is negative
+								if (data[2] == '-'){
+									negative=true;
+									dynamic_keymap_macro_get_buffer(macro->offset++, 1, &data[2]);
+								}
+								count = 0;
+								//get the amount of step to jump
+								while (data[2] >= 20 && count <=4 && data[2] != ']'){
+									loop_value *= 10;
+									//add or sobtract based on negative true or false
+									if (!negative) {loop_value += data[2]  - '0';}
+									else {loop_value -= data[2]  - '0';}
+									dynamic_keymap_macro_get_buffer(macro->offset++, 1, &data[2]);
+									count++;
+								}
+								if (data[2] < 20){
+									loop_value=0;
+								}
+								break;
+							}
+							
+							if (loop_check[count] == ']'){
+								loop_check[count] = '\0';
+								break;
+							}
+							
 							count++;
 						}
-						loop_check[count] = '\0';
-						macro->offset--;
+						//if it ended prematuraly, just end it now.
+						if (data[2] < 20){
+							macro->offset = macro->loop;
+							send_string_with_delay((const char *)data, 0);
+							return MAX(DYNAMIC_KEYMAP_MACRO_DELAY, 1);
+						}
 						
 						
 						
@@ -404,20 +447,66 @@ static uint32_t concurrent_macros_execute_one_step(uint32_t trigger_time, void *
 						
 						}
 					
-						//stop this loop
+						//stop this loop if button is not held
 						if (strcmp(loop_check,loop_stop)==0){
 							if (!matrix_is_on(macro->keypos.row, macro->keypos.col)) {
 								concurrent_macros_stop(macro);
 							}
 							return 1;
-
 						}
-						
-						//stop all loops
+						//end the loop no matter what
+						if (strcmp(loop_check,loop_end)==0){
+							concurrent_macros_stop(macro);
+							return 1;
+						}
+						//if ALT is held jump ahead or end the macro
+						if (strcmp(loop_check,loop_alt)==0){
+							if (!(get_mods() & MOD_MASK_ALT)){
+								if (loop_value == 0){
+									concurrent_macros_stop(macro);
+								}
+							}else{
+								macro->offset += loop_value;
+							}
+							return 1;
+							
+						}
+						//if CTRL is held jump ahead or end the macro
+						if (strcmp(loop_check,loop_ctrl)==0){
+							if (!(get_mods() & MOD_MASK_CTRL)){
+								if (loop_value == 0){
+									concurrent_macros_stop(macro);
+								}
+							}else{
+								macro->offset += loop_value;
+							}
+							return 1;
+						}
+						//if shift is held jump ahead or end macro
+						if (strcmp(loop_check,loop_shift)==0){
+							if (!(get_mods() & MOD_MASK_SHIFT)){
+								if (loop_value == 0){
+									concurrent_macros_stop(macro);
+								}
+							}else{
+								macro->offset += loop_value;
+							}
+							return 1;
+						}
+						//stop all macros exept the one executing it
 						if (strcmp(loop_check,loop_stopall)==0){
 							concurrent_macros_stop_others(macro);
 							return 1;
 						}
+						//check if empty, could be a jump
+						if (loop_check[0]==0){
+							//if loop value is 0 then act like its a character else jump ahead
+							if (loop_value != 0){
+								macro->offset += loop_value;
+								return 1;
+							}
+						}
+						
 					}
 					
 					//if it makes it here, no loop was detected

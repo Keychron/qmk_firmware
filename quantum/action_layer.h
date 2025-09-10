@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef DYNAMIC_KEYMAP_ENABLE
 #    ifndef DYNAMIC_KEYMAP_LAYER_COUNT
-#        define DYNAMIC_KEYMAP_LAYER_COUNT 4
+#        define DYNAMIC_KEYMAP_LAYER_COUNT 5
 #    endif
 #    define MAX_LAYER DYNAMIC_KEYMAP_LAYER_COUNT
 #    if DYNAMIC_KEYMAP_LAYER_COUNT <= 8

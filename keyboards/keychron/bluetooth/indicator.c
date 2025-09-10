@@ -496,10 +496,10 @@ __attribute__((weak)) void os_state_indicate(void) {
 	rgb_matrix_set_color(extra_key_led_4, 0,0,0);
 	//turn them on based on layer_state, sometimes 2 can be on at the same times with fn
 	if (indicator_state != BLUETOOTH_SUSPEND && indicator_state != BLUETOOTH_DISCONNECTED){
-		if (layer_state & 1 || layer_state == 0 ) rgb_matrix_set_color(extra_key_led_1, 255, 255, 255);
-		if (layer_state & 2) rgb_matrix_set_color(extra_key_led_2, 255, 255, 255);
-		if (layer_state & 4) rgb_matrix_set_color(extra_key_led_3, 255, 255, 255);
-		if (layer_state & 8) rgb_matrix_set_color(extra_key_led_4, 255, 255, 255);
+	if (layer_state & 1 || layer_state == 0 ) rgb_matrix_set_color(extra_key_led_1, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
+		if (layer_state & 2) rgb_matrix_set_color(extra_key_led_2, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
+		if (layer_state & 4) rgb_matrix_set_color(extra_key_led_3, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
+		if (layer_state & 8) rgb_matrix_set_color(extra_key_led_4, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
 	}
 #    if defined(NUM_LOCK_INDEX)
     if (host_keyboard_led_state().num_lock) {
