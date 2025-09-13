@@ -129,12 +129,15 @@ static inline void factory_reset_ind_timer_check(void) {
 
 void process_record_factory_reset(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-#if defined(FN_KEY1) || defined(FN_KEY2)
+#if defined(FN_KEY1) || defined(FN_KEY2) || defined(FN_KEY3)
 #    ifdef FN_KEY1
         case FN_KEY1: /* fall through */
 #    endif
 #    ifdef FN_KEY2
         case FN_KEY2:
+#    endif
+#    ifdef FN_KEY3
+        case FN_KEY3:
 #    endif
             if (record->event.pressed) {
                 factory_reset_state |= KEY_PRESS_FN;
