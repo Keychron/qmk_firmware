@@ -22,7 +22,7 @@ typedef enum : uint8_t { CM_FREE, CM_IDLE, CM_DO_NEXT, CM_ERROR } concurrent_mac
 #define CM_FLAG_STOP (1 << 3)
 
 char loop_init[] = "init";
-char loop_go[] = "loop";
+char loop_loop[] = "loop";
 char loop_toggle[] = "toggle";
 char loop_stopall[] = "stopall";
 char loop_stop[] = "stop";
@@ -30,6 +30,16 @@ char loop_alt[] = "alt";
 char loop_ctrl[] = "ctrl";
 char loop_shift[] = "shift";
 char loop_end[] = "end";
+
+char small_init[] = "i";
+char small_loop[] = "l";
+char small_toggle[] = "t";
+char small_stopall[] = "sa";
+char small_stop[] = "s";
+char small_alt[] = "al";
+char small_ctrl[] = "ct";
+char small_shift[] = "sh";
+char small_end[] = "e";
 
 char loop_check[20] = "";
 int16_t loop_value = 0;
@@ -356,6 +366,10 @@ static uint32_t concurrent_macros_execute_one_step(uint32_t trigger_time, void *
 						while (data[2] >= 20 && count <=9){
 							dynamic_keymap_macro_get_buffer(macro->offset++, 1, &data[2]); //load next character
 							loop_check[count] = (char)data[2];
+							//make the text lower case
+							if (loop_check[count] >= 'A' && loop_check[count] <= 'Z'){
+								loop_check[count] += 32;
+							}
 							//if a ; shows up in the backet this indicate an offset jump
 							if (loop_check[count] == ';'){
 								loop_check[count] = '\0';
@@ -399,7 +413,7 @@ static uint32_t concurrent_macros_execute_one_step(uint32_t trigger_time, void *
 						
 						//check all posible loop state
 						//do normal loop if the string is loop_go
-						if (strcmp(loop_check,loop_go)==0){
+						if (strcmp(loop_check,small_loop)==0 || strcmp(loop_check,loop_loop)==0){
 							macro->loop = 0;
 							if (macro->flags & CM_FLAG_REPEAT_UNTIL_MASK) {
 								macro->state = CM_ERROR;
@@ -417,7 +431,7 @@ static uint32_t concurrent_macros_execute_one_step(uint32_t trigger_time, void *
 
 						}
 						//trigger loop init if the string is loop_init
-						if (strcmp(loop_check,loop_init)==0){
+						if (strcmp(loop_check,small_init)==0 || strcmp(loop_check,loop_init)==0){
 							if (macro->flags & CM_FLAG_START_REPEAT) {
 								macro->state = CM_ERROR;
 								return 0;
@@ -429,8 +443,44 @@ static uint32_t concurrent_macros_execute_one_step(uint32_t trigger_time, void *
 							}
 						}
 						
+
+						//if ALT is held jump ahead or end the macro
+						if (strcmp(loop_check,small_alt)==0 || strcmp(loop_check,loop_alt)==0){
+							if (!(get_mods() & MOD_MASK_ALT)){
+								if (loop_value == 0){
+									concurrent_macros_stop(macro);
+								}
+							}else{
+								macro->offset += loop_value;
+							}
+							return 1;
+							
+						}
+						//if CTRL is held jump ahead or end the macro
+						if (strcmp(loop_check,loop_ctrl)==0 || strcmp(loop_check,small_ctrl)==0){
+							if (!(get_mods() & MOD_MASK_CTRL)){
+								if (loop_value == 0){
+									concurrent_macros_stop(macro);
+								}
+							}else{
+								macro->offset += loop_value;
+							}
+							return 1;
+						}
+						//if shift is held jump ahead or end macro
+						if (strcmp(loop_check,small_shift)==0 || strcmp(loop_check,loop_shift)==0){
+							if (!(get_mods() & MOD_MASK_SHIFT)){
+								if (loop_value == 0){
+									concurrent_macros_stop(macro);
+								}
+							}else{
+								macro->offset += loop_value;
+							}
+							return 1;
+						}
+						
 						//trigger toggle loop
-						if (strcmp(loop_check,loop_toggle)==0){
+						if (strcmp(loop_check,loop_toggle)==0 || strcmp(loop_check,small_toggle)==0){
 							if (macro->flags & CM_FLAG_REPEAT_UNTIL_MASK) {
 								macro->state = CM_ERROR;
 								return 0;
@@ -448,54 +498,21 @@ static uint32_t concurrent_macros_execute_one_step(uint32_t trigger_time, void *
 						}
 					
 						//stop this loop if button is not held
-						if (strcmp(loop_check,loop_stop)==0){
+						if (strcmp(loop_check,loop_stop)==0 || strcmp(loop_check,small_stop)==0){
 							if (!matrix_is_on(macro->keypos.row, macro->keypos.col)) {
 								concurrent_macros_stop(macro);
 							}
 							return 1;
 						}
-						//end the loop no matter what
-						if (strcmp(loop_check,loop_end)==0){
-							concurrent_macros_stop(macro);
-							return 1;
-						}
-						//if ALT is held jump ahead or end the macro
-						if (strcmp(loop_check,loop_alt)==0){
-							if (!(get_mods() & MOD_MASK_ALT)){
-								if (loop_value == 0){
-									concurrent_macros_stop(macro);
-								}
-							}else{
-								macro->offset += loop_value;
-							}
-							return 1;
-							
-						}
-						//if CTRL is held jump ahead or end the macro
-						if (strcmp(loop_check,loop_ctrl)==0){
-							if (!(get_mods() & MOD_MASK_CTRL)){
-								if (loop_value == 0){
-									concurrent_macros_stop(macro);
-								}
-							}else{
-								macro->offset += loop_value;
-							}
-							return 1;
-						}
-						//if shift is held jump ahead or end macro
-						if (strcmp(loop_check,loop_shift)==0){
-							if (!(get_mods() & MOD_MASK_SHIFT)){
-								if (loop_value == 0){
-									concurrent_macros_stop(macro);
-								}
-							}else{
-								macro->offset += loop_value;
-							}
-							return 1;
-						}
+						
 						//stop all macros exept the one executing it
-						if (strcmp(loop_check,loop_stopall)==0){
+						if (strcmp(loop_check,loop_stopall)==0 || strcmp(loop_check,small_stopall)==0){
 							concurrent_macros_stop_others(macro);
+							return 1;
+						}
+						//end the loop no matter what
+						if (strcmp(loop_check,loop_end)==0 || strcmp(loop_check,small_end)==0){
+							concurrent_macros_stop(macro);
 							return 1;
 						}
 						//check if empty, could be a jump

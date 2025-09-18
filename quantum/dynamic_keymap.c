@@ -118,6 +118,9 @@ void *dynamic_keymap_key_to_eeprom_address(uint8_t layer, uint8_t row, uint8_t c
 }
 
 uint16_t dynamic_keymap_get_keycode(uint8_t layer, uint8_t row, uint8_t column) {
+	if (os_switch == false){
+		return keycode_at_keymap_location_raw(layer,row,column);
+	}
     if (layer >= DYNAMIC_KEYMAP_LAYER_COUNT || row >= MATRIX_ROWS || column >= MATRIX_COLS) return KC_NO;
     void *address = dynamic_keymap_key_to_eeprom_address(layer, row, column);
 #ifdef DYNAMIC_KEYMAP_BUFFER_ENABLE

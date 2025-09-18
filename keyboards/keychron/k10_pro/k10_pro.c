@@ -23,6 +23,7 @@
 #    include "battery.h"
 #    include "bat_level_animation.h"
 #    include "lpm.h"
+#    include "dynamic_keymap.h"
 #endif
 
 #ifdef ENABLE_FACTORY_TEST
@@ -60,7 +61,11 @@ static void pairing_key_timer_cb(void *arg) {
 
 bool dip_switch_update_kb(uint8_t index, bool active) {
     if (index == 0) {
-        default_layer_set(1UL << (active ? 0 : 2));
+		
+        //default_layer_set(1UL << (active ? 0 : 2));
+		os_switch = active;
+		os_state_indicate();
+		rgb_matrix_driver.flush();
     }
     dip_switch_update_user(index, active);
 

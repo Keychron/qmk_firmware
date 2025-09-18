@@ -22,6 +22,7 @@
 #include "bluetooth_config.h"
 #include "config.h"
 #include "rtc_timer.h"
+#include "dynamic_keymap.h"
 
 #if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
 #    ifdef LED_MATRIX_ENABLE
@@ -497,10 +498,17 @@ __attribute__((weak)) void os_state_indicate(void) {
 	//turn them on based on layer_state, sometimes 2 can be on at the same times with fn
 	//and when the keyboard layer_state is 0, meaning the same as 1
 	if (indicator_state != BLUETOOTH_SUSPEND && indicator_state != BLUETOOTH_DISCONNECTED){
-		if ((layer_state & 15) <= 1) rgb_matrix_set_color(extra_key_led_1, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
-		if (layer_state & 2) rgb_matrix_set_color(extra_key_led_2, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
-		if (layer_state & 4) rgb_matrix_set_color(extra_key_led_3, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
-		if (layer_state & 8) rgb_matrix_set_color(extra_key_led_4, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
+		if (!os_switch){
+			if ((layer_state & 15) <= 1) rgb_matrix_set_color(extra_key_led_1, 15+(layer_state & 16)*15, 128-(layer_state & 16)*7, 255-(layer_state & 16)*15);
+			if (layer_state & 2) rgb_matrix_set_color(extra_key_led_2, 15+(layer_state & 16)*15, 128-(layer_state & 16)*7, 255-(layer_state & 16)*15);
+			if (layer_state & 4) rgb_matrix_set_color(extra_key_led_3, 15+(layer_state & 16)*15, 128-(layer_state & 16)*7, 255-(layer_state & 16)*15);
+			if (layer_state & 8) rgb_matrix_set_color(extra_key_led_4, 15+(layer_state & 16)*15, 128-(layer_state & 16)*7, 255-(layer_state & 16)*15);
+		}else{
+			if ((layer_state & 15) <= 1) rgb_matrix_set_color(extra_key_led_1, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
+			if (layer_state & 2) rgb_matrix_set_color(extra_key_led_2, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
+			if (layer_state & 4) rgb_matrix_set_color(extra_key_led_3, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
+			if (layer_state & 8) rgb_matrix_set_color(extra_key_led_4, 255, 255-(layer_state & 16)*15, 255-(layer_state & 16)*15);
+		}
 	}
 #    if defined(NUM_LOCK_INDEX)
     if (host_keyboard_led_state().num_lock) {

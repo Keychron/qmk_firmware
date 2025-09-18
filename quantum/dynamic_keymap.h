@@ -68,3 +68,5 @@ void     dynamic_keymap_macro_set_buffer(uint16_t offset, uint16_t size, uint8_t
 void     dynamic_keymap_macro_reset(void);
 
 void dynamic_keymap_macro_send(uint8_t id);
+
+bool os_switch;

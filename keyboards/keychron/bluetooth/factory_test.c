@@ -50,8 +50,12 @@ enum {
     KEY_PRESS_Z              = 0x01 << 2,
     KEY_PRESS_BL_KEY1        = 0x01 << 3,
     KEY_PRESS_BL_KEY2        = 0x01 << 4,
+	KEY_PRESS_ESC        	 = 0x01 << 5,
+	KEY_PRESS_END        	 = 0x01 << 6,
     KEY_PRESS_FACTORY_RESET  = KEY_PRESS_FN | KEY_PRESS_J | KEY_PRESS_Z,
     KEY_PRESS_BACKLIGTH_TEST = KEY_PRESS_FN | KEY_PRESS_BL_KEY1 | KEY_PRESS_BL_KEY2,
+	KEY_PRESS_BOOT			 = KEY_PRESS_FN | KEY_PRESS_ESC,
+	KEY_PRESS_REBOOT		 = KEY_PRESS_FN | KEY_PRESS_END
 };
 
 enum {
@@ -111,7 +115,16 @@ static inline void factory_timer_check(void) {
             if (!rgb_matrix_is_enabled()) rgb_matrix_enable();
 #endif
             backlight_test_mode = BACKLIGHT_TEST_WHITE;
-        }
+		
+        } else if (factory_reset_state == KEY_PRESS_BOOT) {
+			//BOOT KEYBOARD
+			factory_reset_state = 0;
+			reset_keyboard();
+		} else if (factory_reset_state == KEY_PRESS_REBOOT) {
+			//REBOOT KEYBOARD
+			factory_reset_state = 0;
+			soft_reset_keyboard();
+		}
 
         factory_reset_state = 0;
     }
@@ -165,6 +178,26 @@ void process_record_factory_reset(uint16_t keycode, keyrecord_t *record) {
                 factory_reset_timer = 0;
             }
             break;
+//escape for boot loading
+		case KC_ESC:
+            if (record->event.pressed) {
+                factory_reset_state |= KEY_PRESS_ESC;
+                if (factory_reset_state == 0x21) factory_timer_start();
+            } else {
+                factory_reset_state &= ~KEY_PRESS_ESC;
+                factory_reset_timer = 0;
+            }
+			break;
+//soft reboot reboard
+		case KC_END:
+            if (record->event.pressed) {
+                factory_reset_state |= KEY_PRESS_END;
+                if (factory_reset_state == 0x41) factory_timer_start();
+            } else {
+                factory_reset_state &= ~KEY_PRESS_END;
+                factory_reset_timer = 0;
+            }
+			break;
 #ifdef BL_TEST_KEY1
         case BL_TEST_KEY1:
             if (record->event.pressed) {
