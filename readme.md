@@ -5,21 +5,21 @@
 ```
 -Modified TO(x) to require alt to be pressed if higher than layer amount, TO(5) = TO(0) if alt is held, else nothing
 -Increased amount of layer to 5
--totally changed K10 pro/ISO/RGB/VIA/keymap.c, removed mac, layer 5 exclusively for FN
--FN+esc for 3 sec = flashing mode even when plugged with UBS when on bluetooth
--FN+end for 3 sec = soft reboot keyboard
--Made modification to LED 16-19 (default F13-16) to display which layer 0 to 3, if fn is on, it will be red instead.
--disabled the mac/windows switch, instead when on the keyboard will use the default keymap.c values instead of dynamic one, layer lights will be blue instead
+-totally changed K10 pro/ISO/RGB/VIA/keymap.c, removed mac, layer 5 exclusively for FN, default alt+NUBS to travel between the 4 first layers
+-FN+esc for 3 sec = flashing mode even when connected via bluetooth, as long as the USB cable is plugged in.
+-FN+end for 3 sec = soft reboot keyboard, lose no data
+-Made modification to LED 16-19 (default F13-16) to display which layer 0 to 3, if fn is on, it will be red instead, if OS switch is set to mac, it will be blue instead.
+-disabled the mac/windows switch, instead when set to mac, the keyboard will use the default keymap.c values instead of dynamic one, technically allowing for x2 the amount of layer but requires recompile to edit them.
 -Installed https://github.com/yeroca/qmk_concurrent_macros.git for macro looping
 -Made modification to the macro module, see below
 ```
 
-Macro mods
-All delay that end with 1 will have a random delay added to them of +- 20, so 101 delay can be 80 to 120
-Switched F21-24 to some text check instead along with other added features. any capitalization will be accepted.
-KC_TRNS normally just do nothing when inside a macro, it now acts the way you expect it to, but it only fetches from layer 0
-KC_TRNS is a valid key for a macro but website like keychron launcher and via block it, so I included a modified version of the via website
-this version is exactly the same as the september 2025 usevia.app website exept it allows all valid keys below 0x00FF inside a macro.
+Macro module changes
+All delay that end with 1 will have a random delay added to them of +- 20, so 101 delay can be 81 to 121
+Changed F21-24 to some text check instead along with other added features. any capitalization will be accepted. short handle available for saving macro space.
+KC_TRNS normally just do nothing when inside a macro, it now acts the way you expect it to, but it always fetches from layer 0
+KC_TRNS is a valid key for a macro but website like keychron launcher and via block it, so I included a modified version of the via website viaWebsite.zip
+this version is exactly the same as the september 2025 usevia.app website except it changes 'const autocompleteKeycodes' to include all valid buttons below 0x00FF
 
 - \[init] or \[i] = same as having F21, start of the loop
 - \[loop] or \[l] = same as F22, go back to [init] if key is held
@@ -38,6 +38,10 @@ this version is exactly the same as the september 2025 usevia.app website exept 
 Exemple: This macro here will act like the key it's associated to unless shift is held, if so it will spam the key+A until released.
 
 - `[shift;28]{+KC_TRNS}[init]{10}[loop]{-KC_TRNS}[end][init]{KC_TRNS}{80}{KC_A}{20}[loop]`
+
+or
+
+- `[SH;28]{+KC_TRNS}[i]{10}[L]{-KC_TRNS}[E][i]{KC_TRNS}{80}{KC_A}{20}[L]`
 
 
 
