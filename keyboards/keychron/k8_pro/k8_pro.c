@@ -44,7 +44,7 @@ static uint8_t  mac_keycode[4]                  = {KC_LOPT, KC_ROPT, KC_LCMD, KC
 key_combination_t key_comb_list[4] = {
     {2, {KC_LWIN, KC_TAB}},        // Task (win)
     {2, {KC_LWIN, KC_E}},          // Files (win)
-    {3, {KC_LSFT, KC_LGUI, KC_4}}, // Snapshot (mac)
+    {3, {KC_LSFT, KC_LGUI, KC_S}}, // Snapshot (mac)
     {2, {KC_LWIN, KC_C}}           // Cortana (win)
 };
 
