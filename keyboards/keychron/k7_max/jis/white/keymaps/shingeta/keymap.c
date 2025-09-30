@@ -56,16 +56,16 @@ static bool is_shingeta = true;
 #define B_DOT ((uint64_t)1 << 28)
 #define B_SLSH ((uint64_t)1 << 29)
 
-#define B_1 ((uint64_t)1 << 30)    // 新下駄
-#define B_2 ((uint64_t)1 << 31)    // 新下駄
-#define B_3 ((uint64_t)1 << 32)    // 新下駄
-#define B_4 ((uint64_t)1 << 33)    // 新下駄
-#define B_5 ((uint64_t)1 << 34)    // 新下駄
-#define B_6 ((uint64_t)1 << 35)    // 新下駄
-#define B_7 ((uint64_t)1 << 36)    // 新下駄
-#define B_8 ((uint64_t)1 << 37)    // 新下駄
-#define B_9 ((uint64_t)1 << 38)    // 新下駄
-#define B_0 ((uint64_t)1 << 39)    // 新下駄
+#define BB_1 ((uint64_t)1 << 30)   // 新下駄
+#define BB_2 ((uint64_t)1 << 31)   // 新下駄
+#define BB_3 ((uint64_t)1 << 32)   // 新下駄
+#define BB_4 ((uint64_t)1 << 33)   // 新下駄
+#define BB_5 ((uint64_t)1 << 34)   // 新下駄
+#define BB_6 ((uint64_t)1 << 35)   // 新下駄
+#define BB_7 ((uint64_t)1 << 36)   // 新下駄
+#define BB_8 ((uint64_t)1 << 37)   // 新下駄
+#define BB_9 ((uint64_t)1 << 38)   // 新下駄
+#define BB_0 ((uint64_t)1 << 39)   // 新下駄
 #define B_MINS ((uint64_t)1 << 40) // 新下駄
 
 #define B_X1 ((uint64_t)1 << 41) // 新下駄
@@ -90,24 +90,22 @@ const uint64_t ng_key[] = {
 
     [NG_N - NG_Q] = B_N,       [NG_M - NG_Q] = B_M, [NG_COMM - NG_Q] = B_COMM, [NG_DOT - NG_Q] = B_DOT, [NG_SLSH - NG_Q] = B_SLSH,
 
-    [NG_1 - NG_Q]    = B_1,    // 新下駄
-    [NG_2 - NG_Q]    = B_2,    // 新下駄
-    [NG_3 - NG_Q]    = B_3,    // 新下駄
-    [NG_4 - NG_Q]    = B_4,    // 新下駄
-    [NG_5 - NG_Q]    = B_5,    // 新下駄
-    [NG_6 - NG_Q]    = B_6,    // 新下駄
-    [NG_7 - NG_Q]    = B_7,    // 新下駄
-    [NG_8 - NG_Q]    = B_8,    // 新下駄
-    [NG_9 - NG_Q]    = B_9,    // 新下駄
-    [NG_0 - NG_Q]    = B_0,    // 新下駄
+    [NG_1 - NG_Q]    = BB_1,   // 新下駄
+    [NG_2 - NG_Q]    = BB_2,   // 新下駄
+    [NG_3 - NG_Q]    = BB_3,   // 新下駄
+    [NG_4 - NG_Q]    = BB_4,   // 新下駄
+    [NG_5 - NG_Q]    = BB_5,   // 新下駄
+    [NG_6 - NG_Q]    = BB_6,   // 新下駄
+    [NG_7 - NG_Q]    = BB_7,   // 新下駄
+    [NG_8 - NG_Q]    = BB_8,   // 新下駄
+    [NG_9 - NG_Q]    = BB_9,   // 新下駄
+    [NG_0 - NG_Q]    = BB_0,   // 新下駄
     [NG_MINS - NG_Q] = B_MINS, // 新下駄
 
     [NG_X1 - NG_Q] = B_X1, // 新下駄
 
     [NG_SHFT - NG_Q] = B_SHFT, // 新下駄
 };
-}
-;
 typedef struct {
     uint64_t key; // 新下駄
     char     kana[5];
@@ -116,16 +114,16 @@ typedef struct {
 const PROGMEM naginata_keymap ngmap[] = {
     // 新下駄
     // 単独
-    {.key = B_1, .kana = "1"},
-    {.key = B_2, .kana = "2"},
-    {.key = B_3, .kana = "3"},
-    {.key = B_4, .kana = "4"},
-    {.key = B_5, .kana = "5"},
-    {.key = B_6, .kana = "6"},
-    {.key = B_7, .kana = "7"},
-    {.key = B_8, .kana = "8"},
-    {.key = B_9, .kana = "9"},
-    {.key = B_0, .kana = "0"},
+    {.key = BB_1, .kana = "1"},
+    {.key = BB_2, .kana = "2"},
+    {.key = BB_3, .kana = "3"},
+    {.key = BB_4, .kana = "4"},
+    {.key = BB_5, .kana = "5"},
+    {.key = BB_6, .kana = "6"},
+    {.key = BB_7, .kana = "7"},
+    {.key = BB_8, .kana = "8"},
+    {.key = BB_9, .kana = "9"},
+    {.key = BB_0, .kana = "0"},
     {.key = B_MINS, .kana = "-"},
     {.key = B_SHFT, .kana = " "},
 
@@ -198,11 +196,11 @@ const PROGMEM naginata_keymap ngmap[] = {
     {.key = B_D | B_DOT, .kana = "pu"},
     {.key = B_D | B_SLSH, .kana = "vu"},
 
-    {.key = B_K | B_1, .kana = "la"},
-    {.key = B_K | B_2, .kana = "li"},
-    {.key = B_K | B_3, .kana = "lu"},
-    {.key = B_K | B_4, .kana = "le"},
-    {.key = B_K | B_5, .kana = "lo"},
+    {.key = B_K | BB_1, .kana = "la"},
+    {.key = B_K | BB_2, .kana = "li"},
+    {.key = B_K | BB_3, .kana = "lu"},
+    {.key = B_K | BB_4, .kana = "le"},
+    {.key = B_K | BB_5, .kana = "lo"},
 
     // 薬指シフト
     {.key = B_L | B_Q, .kana = "di"},
@@ -238,11 +236,11 @@ const PROGMEM naginata_keymap ngmap[] = {
     {.key = B_S | B_DOT, .kana = "po"},
     {.key = B_S | B_SLSH, .kana = "tile"},
 
-    {.key = B_L | B_1, .kana = "xya"},
-    {.key = B_L | B_2, .kana = "mya"},
-    {.key = B_L | B_3, .kana = "myu"},
-    {.key = B_L | B_4, .kana = "myo"},
-    {.key = B_L | B_5, .kana = "xwa"},
+    {.key = B_L | BB_1, .kana = "xya"},
+    {.key = B_L | BB_2, .kana = "mya"},
+    {.key = B_L | BB_3, .kana = "myu"},
+    {.key = B_L | BB_4, .kana = "myo"},
+    {.key = B_L | BB_5, .kana = "xwa"},
 
     {.key = B_I | B_E, .kana = "sho"},
     {.key = B_I | B_W, .kana = "shu"},
@@ -257,10 +255,10 @@ const PROGMEM naginata_keymap ngmap[] = {
     {.key = B_I | B_G, .kana = "cho"},
     {.key = B_I | B_B, .kana = "cha"},
 
-    {.key = B_I | B_1, .kana = "xyu"},
-    {.key = B_I | B_2, .kana = "bya"},
-    {.key = B_I | B_3, .kana = "byu"},
-    {.key = B_I | B_4, .kana = "byo"},
+    {.key = B_I | BB_1, .kana = "xyu"},
+    {.key = B_I | BB_2, .kana = "bya"},
+    {.key = B_I | BB_3, .kana = "byu"},
+    {.key = B_I | BB_4, .kana = "byo"},
 
     {.key = B_O | B_E, .kana = "jo"},
     {.key = B_O | B_W, .kana = "ju"},
@@ -275,10 +273,10 @@ const PROGMEM naginata_keymap ngmap[] = {
     {.key = B_O | B_G, .kana = "nyo"},
     {.key = B_O | B_B, .kana = "nya"},
 
-    {.key = B_O | B_1, .kana = "xyo"},
-    {.key = B_O | B_2, .kana = "pya"},
-    {.key = B_O | B_3, .kana = "pyu"},
-    {.key = B_O | B_4, .kana = "pyo"},
+    {.key = B_O | BB_1, .kana = "xyo"},
+    {.key = B_O | BB_2, .kana = "pya"},
+    {.key = B_O | BB_3, .kana = "pyu"},
+    {.key = B_O | BB_4, .kana = "pyo"},
 
     // others
     // [RF]・[RG]・　[HU]／
