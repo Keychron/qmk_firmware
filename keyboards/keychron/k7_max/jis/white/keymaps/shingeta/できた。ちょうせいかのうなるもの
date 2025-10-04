@@ -1,0 +1,59 @@
+// 薙刀式の入力処理
+
+// タイマー用の変数
+static uint16_t naginata_timer = 0;
+static bool     timer_active   = false;
+
+bool process_naginata(uint16_t keycode, keyrecord_t *record) {
+    if (record->event.pressed) {
+        switch (keycode) {
+            case NG_Q ... NG_SHFT:              // 新下駄
+                ninputs[ng_chrcount] = keycode; // キー入力をバッファに貯める
+                ng_chrcount++;
+                keycomb |= ng_key[keycode - NG_Q];
+
+                // キーの重ね合わせ
+                if (is_shingeta) {
+                    // 2文字押したら即座に処理を開始（優先）
+                    if (ng_chrcount > 1) {
+                        timer_active = false; // タイマーをキャンセル
+                        naginata_type();
+                    } else if (ng_chrcount == 1) {
+                        // 1文字目：タイマーを開始
+                        naginata_timer = timer_read();
+                        timer_active   = true;
+                    }
+                }
+                return false;
+                break;
+        }
+    } else { // key release
+        switch (keycode) {
+            case NG_Q ... NG_SHFT: // 新下駄
+                // キーリリースを優先：即座に処理
+                if (ng_chrcount > 0) {
+                    timer_active = false; // タイマーをキャンセル
+                    naginata_type();
+                }
+                keycomb &= ~ng_key[keycode - NG_Q]; // キーの重ね合わせ
+                return false;
+                break;
+        }
+    }
+    return true;
+}
+
+// matrix_scan_user() に追加する処理
+void naginata_timer_task(void) {
+    if (timer_active && ng_chrcount > 0) {
+        // 50ms経過したら処理を実行
+        if (timer_elapsed(naginata_timer) > 50) {
+            timer_active = false;
+            naginata_type();
+        }
+    }
+}
+
+void matrix_scan_user(void) {
+    naginata_timer_task();
+}

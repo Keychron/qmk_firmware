@@ -10,6 +10,7 @@
 #endif // INTROSPECTION_KEYMAP_C
 
 #include "keymap_introspection.h"
+#include "quantum.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Key mapping
@@ -73,7 +74,6 @@ __attribute__((weak)) uint16_t keycode_at_encodermap_location(uint8_t layer_num,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Combos
-
 #if defined(COMBO_ENABLE)
 
 uint16_t combo_count_raw(void) {
@@ -83,10 +83,10 @@ __attribute__((weak)) uint16_t combo_count(void) {
     return combo_count_raw();
 }
 
-combo_t* combo_get_raw(uint16_t combo_idx) {
+combo_t *combo_get_raw(uint16_t combo_idx) {
     return &key_combos[combo_idx];
 }
-__attribute__((weak)) combo_t* combo_get(uint16_t combo_idx) {
+__attribute__((weak)) combo_t *combo_get(uint16_t combo_idx) {
     return combo_get_raw(combo_idx);
 }
 

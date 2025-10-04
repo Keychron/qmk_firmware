@@ -1,0 +1,1 @@
+SUBS(helloWorld, "QMK is pretty rad eh?", KC_H, KC_J)
