@@ -15,7 +15,7 @@
  */
 
 #include QMK_KEYBOARD_H
-#include "subbrand_common.h"
+#include "lemokey_common.h"
 
 enum layers {
     BASE,
@@ -50,7 +50,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 #endif
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if(!process_record_subbrand_common(keycode, record)) {
+    if(!process_record_lemokey_common(keycode, record)) {
         return false;
     }
     return true;
