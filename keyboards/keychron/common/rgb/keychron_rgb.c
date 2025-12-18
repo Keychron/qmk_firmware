@@ -36,8 +36,12 @@
 #    define PER_KEY_RGB_VER 0x0001
 
 #    define OFFSET_OS_INDICATOR ((uint8_t *)(EECONFIG_BASE_CUSTOM_RGB))
+#ifdef RETAIL_DEMO_ENABLE
 #    define OFFSET_RETAIL_DEMO (OFFSET_OS_INDICATOR + sizeof(os_indicator_config_t))
 #    define OFFSET_PER_KEY_RGB_TYPE (OFFSET_RETAIL_DEMO + sizeof(retail_demo_enable))
+#else
+#    define OFFSET_PER_KEY_RGB_TYPE (OFFSET_OS_INDICATOR + sizeof(os_indicator_config_t))
+#endif
 #    define OFFSET_PER_KEY_RGBS (OFFSET_PER_KEY_RGB_TYPE + sizeof(per_key_rgb_type))
 #    define OFFSET_LAYER_FLAGS (OFFSET_PER_KEY_RGBS + sizeof(per_key_led))
 #    define OFFSET_EFFECT_LIST (OFFSET_LAYER_FLAGS + sizeof(regions))
@@ -60,7 +64,9 @@ enum {
     MIXED_EFFECT_RGB_SET_EFFECT_LIST,
 };
 
+#ifdef RETAIL_DEMO_ENABLE
 extern uint8_t retail_demo_enable;
+#endif
 extern uint8_t per_key_rgb_type;
 extern HSV     per_key_led[RGB_MATRIX_LED_COUNT];
 extern HSV     default_per_key_led[RGB_MATRIX_LED_COUNT];
@@ -79,9 +85,11 @@ void eeconfig_reset_custom_rgb(void) {
     os_ind_cfg.hsv.s       = 0;
     os_ind_cfg.hsv.h = os_ind_cfg.hsv.v = 0xFF;
 
+    #ifdef RETAIL_DEMO_ENABLE
     eeprom_update_block(&os_ind_cfg, OFFSET_OS_INDICATOR, sizeof(os_ind_cfg));
     retail_demo_enable = 0;
     eeprom_read_block(&retail_demo_enable, (uint8_t *)(OFFSET_RETAIL_DEMO), sizeof(retail_demo_enable));
+    #endif
     per_key_rgb_type = 0;
     eeprom_update_block(&per_key_rgb_type, OFFSET_PER_KEY_RGB_TYPE, sizeof(per_key_rgb_type));
 
@@ -113,7 +121,9 @@ void eeconfig_init_custom_rgb(void) {
     eeprom_update_dword(EECONFIG_KEYBOARD, (EECONFIG_KB_DATA_VERSION));
 
     eeprom_read_block(&os_ind_cfg, OFFSET_OS_INDICATOR, sizeof(os_ind_cfg));
+    #ifdef RETAIL_DEMO_ENABLE
     eeprom_read_block(&retail_demo_enable, (uint8_t *)(OFFSET_RETAIL_DEMO), sizeof(retail_demo_enable));
+    #endif
 
     if (os_ind_cfg.hsv.v < 128) os_ind_cfg.hsv.v = 128;
     // Load per key rgb led
@@ -125,9 +135,11 @@ void eeconfig_init_custom_rgb(void) {
     update_mixed_rgb_effect_count();
 }
 
+#ifdef RETAIL_DEMO_ENABLE
 void rgb_save_retail_demo(void) {
     eeprom_update_block(&retail_demo_enable, (uint8_t *)(OFFSET_RETAIL_DEMO), sizeof(retail_demo_enable));
 }
+#endif
 
 static bool rgb_get_version(uint8_t *data) {
     data[1] = PER_KEY_RGB_VER & 0xFF;
