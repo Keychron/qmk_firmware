@@ -68,10 +68,80 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 };
 #endif
 
-// clang-format on
+// ============================================================
+//   PM 专属：K17 Max 随机心跳模块 (Option + PgUp 开关版)
+// ============================================================
+
+// 引用必要的头文件
+#include "timer.h"
+
+// 1. 定义配置变量
+static uint32_t pm_timer = 0;       
+static uint32_t pm_random_wait = 0; 
+static bool pm_auto_mode = false; // 默认关闭，需按 Option+PgUp 开启
+
+// 2. 时间范围 (3分钟 - 7分钟)
+#define MIN_TIME 180000 
+#define MAX_TIME 420000 
+
+// 3. 生成随机时间算法
+uint32_t get_next_random_delay(void) {
+    return MIN_TIME + (timer_read32() % (MAX_TIME - MIN_TIME));
+}
+
+// 4. 心跳引擎：每毫秒检查一次
+void matrix_scan_user(void) {
+    if (pm_auto_mode) {
+        // 第一次启动时，初始化随机种子
+        if (pm_random_wait == 0) {
+            pm_random_wait = get_next_random_delay();
+            pm_timer = timer_read32();
+        }
+
+        if (timer_elapsed32(pm_timer) > pm_random_wait) {
+            
+            // 执行 Cmd + Tab
+            register_code(KC_LGUI); 
+            tap_code(KC_TAB);
+            unregister_code(KC_LGUI);
+
+            // 重置计时
+            pm_random_wait = get_next_random_delay();
+            pm_timer = timer_read32();
+        }
+    }
+}
+
+// 5. 按键监听逻辑 (完美融合原厂功能)
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    
+    // --- 第一步：必须先运行 Keychron 原厂逻辑 (蓝牙/灯光等) ---
     if (!process_record_keychron_common(keycode, record)) {
         return false;
     }
+
+    // --- 第二步：检测你的 PM 开关 ---
+    switch (keycode) {
+        case KC_PGUP: // 当按下 PageUp 时
+            // 检查是否按住了 Option 键 (左或右都可以)
+            if ( (get_mods() & MOD_BIT(KC_LALT)) || (get_mods() & MOD_BIT(KC_RALT)) ) {
+                if (record->event.pressed) {
+                    // 切换开关状态
+                    pm_auto_mode = !pm_auto_mode;
+                    
+                    // 如果开启，重置计时器
+                    if (pm_auto_mode) {
+                        pm_timer = timer_read32();
+                        pm_random_wait = get_next_random_delay();
+                    } else {
+                        pm_random_wait = 0; // 关闭时清零
+                    }
+                }
+                return false; // 拦截按键，不让页面滚动
+            }
+            break;
+    }
+
     return true;
 }
+
