@@ -18,9 +18,6 @@
 
 #include "eeconfig_kb.h"
 
-/* Turn off effects when suspended */
-#define RGB_DISABLE_WHEN_USB_SUSPENDED
-
 /* HC595 Shift Register for Matrix Scan */
 #define HC595_STCP B0
 #define HC595_SHCP A1
