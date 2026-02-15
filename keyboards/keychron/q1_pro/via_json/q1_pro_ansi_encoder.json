@@ -1,5 +1,5 @@
 {
-  "name": "Keychron Q1 Pro ANSI Knob",
+  "name": "Keychron Q1 Pro ANSI Encoder",
   "vendorId": "0x3434",
   "productId": "0x0610",
   "keycodes": ["qmk_lighting"],

@@ -8,11 +8,11 @@ A customizable 75% keyboard with knob.
 
 Make example for this keyboard (after setting up your build environment):
 
-    make keychron/q1_pro/ansi/encoder:keychron
+    make keychron/q1_pro/ansi_encoder:keychron
 
 Flashing example for this keyboard:
 
-    make keychron/q1_pro/ansi/encoder:keychron:flash
+    make keychron/q1_pro/ansi_encoder:keychron:flash
 
 **Reset Key**: Connect the USB cable, toggle mode switch to "Off", hold down the *Esc* key or reset button underneath space bar, then toggle the switch to "Cable".
 

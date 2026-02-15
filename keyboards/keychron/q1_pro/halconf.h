@@ -16,7 +16,7 @@
 
 #pragma once
 
-#define _CHIBIOS_HAL_CONF_VER_8_0_
+#define _CHIBIOS_HAL_CONF_VER_8_4_
 
 #define HAL_USE_I2C TRUE
 
