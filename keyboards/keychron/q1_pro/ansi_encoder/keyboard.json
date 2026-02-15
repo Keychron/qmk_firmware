@@ -1,7 +1,7 @@
 {
     "usb": {
         "pid": "0x0610",
-        "device_version": "1.0.0"
+        "device_version": "1.2.0"
     },
     "features": {
         "encoder": true,
