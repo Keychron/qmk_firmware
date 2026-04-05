@@ -6,6 +6,8 @@ USE_PROCESS_STACKSIZE = 0x2000
 USE_FPU = yes
 
 include keyboards/keychron/common/analog_matrix/analog_matrix.mk
+OPENRGB_ENABLE = yes
+
 include keyboards/keychron/common/keychron_common.mk
 include keyboards/keychron/common/wireless/wireless.mk
 

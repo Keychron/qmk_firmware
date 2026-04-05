@@ -56,3 +56,8 @@
 #    define RGB_MATRIX_FRAMEBUFFER_EFFECTS
 
 #endif
+
+/* OpenRGB requires 64-byte raw HID reports */
+#define RAW_EPSIZE 64
+
+

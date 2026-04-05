@@ -27,6 +27,9 @@
 #ifdef ANANLOG_MATRIX
 #    include "analog_matrix.h"
 #endif
+#ifdef OPENRGB_ENABLE
+#    include "openrgb.h"
+#endif
 
 #define PROTOCOL_VERSION 0x02
 
@@ -134,6 +137,11 @@ bool kc_raw_hid_rx(uint8_t *data, uint8_t length) {
             return true;
 #endif
         default:
+#ifdef OPENRGB_ENABLE
+            if (openrgb_command_handler(data, length)) {
+                return true;
+            }
+#endif
             return false;
     }
 

@@ -7,6 +7,12 @@ SRC += \
 	$(KEYCHRON_COMMON_DIR)/keychron_raw_hid.c \
     $(KEYCHRON_COMMON_DIR)/factory_test.c
 
+ifeq ($(strip $(OPENRGB_ENABLE)), yes)
+    OPT_DEFS += -DOPENRGB_ENABLE
+    SRC += $(KEYCHRON_COMMON_DIR)/openrgb.c
+    RAW_ENABLE = yes
+endif
+
 VPATH += $(TOP_DIR)/keyboards/keychron/$(KEYCHRON_COMMON_DIR)
 
 ESC := $(shell printf '\033')
