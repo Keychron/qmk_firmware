@@ -22,6 +22,29 @@
 
 static uint32_t power_on_indicator_timer;
 
+// Override analog matrix init to reduce boot time for Mac boot selector
+#ifdef ANANLOG_MATRIX
+extern void analog_matrix_eeconfig_init(void);
+extern void he_eeprom_driver_init(void);
+extern uint16_t calibrate_values[MATRIX_ROWS][MATRIX_COLS][31];
+extern uint8_t cur_calib;
+
+#ifndef ANALOG_MATRIX_BOOT_SCANS
+#    define ANALOG_MATRIX_BOOT_SCANS 5
+#endif
+
+void analog_matrix_init(void) {
+    he_eeprom_driver_init();
+    analog_matrix_eeconfig_init();
+    cur_calib = 0;
+    memset(calibrate_values, 0, MATRIX_ROWS * MATRIX_COLS * 31 * sizeof(calibrate_values[0][0][0]));
+    
+    // Reduced scans for faster boot - compromise between stability and boot speed
+    for (uint8_t i = 0; i < ANALOG_MATRIX_BOOT_SCANS; i++)
+        matrix_scan();
+}
+#endif
+
 #ifdef DIP_SWITCH_ENABLE
 bool dip_switch_update_kb(uint8_t index, bool active) {
     if (index == 0) {
