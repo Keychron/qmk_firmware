@@ -25,8 +25,10 @@
 #    define RGB_MATRIX_LED_COUNT 108
 
 /* Indications */
-#    define NUM_LOCK_INDEX 37
-#    define CAPS_LOCK_INDEX 62
+/* Order is typically NUM, CAPS, SCROLL*/
+#    define NUM_LOCK_INDEX 16
+#    define CAPS_LOCK_INDEX 17
+#    define SCROLL_LOCK_INDEX 18
 #    define LOW_BAT_IND_INDEX \
         { 98 }
 
