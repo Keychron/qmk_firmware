@@ -43,7 +43,7 @@ bool per_key_rgb_solid(effect_params_t *params) {
     return rgb_matrix_check_finished_leds(led_max);
 }
 
-bool per_key_rgb_breahting(effect_params_t *params) {
+bool per_key_rgb_breathing(effect_params_t *params) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
     HSV      hsv;
     uint16_t time = scale16by8(g_rgb_timer, rgb_matrix_config.speed / 8);
@@ -127,6 +127,51 @@ bool per_key_rgb_effect_runner_reactive_splash(uint8_t start, effect_params_t *p
         rgb_matrix_region_set_color(params->region, i, rgb.r, rgb.g, rgb.b);
     }
     return rgb_matrix_check_finished_leds(led_max);
+}
+
+static HSV solid_reactive_wide_math(HSV hsv, int16_t dx, int16_t dy, uint8_t dist, uint16_t tick) {
+    uint16_t effect = tick + dist * 5;
+    if (effect > 255) effect = 255;
+#    ifdef RGB_MATRIX_SOLID_REACTIVE_GRADIENT_MODE
+    hsv.h = scale16by8(g_rgb_timer, qadd8(rgb_matrix_config.speed, 8) >> 4);
+#    endif
+    hsv.v = qadd8(hsv.v, 255 - effect);
+    return hsv;
+}
+
+bool per_key_rgb_reactive_multi_wide(effect_params_t *params) {
+    return per_key_rgb_effect_runner_reactive_splash(0, params, &solid_reactive_wide_math);
+}
+
+static HSV SPLASH_math(HSV hsv, int16_t dx, int16_t dy, uint8_t dist, uint16_t tick) {
+    uint16_t effect = tick - dist;
+    if (effect > 255) effect = 255;
+    hsv.h += effect;
+    hsv.v = qadd8(hsv.v, 255 - effect);
+    return hsv;
+}
+
+bool per_key_rgb_reactive_splash(effect_params_t *params) {
+    return per_key_rgb_effect_runner_reactive_splash(qsub8(g_last_hit_tracker.count, 1), params, &SPLASH_math);
+}
+
+bool per_key_rgb(effect_params_t *params) {
+    switch (per_key_rgb_type) {
+        case PER_KEY_RGB_BREATHING:
+            return per_key_rgb_breathing(params);
+
+        case PER_KEY_RGB_REACTIVE_SIMPLE:
+            return per_key_rgb_reactive_simple(params);
+
+        case PER_KEY_RGB_REACTIVE_MULTI_WIDE:
+            return per_key_rgb_reactive_multi_wide(params);
+
+        case PER_KEY_RGB_REACTIVE_SPLASH:
+            return per_key_rgb_reactive_splash(params);
+
+        default:
+            return per_key_rgb_solid(params);
+    }
 }
 
 #endif
