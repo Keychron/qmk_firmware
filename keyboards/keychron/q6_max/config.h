@@ -61,9 +61,9 @@
 #    if defined(RGB_MATRIX_ENABLE)
 
 #        define BT_INDCATION_LED_MATRIX_LIST \
-            { 21, 22, 23 }
+            { 1, 2, 3 }
 
-#        define P24G_INDICATION_LED_INDEX 24
+#        define P24G_INDICATION_LED_INDEX 4
 
 #        define BAT_LEVEL_LED_LIST \
             { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 }
