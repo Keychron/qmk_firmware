@@ -433,7 +433,7 @@ void os_state_indicate(void) {
     }
 #    endif
 #    if defined(SCROLL_LOCK_INDEX)
-    if (host_keyboard_led_state().compose && !os_ind_cfg.disable.scroll_lock) {
+    if (host_keyboard_led_state().scroll_lock && !os_ind_cfg.disable.scroll_lock) {
         rgb_matrix_set_color(SCROLL_LOCK_INDEX, rgb.r, rgb.g, rgb.b);
     }
 #    endif
