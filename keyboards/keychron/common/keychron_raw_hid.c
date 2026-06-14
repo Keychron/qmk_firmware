@@ -18,6 +18,7 @@
 #include "keychron_common.h"
 #include "keychron_raw_hid.h"
 #include "raw_hid.h"
+#include "usb_descriptor.h"
 #include "version.h"
 #include "language.h"
 #ifdef FACTORY_TEST_ENABLE
@@ -34,6 +35,8 @@
 #endif
 #if defined(LK_WIRELESS_ENABLE) || defined(KC_BLUETOOTH_ENABLE)
 #    include "wireless.h"
+#    include "transport.h"
+#    include "battery.h"
 #    ifdef LK_WIRELESS_ENABLE
 #        include "lkbt51.h"
 #    else
@@ -72,6 +75,9 @@ void get_support_feature(uint8_t *data) {
         ;
 
     data[2] = (FEATURE_QUICK_START | FEATURE_NKRO) >> 8;
+#    if defined(LK_WIRELESS_ENABLE) || defined(KC_BLUETOOTH_ENABLE)
+    data[2] |= (FEATURE_BATTERY >> 8);
+#    endif
 }
 
 #    ifdef ANANLOG_MATRIX
@@ -128,6 +134,24 @@ void kc_raw_hid_send(uint8_t src, uint8_t *data, uint8_t len) {
 #    endif
 }
 
+#    if defined(LK_WIRELESS_ENABLE) || defined(KC_BLUETOOTH_ENABLE)
+/* Proactively push the battery state to the host over the wireless link.
+ * The host only needs to READ the dongle's raw HID interface; this works even
+ * if the host->keyboard (downlink) raw HID path is not bridged by the dongle. */
+void kc_battery_push(void) {
+    uint8_t  data[RAW_EPSIZE] = {0};
+    uint16_t bat_voltage      = battery_get_voltage();
+    data[0]                   = KC_GET_BATTERY;
+    data[1]                   = battery_get_percentage();
+    data[2]                   = bat_voltage & 0xFF;
+    data[3]                   = (bat_voltage >> 8) & 0xFF;
+    data[4]                   = battery_get_charging_state();
+    data[5]                   = get_transport();
+    data[6]                   = KC_BATTERY_MODEL_ID;
+    kc_raw_hid_send(RAW_HID_SRC_WIRELESS, data, RAW_EPSIZE);
+}
+#    endif
+
 bool kc_raw_hid_rx(uint8_t src, uint8_t *data, uint8_t length) {
 #    if defined(ANANLOG_MATRIX) && defined(VIA_ENABLE)
     if (src == RAW_HID_SRC_USB && data[0] == id_get_keyboard_value && data[1] == id_switch_matrix_state) {
@@ -166,6 +190,18 @@ bool kc_raw_hid_rx(uint8_t src, uint8_t *data, uint8_t length) {
         case KC_GET_DEFAULT_LAYER:
             data[1] = get_highest_layer(default_layer_state);
             break;
+
+#    if defined(LK_WIRELESS_ENABLE) || defined(KC_BLUETOOTH_ENABLE)
+        case KC_GET_BATTERY: {
+            uint16_t bat_voltage = battery_get_voltage();
+            data[1]              = battery_get_percentage();
+            data[2]              = bat_voltage & 0xFF;
+            data[3]              = (bat_voltage >> 8) & 0xFF;
+            data[4]              = battery_get_charging_state();
+            data[5]              = get_transport();
+            data[6]              = KC_BATTERY_MODEL_ID;
+        } break;
+#    endif
 
         case KC_MISC_CMD_GROUP:
             switch (data[1]) {
