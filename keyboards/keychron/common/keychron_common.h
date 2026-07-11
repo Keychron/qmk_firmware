@@ -20,6 +20,14 @@
 #include <assert.h>
 #include "keycodes.h"
 
+#ifndef MAC_BASE_LAYER
+#define MAC_BASE_LAYER 0
+#endif
+
+#ifndef WIN_BASE_LAYER
+#define WIN_BASE_LAYER 2
+#endif
+
 #ifndef CUSTOM_KEYCODES_ENABLE
 // clang-format off
 enum {
@@ -137,6 +145,10 @@ typedef struct PACKED {
 } key_combination_t;
 
 void keychron_common_init(void);
+#if defined(LED_MAC_OS_PIN) && defined(LED_WIN_OS_PIN)
+void keychron_os_led_trigger(void);
+void keychron_os_led_process(void);
+#endif
 bool process_record_keychron_common(uint16_t keycode, keyrecord_t *record);
 void keychron_common_task(void);
 
