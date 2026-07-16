@@ -302,7 +302,6 @@ static wear_leveling_status_t wear_leveling_write_consolidated(void) {
  */
 static wear_leveling_status_t wear_leveling_consolidate_force(void) {
     wl_dprintf("Erasing backing store\n");
-    wear_leveling_unlock();
 
     // Erase the backing store. Expectation is that any un-written values that are read back after this call come back as zero.
     bool ok = backing_store_erase();
@@ -359,7 +358,7 @@ static wear_leveling_status_t wear_leveling_append_raw(backing_store_int_t value
  * @return true if consolidation occurred
  */
 static wear_leveling_status_t wear_leveling_write_raw_multibyte(uint32_t address, const void *value, size_t length) {
-    const uint8_t *   p   = value;
+    const uint8_t    *p   = value;
     write_log_entry_t log = LOG_ENTRY_MAKE_MULTIBYTE(address, length);
     for (size_t i = 0; i < length; ++i) {
         log.raw8[3 + i] = p[i];
@@ -416,7 +415,7 @@ static wear_leveling_status_t wear_leveling_write_raw_multibyte(uint32_t address
  * Handles the actual writing of logical data into the write log section of the backing store.
  */
 static wear_leveling_status_t wear_leveling_write_raw(uint32_t address, const void *value, size_t length) {
-    const uint8_t *        p         = value;
+    const uint8_t         *p         = value;
     size_t                 remaining = length;
     wear_leveling_status_t status    = WEAR_LEVELING_SUCCESS;
     while (remaining > 0) {
@@ -556,7 +555,7 @@ static wear_leveling_status_t wear_leveling_playback_log(void) {
                     if (!ok) {
                         wl_dprintf("Failed to load from backing store, skipping playback of write log\n");
                         cancel_playback = true;
-                        status = WEAR_LEVELING_FAILED;
+                        status          = WEAR_LEVELING_FAILED;
                         break;
                     }
                     address += (BACKING_STORE_WRITE_SIZE);

@@ -26,6 +26,9 @@
 #ifdef ANANLOG_MATRIX
 #    include "analog_matrix.h"
 #endif
+#ifdef OPENRGB_ENABLE
+#    include "openrgb.h"
+#endif
 #ifdef DYNAMIC_DEBOUNCE_ENABLE
 #    include "keychron_debounce.h"
 #endif
@@ -264,6 +267,11 @@ bool kc_raw_hid_rx(uint8_t src, uint8_t *data, uint8_t length) {
 
 #    endif
         default:
+#    ifdef OPENRGB_ENABLE
+            if (src == RAW_HID_SRC_USB && openrgb_command_handler(data, length)) {
+                return true;
+            }
+#    endif
             return false;
     }
 

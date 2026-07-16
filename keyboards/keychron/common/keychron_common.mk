@@ -31,6 +31,12 @@ include $(KEYCHRON_COMMON_DIR)/rgb/rgb.mk
 endif
 endif
 
+ifeq ($(strip $(OPENRGB_ENABLE)), yes)
+    OPT_DEFS += -DOPENRGB_ENABLE
+    SRC += $(KEYCHRON_COMMON_DIR)/openrgb.c
+    RAW_ENABLE = yes
+endif
+
 ifeq ($(strip $(USB_REPORT_INTERVAL_ENABLE)), yes)
 OPT_DEFS += -DUSB_REPORT_INTERVAL_ENABLE
 SRC += $(KEYCHRON_COMMON_DIR)/usb_report_rate.c

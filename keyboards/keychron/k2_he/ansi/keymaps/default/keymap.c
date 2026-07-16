@@ -61,3 +61,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______,            _______,  _______,  _______,  _______,  BAT_LVL,  _______,  _______,  _______,  _______,  _______,            _______,  _______,  _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,  _______,  _______)
 };
+
+#ifdef OPENRGB_ENABLE
+void keyboard_post_init_user(void) {
+    rgb_matrix_mode_noeeprom(RGB_MATRIX_OPENRGB_DIRECT);
+}
+#endif
