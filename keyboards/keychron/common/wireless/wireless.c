@@ -606,13 +606,9 @@ void wireless_event_task(void) {
             case EVT_CONECTION_INTERVAL:
                 report_buffer_set_inverval(event.params.interval);
                 break;
-#if defined(RAW_ENABLE) && defined(WILRESS_RAW_ENABLE)
+#if defined(RAW_ENABLE) && defined(WIRELESS_RAW_ENABLE)
             case EVT_RAW_HID:
-#    ifdef VIA_ENABLE
-                via_raw_hid_receive(RAW_HID_SRC_WIRELESS, event.params.raw_hid_data, 32);
-#    else
-                kc_raw_hid_rx(RAW_HID_SRC_WIRELESS, event.params.raw_hid_data, 32);
-#    endif
+                raw_hid_receive(RAW_HID_SRC_WIRELESS, event.params.raw_hid_data, 32);
                 lpm_timer_reset();
                 break;
 #endif
