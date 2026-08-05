@@ -289,6 +289,18 @@ void battery_calculte_voltage(uint16_t value) {
     battery_set_voltage(voltage);
 }
 
+/**
+ * Default no-op: only exists so via_command_kb()'s default case below has
+ * something to call regardless of which keymap is being built. A keymap
+ * that wants to handle raw HID command IDs this board doesn't already
+ * claim (0xAA/0xAB above) can define its own strong raw_hid_receive_kb()
+ * to override this weak one — same override convention QMK itself uses
+ * for via_command_kb().
+ */
+__attribute__((weak)) bool raw_hid_receive_kb(uint8_t *data, uint8_t length) {
+    return false;
+}
+
 bool via_command_kb(uint8_t *data, uint8_t length) {
     switch (data[0]) {
 #ifdef KC_BLUETOOTH_ENABLE
@@ -302,7 +314,7 @@ bool via_command_kb(uint8_t *data, uint8_t length) {
             break;
 #endif
         default:
-            return false;
+            return raw_hid_receive_kb(data, length);
     }
 
     return true;
