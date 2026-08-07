@@ -32,6 +32,7 @@
 #include "lpm.h"
 #include "transport.h"
 #include "battery.h"
+#include "bat_level_animation.h"
 #include "report_buffer.h"
 #include "keychron_common.h"
 

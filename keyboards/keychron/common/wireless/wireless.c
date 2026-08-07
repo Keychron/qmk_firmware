@@ -687,8 +687,10 @@ bool wireless_lpm_set(uint8_t *data) {
 
     // Reset backlight timeout
     if ((get_transport() & TRANSPORT_WIRELESS) && wireless_state == WT_CONNECTED) {
+#if defined(RGB_MATRIX_ENABLE) || defined(LED_MATRIX_ENABLE)
         indicator_set_backlit_timeout(backlit_disable_time * 1000);
         indicator_reset_backlit_time();
+#endif
 
 #    ifdef MOUSEKEY_ENABLE
         // Wiggle mouse to reset bluetooth module timer

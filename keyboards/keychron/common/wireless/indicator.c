@@ -42,27 +42,27 @@
 #include "eeprom.h"
 
 #ifdef BT_HOST_LED_MATRIX_LIST
-#error "BT_HOST_LED_MATRIX_LIST is deprecated, please use BT_INDCATION_LED_MATRIX_LIST instead"
+#    error "BT_HOST_LED_MATRIX_LIST is deprecated, please use BT_INDCATION_LED_MATRIX_LIST instead"
 #endif
 
 #ifdef BT_HOST_LED_PIN_LIST
-#error "BT_HOST_LED_PIN_LIST is deprecated, please use BT_INDICATION_LED_PIN_LIST instead"
+#    error "BT_HOST_LED_PIN_LIST is deprecated, please use BT_INDICATION_LED_PIN_LIST instead"
 #endif
 
 #ifdef P2P4G_HOST_LED_MATRIX_LIST
-#error "P2P4G_HOST_LED_MATRIX_LIST is deprecated, please use P24G_INDICATION_LED_INDEX instead"
+#    error "P2P4G_HOST_LED_MATRIX_LIST is deprecated, please use P24G_INDICATION_LED_INDEX instead"
 #endif
 
 #ifdef P24G_HOST_LED_PIN_LIST
-#error "P24G_HOST_LED_PIN_LIST is deprecated, please use P24G_LED_PIN instead"
+#    error "P24G_HOST_LED_PIN_LIST is deprecated, please use P24G_LED_PIN instead"
 #endif
 
 #ifdef P24G_INDICATION_LED_PIN_LIST
-#error "P24G_INDICATION_LED_PIN_LIST is deprecated, please use P24G_LED_PIN instead"
+#    error "P24G_INDICATION_LED_PIN_LIST is deprecated, please use P24G_LED_PIN instead"
 #endif
 
 #ifdef HOST_LED_PIN_ON_STATE
-#error "HOST_LED_PIN_ON_STATE is deprecated, please use BT_INDICATION_LED_ON_STATE instead"
+#    error "HOST_LED_PIN_ON_STATE is deprecated, please use BT_INDICATION_LED_ON_STATE instead"
 #endif
 
 #define INDEX_MASK 0x0F
@@ -594,13 +594,15 @@ void indicator_battery_low(void) {
 #    if defined(BAT_LOW_LED_PIN)
                 gpio_write_pin(BAT_LOW_LED_PIN, !BAT_LOW_LED_PIN_ON_STATE);
 #    endif
+#    if defined(RGB_MATRIX_ENABLE) || defined(LED_MATRIX_ENABLE)
                 if (!indicator_config.value
-#    if defined(NUM_LOCK_INDEX) || defined(CAPS_LOCK_INDEX) || defined(SCROLL_LOCK_INDEX) || defined(COMPOSE_LOCK_INDEX) || defined(KANA_LOCK_INDEX) || (defined(WINLOCK_LED_LIST) && !defined(WIN_LOCK_LED_PIN))
+#        if defined(NUM_LOCK_INDEX) || defined(CAPS_LOCK_INDEX) || defined(SCROLL_LOCK_INDEX) || defined(COMPOSE_LOCK_INDEX) || defined(KANA_LOCK_INDEX) || (defined(WINLOCK_LED_LIST) && !defined(WIN_LOCK_LED_PIN))
                     && LED_DRIVER_ALLOW_SHUTDOWN()
-#    endif
+#        endif
                 ) {
                     indicator_disable();
                 }
+#    endif
             }
         } else if ((bat_low_ind_state & 0x0F) > (LOW_BAT_LED_BLINK_TIMES)) {
 #    if defined(BAT_LOW_LED_PIN)

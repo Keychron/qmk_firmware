@@ -62,6 +62,10 @@ void keychron_task_kb(void) {
 
 #ifdef KC_BLUETOOTH_ENABLE
 bool lpm_is_kb_idle(void) {
+#if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
     return power_on_indicator_timer == 0 && !backlight_indicator_is_active();
+#else
+    return power_on_indicator_timer == 0;
+#endif
 }
 #endif
