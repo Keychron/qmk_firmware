@@ -7,6 +7,7 @@ USE_FPU = yes
 
 OPT_DEFS += -DSHARED_EP_ENABLE -DKEYBOARD_SHARED_EP
 OPT_DEFS += -DXINPUT_ENABLE
+OPT_DEFS += -DWIRELESS_RAW_ENABLE
 
 include keyboards/keychron/common/analog_matrix/analog_matrix.mk
 include keyboards/keychron/common/keychron_common.mk
