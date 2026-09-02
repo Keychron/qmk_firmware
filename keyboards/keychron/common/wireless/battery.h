@@ -55,6 +55,7 @@ void     battery_calculate_voltage(bool vol_src_bt, uint16_t value);
 void     battery_set_voltage(uint16_t value);
 uint16_t battery_get_voltage(void);
 uint8_t  battery_get_percentage(void);
+uint8_t  battery_get_charging_state(void);
 bool     battery_is_empty(void);
 bool     battery_is_critical_low(void);
 bool     battery_power_on_sample(void);
