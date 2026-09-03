@@ -33,6 +33,7 @@
 #    include "snap_click.h"
 #endif
 #if defined(LK_WIRELESS_ENABLE) || defined(KC_BLUETOOTH_ENABLE)
+#    include "battery.h"
 #    include "wireless.h"
 #    ifdef LK_WIRELESS_ENABLE
 #        include "lkbt51.h"
@@ -167,6 +168,12 @@ bool kc_raw_hid_rx(uint8_t src, uint8_t *data, uint8_t length) {
             data[1] = get_highest_layer(default_layer_state);
             data[2] = get_highest_layer(layer_state);
             break;
+
+#    if defined(LK_WIRELESS_ENABLE) || defined(KC_BLUETOOTH_ENABLE)
+        case KC_GET_BATTERY_LEVEL:
+            data[1] = battery_get_percentage();
+            break;
+#    endif
 
         case KC_MISC_CMD_GROUP:
             switch (data[1]) {

@@ -25,6 +25,7 @@ enum {
     KC_GET_FIRMWARE_VERSION = 0xA1,
     KC_GET_SUPPORT_FEATURE  = 0xA2,
     KC_GET_DEFAULT_LAYER    = 0xA3,
+    KC_GET_BATTERY_LEVEL    = 0xA4,
     KC_MISC_CMD_GROUP       = 0xA7,
     KC_KEYCHRON_RGB         = 0xA8,
     KC_ANALOG_MATRIX        = 0xA9,
