@@ -29,17 +29,15 @@ void keyboard_post_init_kb(void) {
     gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
     gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
 
+#ifdef LED_OS_TIMEOUT
+    keychron_os_led_trigger();
+#endif
+
     keyboard_post_init_user();
 }
 
 void keychron_task_kb(void) {
-    if (get_highest_layer(default_layer_state) == MAC_BASE_LAYER) {
-        gpio_write_pin(LED_MAC_OS_PIN, LED_OS_PIN_ON_STATE);
-        gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
-    } else {
-        gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
-        gpio_write_pin(LED_WIN_OS_PIN, LED_OS_PIN_ON_STATE);
-    }
+    keychron_os_led_process();
 }
 
 void suspend_power_down_keychron_kb(void) {

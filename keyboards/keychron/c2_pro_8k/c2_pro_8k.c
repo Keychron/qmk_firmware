@@ -26,7 +26,7 @@ bool dip_switch_update_kb(uint8_t index, bool active) {
         return false;
     }
     if (index == 0) {
-        default_layer_set(1UL << (active ? 0 : 2));
+        default_layer_set(1UL << (active ? MAC_BASE_LAYER : WIN_BASE_LAYER));
     }
     return true;
 }
@@ -50,8 +50,10 @@ void keychron_task_kb(void) {
 
             if (!host_keyboard_led_state().caps_lock) gpio_write_pin(LED_CAPS_LOCK_PIN, !LED_PIN_ON_STATE);
             if (!host_keyboard_led_state().num_lock) gpio_write_pin(LED_NUM_LOCK_PIN, !LED_PIN_ON_STATE);
-            gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
-            gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
+
+#ifdef LED_OS_TIMEOUT
+            keychron_os_led_trigger();
+#endif
         } else {
             gpio_write_pin(LED_CAPS_LOCK_PIN, LED_PIN_ON_STATE);
             gpio_write_pin(LED_NUM_LOCK_PIN, LED_PIN_ON_STATE);
@@ -59,13 +61,7 @@ void keychron_task_kb(void) {
             gpio_write_pin(LED_WIN_OS_PIN, LED_OS_PIN_ON_STATE);
         }
     } else {
-        if (get_highest_layer(default_layer_state) == MAC_BASE_LAYER) {
-            gpio_write_pin(LED_MAC_OS_PIN, LED_OS_PIN_ON_STATE);
-            gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
-        } else {
-            gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
-            gpio_write_pin(LED_WIN_OS_PIN, LED_OS_PIN_ON_STATE);
-        }
+        keychron_os_led_process();
     }
 }
 
