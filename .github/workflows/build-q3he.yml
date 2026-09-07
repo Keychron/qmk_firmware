@@ -1,0 +1,28 @@
+name: Build Q3 HE Firmware
+
+on:
+  push:
+    branches:
+      - patch-1
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/qmk/qmk_cli
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile Q3 HE firmware
+        run: qmk compile -kb keychron/q3_he/ansi_encoder -km default
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: q3-he-firmware
+          path: |
+            *.bin
+            *.hex
+            *.uf2
