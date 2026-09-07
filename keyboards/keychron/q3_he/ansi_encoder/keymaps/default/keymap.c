@@ -17,6 +17,10 @@
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
 
+enum custom_keycodes {
+    MACRO_HUMANA = SAFE_RANGE,
+};
+    
 enum layers {
     MAC_BASE,
     MAC_FN,
@@ -54,7 +58,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LCTL,  KC_LWIN,  KC_LALT,                                KC_SPC,                                 KC_RALT,  KC_RWIN,  FN_WIN,   KC_RCTL,   KC_LEFT,  KC_DOWN,  KC_RGHT),
 
     [WIN_FN] = LAYOUT_ansi_87(
-        _______,  KC_BRID,  KC_BRIU,  KC_TASK,  KC_FILE,  UG_VALD,  UG_VALU,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,  UG_TOGG,   _______,  _______,  UG_TOGG,
+        MACRO_HUMANA,  KC_BRID,  KC_BRIU,  KC_TASK,  KC_FILE,  UG_VALD,  UG_VALU,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,  UG_TOGG,   _______,  _______,  UG_TOGG,
         _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
         UG_TOGG,  UG_NEXT,  UG_VALU,  UG_HUEU,  UG_SATU,  UG_SPDU,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
         _______,  UG_PREV,  UG_VALD,  UG_HUED,  UG_SATD,  UG_SPDD,  _______,  _______,  _______,  _______,  _______,  _______,            _______,
@@ -71,3 +75,69 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
     [WIN_FN]   = {ENCODER_CCW_CW(UG_VALD, UG_VALU)},
 };
 #endif // ENCODER_MAP_ENABLE
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case MACRO_HUMANA:
+            if (record->event.pressed) {
+                srand(timer_read32());
+
+                for (int i = 0; i < 5; i++) {
+                    uint32_t inicio_rotacion = timer_read32();
+                    uint32_t duracion_rotacion = 120000 + (rand() % 5001);
+
+                    // 1. Home
+                    register_code(KC_HOME);
+                    wait_ms(110 + (rand() % 41));
+                    unregister_code(KC_HOME);
+
+                    wait_ms(2200 + (rand() % 251));
+
+                    // 2. F1
+                    register_code(KC_F1);
+                    wait_ms(80 + (rand() % 31));
+                    unregister_code(KC_F1);
+
+                    wait_ms(1250 + (rand() % 221));
+
+                    // 3. LShift + W
+                    register_code(KC_LSHIFT);
+                    wait_ms(120 + (rand() % 35));
+                    unregister_code(KC_LSHIFT);
+
+                    wait_ms(800 + (rand() % 201));
+
+                    register_code(KC_W);
+                    wait_ms(120 + (rand() % 35));
+                    unregister_code(KC_W);
+
+                    wait_ms(900 + (rand() % 201));
+
+                    // 4. Tecla Y
+                    register_code(KC_Y);
+                    wait_ms(100 + (rand() % 41));
+                    unregister_code(KC_Y);
+
+                    wait_ms(1000 + (rand() % 301));
+
+                    // 5. Bucle alternado
+                    while (timer_elapsed32(inicio_rotacion) < duracion_rotacion) {
+                        register_code(KC_LSHIFT);
+                        wait_ms(120 + (rand() % 35));
+                        unregister_code(KC_LSHIFT);
+
+                        wait_ms(800 + (rand() % 201));
+
+                        register_code(KC_W);
+                        wait_ms(120 + (rand() % 35));
+                        unregister_code(KC_W);
+
+                        wait_ms(900 + (rand() % 201));
+                    }
+
+                    wait_ms(1500 + (rand() % 1001));
+                }
+            }
+            return false;
+    }
+    return true;
+}
