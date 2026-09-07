@@ -108,7 +108,7 @@ static void macro_nueva_rotacion(void) {
     macro_proximo_evento = timer_read32();
 }
 
-void process_record_user(uint16_t keycode, keyrecord_t *record) {
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case MACRO_HUMANA:
             if (record->event.pressed && !macro_activo) {
@@ -117,13 +117,13 @@ void process_record_user(uint16_t keycode, keyrecord_t *record) {
                 macro_rotacion = 0;
                 macro_nueva_rotacion();
             }
-            return;
+            return false;
 
         case MACRO_CANCEL:
             if (record->event.pressed && macro_activo) {
                 macro_cancelar();
             }
-            return;
+            return false;
     }
 
     return true;
