@@ -8,15 +8,27 @@ on:
 
 jobs:
   build:
+    name: Compile Q3 HE
     runs-on: ubuntu-latest
-    container: ghcr.io/qmk/qmk_cli
+
+    container:
+      image: ghcr.io/qmk/qmk_cli
+
+    env:
+      SKIP_GIT: "yes"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
 
-      - name: Compile Q3 HE firmware
-        run: qmk compile -kb keychron/q3_he/ansi_encoder -km default
+      - name: Compile firmware
+        run: |
+          qmk compile \
+            -kb keychron/q3_he/ansi_encoder \
+            -km default
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
@@ -26,3 +38,4 @@ jobs:
             *.bin
             *.hex
             *.uf2
+          if-no-files-found: error
