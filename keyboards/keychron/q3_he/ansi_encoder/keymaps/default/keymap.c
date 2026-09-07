@@ -100,9 +100,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                     wait_ms(1250 + (rand() % 221));
 
                     // 3. LShift + W
-                    register_code(KC_LSHIFT);
+                    register_code(KC_LSFT);
                     wait_ms(120 + (rand() % 35));
-                    unregister_code(KC_LSHIFT);
+                    unregister_code(KC_LSFT);
 
                     wait_ms(800 + (rand() % 201));
 
@@ -121,9 +121,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
                     // 5. Bucle alternado
                     while (timer_elapsed32(inicio_rotacion) < duracion_rotacion) {
-                        register_code(KC_LSHIFT);
+                        register_code(KC_LSFT);
                         wait_ms(120 + (rand() % 35));
-                        unregister_code(KC_LSHIFT);
+                        unregister_code(KC_LSFT);
 
                         wait_ms(800 + (rand() % 201));
 
