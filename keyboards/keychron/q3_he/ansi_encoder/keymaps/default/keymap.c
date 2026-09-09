@@ -1,4 +1,4 @@
-/* Copyright 2024 ~ 2025 @ Keychron (https://www.keychron.com)
+/* Copyright 2024 ~ 2026 @ Keychron (https://www.keychron.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
 
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
+#include <stdlib.h>
 
 enum custom_keycodes {
     MACRO_HUMANA = SAFE_RANGE,
@@ -72,7 +73,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 // clang-format on
 
-
 #if defined(ENCODER_MAP_ENABLE)
 
 const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
@@ -83,53 +83,6 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 };
 
 #endif
-
-
-/* ============================================================
- * MACRO
- * ============================================================
- *
- * 5 rotaciones.
- *
- * Cada rotación:
- *
- *   F1
- *   espera 1250-1470 ms
- *   Shift
- *   W
- *   pausa 900-1100 ms
- *   Shift
- *   pausa 500-1000 ms
- *   Y
- *   pausa 900-1100 ms
- *   Shift / W / Shift / W / ...
- *
- * Duración aproximada de cada rotación:
- *   120000-125000 ms
- *
- * IMPORTANTE:
- * El temporizador de rotación NO corta una acción.
- * La rotación solamente termina después de completar
- * un ciclo completo Shift + W.
- *
- * Entre rotaciones:
- *   1500-2500 ms
- *
- * Y:
- *   Primera Y: 500-1000 ms después del segundo Shift.
- *   Después: cada 60000-63000 ms.
- *
- * El temporizador de Y es GLOBAL y NO se reinicia
- * al comenzar una nueva rotación.
- *
- * Fn + L:
- *   cancelación inmediata.
- *
- * Fn + Esc:
- *   iniciar/reiniciar después de una cancelación.
- * ============================================================
- */
-
 
 static bool macro_activo = false;
 static bool macro_y_activo = false;
@@ -143,25 +96,18 @@ static uint32_t macro_fin_rotacion = 0;
 static uint32_t macro_proximo_y = 0;
 static uint32_t macro_fin_y = 0;
 
-
-/* ------------------------------------------------------------
- * Liberar todas las teclas utilizadas por el macro
- * ------------------------------------------------------------ */
+static uint32_t macro_proximo_sws = 0;
 
 static void macro_liberar_teclas(void) {
     unregister_code(KC_F1);
     unregister_code(KC_LSFT);
     unregister_code(KC_W);
+    unregister_code(KC_S);
     unregister_code(KC_Y);
 
     macro_y_activo = false;
     macro_fin_y = 0;
 }
-
-
-/* ------------------------------------------------------------
- * Cancelación completa
- * ------------------------------------------------------------ */
 
 static void macro_cancelar(void) {
     macro_liberar_teclas();
@@ -175,33 +121,20 @@ static void macro_cancelar(void) {
     macro_fin_rotacion = 0;
 
     macro_proximo_y = 0;
+    macro_proximo_sws = 0;
 }
-
-
-/* ------------------------------------------------------------
- * Iniciar una nueva rotación
- *
- * La nueva rotación comienza exactamente aquí con F1.
- * El temporizador de 120-125 s comienza también aquí.
- * ------------------------------------------------------------ */
 
 static void macro_nueva_rotacion(void) {
     uint32_t ahora = timer_read32();
 
     macro_rotacion++;
 
-    macro_fin_rotacion =
-        ahora + 120000 + (rand() % 5001);
+    macro_fin_rotacion = ahora + 120000 + (rand() % 5001);
 
     macro_proximo_evento = ahora;
 
     macro_estado = 1;
 }
-
-
-/* ------------------------------------------------------------
- * Manejo de teclas especiales del macro
- * ------------------------------------------------------------ */
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
@@ -223,17 +156,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
                 macro_proximo_y = 0;
                 macro_fin_y = 0;
+                macro_proximo_sws = 0;
                 macro_y_activo = false;
 
-                /*
-                 * Primera rotación.
-                 * Comienza con F1.
-                 */
                 macro_nueva_rotacion();
             }
 
             return false;
-
 
         case MACRO_CANCEL:
 
@@ -247,11 +176,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-
-/* ============================================================
- * STATE MACHINE
- * ============================================================ */
-
 void housekeeping_task_user(void) {
 
     if (!macro_activo) {
@@ -260,13 +184,7 @@ void housekeeping_task_user(void) {
 
     uint32_t ahora = timer_read32();
 
-
-    /* --------------------------------------------------------
-     * Liberar Y cuando termine su duración
-     * -------------------------------------------------------- */
-
-    if (macro_y_activo &&
-        timer_expired32(ahora, macro_fin_y)) {
+    if (macro_y_activo && timer_expired32(ahora, macro_fin_y)) {
 
         unregister_code(KC_Y);
 
@@ -274,400 +192,163 @@ void housekeeping_task_user(void) {
         macro_fin_y = 0;
     }
 
-
-    /* --------------------------------------------------------
-     * Esperar hasta que llegue el momento del siguiente evento
-     * -------------------------------------------------------- */
-
     if (!timer_expired32(ahora, macro_proximo_evento)) {
         return;
     }
 
-
-    /* ========================================================
-     * ROTACIÓN: F1
-     * ======================================================== */
-
-
     switch (macro_estado) {
 
-        /* ----------------------------------------------------
-         * 1. F1 DOWN
-         * ---------------------------------------------------- */
-
         case 1:
-
             register_code(KC_F1);
-
-            macro_proximo_evento =
-                ahora + 80 + (rand() % 31);
-
+            macro_proximo_evento = ahora + 80 + (rand() % 31);
             macro_estado = 2;
-
             break;
-
-
-        /* ----------------------------------------------------
-         * 2. F1 UP
-         *
-         * Espera 1250-1470 ms.
-         * ---------------------------------------------------- */
 
         case 2:
-
             unregister_code(KC_F1);
-
-            macro_proximo_evento =
-                ahora + 1250 + (rand() % 221);
-
+            macro_proximo_evento = ahora + 1000 + (rand() % 1001);
             macro_estado = 3;
-
             break;
-
-
-        /* ----------------------------------------------------
-         * 3. Primer Shift
-         * ---------------------------------------------------- */
 
         case 3:
+            register_code(KC_Y);
+            macro_y_activo = true;
+            macro_fin_y = ahora + 100 + (rand() % 41);
 
-            register_code(KC_LSFT);
+            macro_proximo_y = ahora + 60000 + (rand() % 3001);
 
-            macro_proximo_evento =
-                ahora + 120 + (rand() % 35);
-
+            macro_proximo_evento = macro_fin_y;
             macro_estado = 4;
-
             break;
-
-
-        /* ----------------------------------------------------
-         * 4. W
-         * ---------------------------------------------------- */
 
         case 4:
-
-            register_code(KC_W);
-
-            macro_proximo_evento =
-                ahora + 120 + (rand() % 35);
-
-            macro_estado = 5;
-
-            break;
-
-
-        /* ----------------------------------------------------
-         * 5. Liberar W + Shift
-         *
-         * Esta es la primera acción Shift + W.
-         * ---------------------------------------------------- */
-
-        case 5:
-
-            unregister_code(KC_W);
-            unregister_code(KC_LSFT);
-
-            macro_proximo_evento =
-                ahora + 900 + (rand() % 201);
-
-            macro_estado = 6;
-
-            break;
-
-
-        /* ----------------------------------------------------
-         * 6. Segundo Shift
-         * ---------------------------------------------------- */
-
-        case 6:
-
-            register_code(KC_LSFT);
-
-            macro_proximo_evento =
-                ahora + 120 + (rand() % 35);
-
-            macro_estado = 7;
-
-            break;
-
-
-        /* ----------------------------------------------------
-         * 7. Liberar segundo Shift
-         * ---------------------------------------------------- */
-
-        case 7:
-
-            unregister_code(KC_LSFT);
-
-            macro_proximo_evento =
-                ahora + 500 + (rand() % 501);
-
-            macro_estado = 8;
-
-            break;
-
-
-        /* ----------------------------------------------------
-         * 8. Primera Y
-         *
-         * Esta es la Y inicial.
-         * Después se programa la siguiente Y para
-         * 60-63 segundos.
-         * ---------------------------------------------------- */
-
-        case 8:
-
-            register_code(KC_Y);
-
-            macro_y_activo = true;
-
-            macro_fin_y =
-                ahora + 100 + (rand() % 41);
-
-            /*
-             * IMPORTANTE:
-             * Este contador NO se reinicia al cambiar
-             * de rotación.
-             */
-            macro_proximo_y =
-                ahora + 60000 + (rand() % 3001);
-
-            macro_proximo_evento =
-                macro_fin_y;
-
-            macro_estado = 9;
-
-            break;
-
-
-        /* ----------------------------------------------------
-         * 9. Liberar primera Y
-         * ---------------------------------------------------- */
-
-        case 9:
-
             unregister_code(KC_Y);
-
             macro_y_activo = false;
             macro_fin_y = 0;
 
-            macro_proximo_evento =
-                ahora + 900 + (rand() % 201);
+            macro_proximo_sws = ahora;
 
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
             macro_estado = 10;
-
             break;
 
-
-        /* ====================================================
-         * BUCLE PRINCIPAL SHIFT / W
-         * ==================================================== */
-
-
-        /* ----------------------------------------------------
-         * 10. Antes de iniciar otro ciclo Shift + W
-         *
-         * Si Y ya está programada y llegó su momento,
-         * hacemos Y primero.
-         * ---------------------------------------------------- */
-
         case 10:
-
-            if (macro_proximo_y != 0 &&
-                timer_expired32(ahora, macro_proximo_y)) {
-
+            if (macro_proximo_y != 0 && timer_expired32(ahora, macro_proximo_y)) {
                 register_code(KC_Y);
-
                 macro_y_activo = true;
-
-                macro_fin_y =
-                    ahora + 100 + (rand() % 41);
-
-                /*
-                 * Próxima Y: nuevamente 60-63 s.
-                 */
-                macro_proximo_y =
-                    ahora + 60000 + (rand() % 3001);
-
-                macro_proximo_evento =
-                    macro_fin_y;
-
+                macro_fin_y = ahora + 100 + (rand() % 41);
+                macro_proximo_y = ahora + 60000 + (rand() % 3001);
+                macro_proximo_evento = macro_fin_y;
                 macro_estado = 14;
-
                 break;
             }
 
-
-            /*
-             * No hay Y pendiente.
-             * Comenzamos otro conjunto Shift + W.
-             */
+            if (macro_proximo_sws != 0 && timer_expired32(ahora, macro_proximo_sws)) {
+                register_code(KC_LSFT);
+                macro_proximo_evento = ahora + 120 + (rand() % 35);
+                macro_estado = 20;
+                break;
+            }
 
             register_code(KC_LSFT);
-
-            macro_proximo_evento =
-                ahora + 120 + (rand() % 35);
-
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
             macro_estado = 11;
-
             break;
-
-
-        /* ----------------------------------------------------
-         * 11. Liberar Shift
-         * ---------------------------------------------------- */
 
         case 11:
-
             unregister_code(KC_LSFT);
-
-            macro_proximo_evento =
-                ahora + 800 + (rand() % 201);
-
+            macro_proximo_evento = ahora + 800 + (rand() % 201);
             macro_estado = 12;
-
             break;
-
-
-        /* ----------------------------------------------------
-         * 12. W DOWN
-         * ---------------------------------------------------- */
 
         case 12:
-
             register_code(KC_W);
-
-            macro_proximo_evento =
-                ahora + 120 + (rand() % 35);
-
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
             macro_estado = 13;
-
             break;
 
-
-        /* ----------------------------------------------------
-         * 13. W UP
-         *
-         * AQUÍ se comprueba el final de la rotación.
-         *
-         * Nunca se corta antes de completar este W.
-         * Por eso, cuando termina una rotación, la última
-         * acción completa siempre es Shift + W.
-         * ---------------------------------------------------- */
-
         case 13:
-
             unregister_code(KC_W);
 
-
-            /*
-             * La acción Shift + W acaba de terminar.
-             *
-             * Ahora sí comprobamos si alcanzamos
-             * los 120-125 segundos.
-             */
-
             if (timer_expired32(ahora, macro_fin_rotacion)) {
-
-                /*
-                 * Garantizamos que no quede ninguna tecla
-                 * presionada antes de la transición.
-                 */
                 unregister_code(KC_LSFT);
                 unregister_code(KC_W);
+                unregister_code(KC_S);
 
-
-                /*
-                 * ¿Fue la quinta rotación?
-                 */
-                if (macro_rotacion >= 5) {
-
+                // Actualizado a 8 rotaciones completas
+                if (macro_rotacion >= 8) {
                     macro_cancelar();
-
                     return;
                 }
 
-
-                /*
-                 * Todavía quedan rotaciones.
-                 *
-                 * Pausa aleatoria de 1500-2500 ms.
-                 *
-                 * Durante esta pausa NO reiniciamos
-                 * el temporizador global de Y.
-                 */
-
-                macro_proximo_evento =
-                    ahora + 1500 + (rand() % 1001);
-
+                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
                 macro_estado = 100;
-
                 return;
             }
 
-
-            /*
-             * Todavía no terminó la rotación.
-             *
-             * Pausa normal después de W.
-             */
-
-            macro_proximo_evento =
-                ahora + 900 + (rand() % 201);
-
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
             macro_estado = 10;
-
             break;
 
+        case 20:
+            unregister_code(KC_LSFT);
+            macro_proximo_evento = ahora + 400 + (rand() % 101);
+            macro_estado = 21;
+            break;
 
-        /* ====================================================
-         * Y PERIÓDICA
-         * ==================================================== */
+        case 21:
+            register_code(KC_W);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_estado = 22;
+            break;
 
+        case 22:
+            unregister_code(KC_W);
+            macro_proximo_evento = ahora + 200 + (rand() % 101);
+            macro_estado = 23;
+            break;
 
-        /* ----------------------------------------------------
-         * 14. Liberar Y periódica
-         * ---------------------------------------------------- */
+        case 23:
+            register_code(KC_S);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_estado = 24;
+            break;
+
+        case 24:
+            unregister_code(KC_S);
+
+            macro_proximo_sws = ahora + 10000 + (rand() % 501);
+
+            if (timer_expired32(ahora, macro_fin_rotacion)) {
+                unregister_code(KC_LSFT);
+                unregister_code(KC_W);
+                unregister_code(KC_S);
+
+                // Actualizado a 8 rotaciones completas
+                if (macro_rotacion >= 8) {
+                    macro_cancelar();
+                    return;
+                }
+
+                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
+                macro_estado = 100;
+                return;
+            }
+
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
 
         case 14:
-
             unregister_code(KC_Y);
-
             macro_y_activo = false;
             macro_fin_y = 0;
-
-            /*
-             * Después de Y continuamos el ritmo normal.
-             */
-            macro_proximo_evento =
-                ahora + 900 + (rand() % 201);
-
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
             macro_estado = 10;
-
             break;
 
-
-        /* ====================================================
-         * TRANSICIÓN ENTRE ROTACIONES
-         * ==================================================== */
-
-
-        /* ----------------------------------------------------
-         * 100. Comienza la siguiente rotación
-         *
-         * macro_nueva_rotacion():
-         *   incrementa contador
-         *   crea nuevo tiempo 120-125 s
-         *   comienza con F1
-         *
-         * El temporizador de Y NO se modifica.
-         * ---------------------------------------------------- */
-
         case 100:
-
             macro_nueva_rotacion();
-
             break;
     }
 }
