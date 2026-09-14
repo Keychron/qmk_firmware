@@ -86,6 +86,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 
 static bool macro_activo = false;
 static bool macro_y_activo = false;
+static bool macro_c_activo = false;
 
 static uint8_t macro_rotacion = 0;
 static uint8_t macro_estado = 0;
@@ -96,6 +97,9 @@ static uint32_t macro_fin_rotacion = 0;
 static uint32_t macro_proximo_y = 0;
 static uint32_t macro_fin_y = 0;
 
+static uint32_t macro_proximo_c = 0;
+static uint32_t macro_fin_c = 0;
+
 static uint32_t macro_proximo_sws = 0;
 
 static void macro_liberar_teclas(void) {
@@ -104,9 +108,13 @@ static void macro_liberar_teclas(void) {
     unregister_code(KC_W);
     unregister_code(KC_S);
     unregister_code(KC_Y);
+    unregister_code(KC_C);
 
     macro_y_activo = false;
     macro_fin_y = 0;
+
+    macro_c_activo = false;
+    macro_fin_c = 0;
 }
 
 static void macro_cancelar(void) {
@@ -121,6 +129,7 @@ static void macro_cancelar(void) {
     macro_fin_rotacion = 0;
 
     macro_proximo_y = 0;
+    macro_proximo_c = 0;
     macro_proximo_sws = 0;
 }
 
@@ -156,8 +165,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
                 macro_proximo_y = 0;
                 macro_fin_y = 0;
-                macro_proximo_sws = 0;
                 macro_y_activo = false;
+
+                macro_proximo_c = 0;
+                macro_fin_c = 0;
+                macro_c_activo = false;
+
+                macro_proximo_sws = 0;
 
                 macro_nueva_rotacion();
             }
@@ -184,12 +198,18 @@ void housekeeping_task_user(void) {
 
     uint32_t ahora = timer_read32();
 
+    // Liberar tecla Y de forma asíncrona
     if (macro_y_activo && timer_expired32(ahora, macro_fin_y)) {
-
         unregister_code(KC_Y);
-
         macro_y_activo = false;
         macro_fin_y = 0;
+    }
+
+    // Liberar tecla C de forma asíncrona
+    if (macro_c_activo && timer_expired32(ahora, macro_fin_c)) {
+        unregister_code(KC_C);
+        macro_c_activo = false;
+        macro_fin_c = 0;
     }
 
     if (!timer_expired32(ahora, macro_proximo_evento)) {
@@ -198,9 +218,16 @@ void housekeeping_task_user(void) {
 
     switch (macro_estado) {
 
+        /* ----------------------------------------------------
+         * 1. F1 DOWN -> Agendar C para 60-63s tras este evento
+         * ---------------------------------------------------- */
         case 1:
             register_code(KC_F1);
             macro_proximo_evento = ahora + 80 + (rand() % 31);
+            
+            // C se ejecutará por primera vez entre 60s y 63s después de presionar F1
+            macro_proximo_c = ahora + 60000 + (rand() % 3001);
+
             macro_estado = 2;
             break;
 
@@ -232,7 +259,12 @@ void housekeeping_task_user(void) {
             macro_estado = 10;
             break;
 
+        /* ====================================================
+         * BUCLE PRINCIPAL
+         * ==================================================== */
+
         case 10:
+            // 1. Revisar si toca la tecla Y (cada 60-63s)
             if (macro_proximo_y != 0 && timer_expired32(ahora, macro_proximo_y)) {
                 register_code(KC_Y);
                 macro_y_activo = true;
@@ -243,6 +275,18 @@ void housekeeping_task_user(void) {
                 break;
             }
 
+            // 2. Revisar si toca la tecla C (60-63s tras F1, luego en bucle)
+            if (macro_proximo_c != 0 && timer_expired32(ahora, macro_proximo_c)) {
+                register_code(KC_C);
+                macro_c_activo = true;
+                macro_fin_c = ahora + 100 + (rand() % 41);
+                macro_proximo_c = ahora + 60000 + (rand() % 3001);
+                macro_proximo_evento = macro_fin_c;
+                macro_estado = 15;
+                break;
+            }
+
+            // 3. Revisar si toca Shift + W + S (Modificado a cada 7s)
             if (macro_proximo_sws != 0 && timer_expired32(ahora, macro_proximo_sws)) {
                 register_code(KC_LSFT);
                 macro_proximo_evento = ahora + 120 + (rand() % 35);
@@ -250,6 +294,7 @@ void housekeeping_task_user(void) {
                 break;
             }
 
+            // 4. Shift + W normal
             register_code(KC_LSFT);
             macro_proximo_evento = ahora + 120 + (rand() % 35);
             macro_estado = 11;
@@ -275,7 +320,6 @@ void housekeeping_task_user(void) {
                 unregister_code(KC_W);
                 unregister_code(KC_S);
 
-                // Actualizado a 8 rotaciones completas
                 if (macro_rotacion >= 8) {
                     macro_cancelar();
                     return;
@@ -317,14 +361,14 @@ void housekeeping_task_user(void) {
         case 24:
             unregister_code(KC_S);
 
-            macro_proximo_sws = ahora + 10000 + (rand() % 501);
+            // Re-programado a 7 segundos (7000ms a 7500ms)
+            macro_proximo_sws = ahora + 7000 + (rand() % 501);
 
             if (timer_expired32(ahora, macro_fin_rotacion)) {
                 unregister_code(KC_LSFT);
                 unregister_code(KC_W);
                 unregister_code(KC_S);
 
-                // Actualizado a 8 rotaciones completas
                 if (macro_rotacion >= 8) {
                     macro_cancelar();
                     return;
@@ -343,6 +387,14 @@ void housekeeping_task_user(void) {
             unregister_code(KC_Y);
             macro_y_activo = false;
             macro_fin_y = 0;
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
+
+        case 15:
+            unregister_code(KC_C);
+            macro_c_activo = false;
+            macro_fin_c = 0;
             macro_proximo_evento = ahora + 900 + (rand() % 201);
             macro_estado = 10;
             break;
