@@ -48,74 +48,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  UG_TOGG, _______, _______, UG_TOGG,
         _______, BT_HST1, BT_HST2, BT_HST3, P2P4G,   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
         UG_TOGG, UG_NEXT, UG_VALU, UG_HUEU, UG_SATU, UG_SPDU, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-        _______, UG_PREV, UG_VAL¡Entendido! Vamos a ajustar la secuencia de la tecla **L** para que cumpla con los nuevos requerimientos:
-
-1. **No se presiona L antes de F1**: La rotación iniciará directamente con `F1` (seguido de `Y`, como en la versión inicial).
-2. **Primera L tras un par de combos de Shift + W**: La primera `L` se programará para ejecutarse después de avanzar un poco en el bucle principal (unos segundos tras iniciar los combos).
-3. **Mantiene el ciclo de 3 pulsaciones con factor humano**: Se mantendrá el contador de las 3 marcas de `L` distribuidas a lo largo del tiempo con variaciones aleatorias.
-
-### Cambios principales en el código
-
-* **Inicio (Case 0)**: Ahora pasa directamente a presionar `F1` y agenda la primera `L` para ejecutarse unos segundos después (por ejemplo, ~10 a 15 segundos tras iniciar el bucle de movimientos).
-* **Gestión de L en el bucle (Case 10)**: Cuando el temporizador de la `L` expira, se ejecuta la pulsación y se programa la siguiente (hasta completar las 3 pulsaciones de la rotación).
-
----
-
-### Código actualizado (Versión 8 Rotaciones)
-
-*(Si necesitas la versión de 5 rotaciones, solo cambia `if (macro_rotacion >= 8)` por `5` en los casos `13` y `24`).*
-
-```c
-/* Copyright 2024 ~ 2026 @ Keychron ([https://www.keychron.com](https://www.keychron.com))
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 or later.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see [http://www.gnu.org/licenses/](http://www.gnu.org/licenses/).
- */
-
-#include QMK_KEYBOARD_H
-#include "keychron_common.h"
-#include <stdlib.h>
-
-enum custom_keycodes {
-    MACRO_HUMANA = SAFE_RANGE,
-    MACRO_CANCEL,
-};
-
-enum layers {
-    MAC_BASE,
-    MAC_FN,
-    WIN_BASE,
-    WIN_FN,
-};
-
-#define FN_MAC MO(MAC_FN)
-#define FN_WIN MO(WIN_FN)
-
-// clang-format off
-
-const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-
-    [MAC_BASE] = LAYOUT_ansi_87(
-        KC_ESC,   KC_BRID,  KC_BRIU,  KC_MCTRL, KC_LNPAD, UG_VALD, UG_VALU, KC_MPRV, KC_MPLY, KC_MNXT, KC_MUTE, KC_VOLD, KC_VOLU, KC_MUTE, KC_SNAP, KC_SIRI, UG_NEXT,
-        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS, KC_EQL,  KC_BSPC, KC_INS, KC_HOME, KC_PGUP,
-        KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC, KC_RBRC, KC_BSLS, KC_DEL, KC_END, KC_PGDN,
-        KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN, KC_QUOT,             KC_ENT,
-        KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM, KC_DOT,  KC_SLSH,             KC_RSFT,              KC_UP,
-        KC_LCTL,  KC_LOPTN, KC_LCMMD,                               KC_SPC,                                 KC_RCMMD, KC_ROPTN, FN_MAC, KC_RCTL, KC_LEFT, KC_DOWN, KC_RGHT
-    ),
-
-    [MAC_FN] = LAYOUT_ansi_87(
-        _______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  UG_TOGG, _______, _______, UG_TOGG,
-        _______, BT_HST1, BT_HST2, BT_HST3, P2P4G,   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-        UG_TOGG, UG_NEXT, UG_VALU, UG_HUEU, UG_SATU, UG_SPDU, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
         _______, UG_PREV, UG_VALD, UG_HUED, UG_SATD, UG_SPDD, _______, _______, _______, _______, _______, _______,          _______,
         _______,          _______, _______, _______, _______, BAT_LVL, _______, _______, _______, _______, _______,          _______,          _______,
         _______, _______, _______,                            _______,                            _______, _______, _______, _______, _______, _______, _______
@@ -300,4 +232,234 @@ void housekeeping_task_user(void) {
     }
 
     // Liberación asíncrona de L
-    if (macro_l_activo && timer_expired32(ah
+    if (macro_l_activo && timer_expired32(ahora, macro_fin_l)) {
+        unregister_code(KC_L);
+        macro_l_activo = false;
+        macro_fin_l = 0;
+    }
+
+    if (!timer_expired32(ahora, macro_proximo_evento)) {
+        return;
+    }
+
+    switch (macro_estado) {
+
+        /* ----------------------------------------------------
+         * 0. INICIO ROTACIÓN -> F1 directamente (Sin L previa)
+         * ---------------------------------------------------- */
+        case 0:
+            register_code(KC_F1);
+            macro_proximo_evento = ahora + 80 + (rand() % 31);
+            
+            // C agendada para 60-63s tras F1
+            macro_proximo_c = ahora + 60000 + (rand() % 3001);
+
+            // La primera L se programa para después de un par de combos (~10-14s)
+            macro_proximo_l = ahora + 10000 + (rand() % 4001);
+            macro_conteo_l = 0;
+
+            macro_estado = 2;
+            break;
+
+        case 2:
+            unregister_code(KC_F1);
+            macro_proximo_evento = ahora + 1000 + (rand() % 1001);
+            macro_estado = 3;
+            break;
+
+        case 3:
+            register_code(KC_Y);
+            macro_y_activo = true;
+            macro_fin_y = ahora + 100 + (rand() % 41);
+
+            macro_proximo_y = ahora + 60000 + (rand() % 3001);
+
+            macro_proximo_evento = macro_fin_y;
+            macro_estado = 4;
+            break;
+
+        case 4:
+            unregister_code(KC_Y);
+            macro_y_activo = false;
+            macro_fin_y = 0;
+
+            macro_proximo_sws = ahora;
+
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
+
+        /* ====================================================
+         * BUCLE PRINCIPAL
+         * ==================================================== */
+
+        case 10:
+            // 1. Revisar si toca la tecla L (hasta 3 pulsaciones por rotación)
+            if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
+                register_code(KC_L);
+                macro_l_activo = true;
+                macro_fin_l = ahora + 100 + (rand() % 41);
+                
+                macro_conteo_l++;
+
+                // Agendar la siguiente L si no hemos llegado a 3
+                if (macro_conteo_l < 3) {
+                    macro_proximo_l = ahora + 35000 + (rand() % 5001);
+                } else {
+                    macro_proximo_l = 0; // Finalizan las L en esta rotación
+                }
+
+                macro_proximo_evento = macro_fin_l;
+                macro_estado = 16;
+                break;
+            }
+
+            // 2. Revisar si toca la tecla Y (cada 60-63s)
+            if (macro_proximo_y != 0 && timer_expired32(ahora, macro_proximo_y)) {
+                register_code(KC_Y);
+                macro_y_activo = true;
+                macro_fin_y = ahora + 100 + (rand() % 41);
+                macro_proximo_y = ahora + 60000 + (rand() % 3001);
+                macro_proximo_evento = macro_fin_y;
+                macro_estado = 14;
+                break;
+            }
+
+            // 3. Revisar si toca la tecla C (60-63s tras F1)
+            if (macro_proximo_c != 0 && timer_expired32(ahora, macro_proximo_c)) {
+                register_code(KC_C);
+                macro_c_activo = true;
+                macro_fin_c = ahora + 100 + (rand() % 41);
+                macro_proximo_c = ahora + 60000 + (rand() % 3001);
+                macro_proximo_evento = macro_fin_c;
+                macro_estado = 15;
+                break;
+            }
+
+            // 4. Revisar si toca Shift + W + S (Cada 7s)
+            if (macro_proximo_sws != 0 && timer_expired32(ahora, macro_proximo_sws)) {
+                register_code(KC_LSFT);
+                macro_proximo_evento = ahora + 120 + (rand() % 35);
+                macro_estado = 20;
+                break;
+            }
+
+            // 5. Shift + W normal
+            register_code(KC_LSFT);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_estado = 11;
+            break;
+
+        case 11:
+            unregister_code(KC_LSFT);
+            macro_proximo_evento = ahora + 800 + (rand() % 201);
+            macro_estado = 12;
+            break;
+
+        case 12:
+            register_code(KC_W);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_estado = 13;
+            break;
+
+        case 13:
+            unregister_code(KC_W);
+
+            if (timer_expired32(ahora, macro_fin_rotacion)) {
+                unregister_code(KC_LSFT);
+                unregister_code(KC_W);
+                unregister_code(KC_S);
+
+                // Límite de 8 rotaciones
+                if (macro_rotacion >= 8) {
+                    macro_cancelar();
+                    return;
+                }
+
+                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
+                macro_estado = 100;
+                return;
+            }
+
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
+
+        case 20:
+            unregister_code(KC_LSFT);
+            macro_proximo_evento = ahora + 400 + (rand() % 101);
+            macro_estado = 21;
+            break;
+
+        case 21:
+            register_code(KC_W);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_estado = 22;
+            break;
+
+        case 22:
+            unregister_code(KC_W);
+            macro_proximo_evento = ahora + 200 + (rand() % 101);
+            macro_estado = 23;
+            break;
+
+        case 23:
+            register_code(KC_S);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_estado = 24;
+            break;
+
+        case 24:
+            unregister_code(KC_S);
+
+            macro_proximo_sws = ahora + 7000 + (rand() % 501);
+
+            if (timer_expired32(ahora, macro_fin_rotacion)) {
+                unregister_code(KC_LSFT);
+                unregister_code(KC_W);
+                unregister_code(KC_S);
+
+                // Límite de 8 rotaciones
+                if (macro_rotacion >= 8) {
+                    macro_cancelar();
+                    return;
+                }
+
+                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
+                macro_estado = 100;
+                return;
+            }
+
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
+
+        case 14:
+            unregister_code(KC_Y);
+            macro_y_activo = false;
+            macro_fin_y = 0;
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
+
+        case 15:
+            unregister_code(KC_C);
+            macro_c_activo = false;
+            macro_fin_c = 0;
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
+
+        case 16:
+            unregister_code(KC_L);
+            macro_l_activo = false;
+            macro_fin_l = 0;
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
+
+        case 100:
+            macro_nueva_rotacion();
+            break;
+    }
+}
