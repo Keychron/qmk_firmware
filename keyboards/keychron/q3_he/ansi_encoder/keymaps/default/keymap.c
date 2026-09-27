@@ -256,7 +256,7 @@ void housekeeping_task_user(void) {
             macro_proximo_l = ahora + 35000 + (rand() % 5001);
 
             macro_proximo_evento = ahora + 800 + (rand() % 701);
-            macro_estado = 5; // Estado único de transición
+            macro_estado = 5; // Estado único sin formato octal
             break;
 
         case 5:
@@ -385,8 +385,8 @@ void housekeeping_task_user(void) {
                 unregister_code(KC_W);
                 unregister_code(KC_S);
 
-                // Límite de 8 rotaciones
-                if (macro_rotacion >= 8) {
+                // Límite de 5 rotaciones
+                if (macro_rotacion >= 5) {
                     macro_cancelar();
                     return;
                 }
@@ -434,8 +434,8 @@ void housekeeping_task_user(void) {
                 unregister_code(KC_W);
                 unregister_code(KC_S);
 
-                // Límite de 8 rotaciones
-                if (macro_rotacion >= 8) {
+                // Límite de 5 rotaciones
+                if (macro_rotacion >= 5) {
                     macro_cancelar();
                     return;
                 }
