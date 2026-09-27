@@ -106,7 +106,7 @@ static uint32_t macro_fin_l = 0;
 
 static uint32_t macro_proximo_sws = 0;
 
-static uint8_t macro_conteo_l = 0; // Conteo de L dentro de la rotación
+static uint8_t macro_conteo_l = 0;
 
 static void macro_liberar_teclas(void) {
     unregister_code(KC_L);
@@ -154,9 +154,9 @@ static void macro_nueva_rotacion(void) {
 
     macro_proximo_evento = ahora;
 
-    macro_conteo_l = 0; // Resetear el conteo de L para la nueva rotación
+    macro_conteo_l = 0;
 
-    macro_estado = 0; // Iniciar en estado 0 para L antes de F1
+    macro_estado = 0;
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -253,14 +253,13 @@ void housekeeping_task_user(void) {
             macro_fin_l = ahora + 90 + (rand() % 31);
             
             macro_conteo_l = 1;
-            // Programa la segunda L para 35 - 40 segundos después
             macro_proximo_l = ahora + 35000 + (rand() % 5001);
 
-            macro_proximo_evento = ahora + 800 + (rand() % 701); // Espera 0.8s a 1.5s antes de F1
-            macro_estado = 01;
+            macro_proximo_evento = ahora + 800 + (rand() % 701);
+            macro_estado = 5; // Estado único de transición
             break;
 
-        case 01:
+        case 5:
             unregister_code(KC_L);
             macro_l_activo = false;
             macro_fin_l = 0;
@@ -312,7 +311,7 @@ void housekeeping_task_user(void) {
          * ==================================================== */
 
         case 10:
-            // 1. Revisar si toca la tecla L (intercalada limpiamente)
+            // 1. Revisar si toca la tecla L
             if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
                 register_code(KC_L);
                 macro_l_activo = true;
@@ -320,10 +319,9 @@ void housekeeping_task_user(void) {
                 
                 if (macro_conteo_l == 1) {
                     macro_conteo_l = 2;
-                    // Programa la tercera L para 40 - 45 segundos después
                     macro_proximo_l = ahora + 40000 + (rand() % 5001);
                 } else {
-                    macro_proximo_l = 0; // No más L en esta rotación
+                    macro_proximo_l = 0;
                 }
 
                 macro_proximo_evento = macro_fin_l;
@@ -387,6 +385,7 @@ void housekeeping_task_user(void) {
                 unregister_code(KC_W);
                 unregister_code(KC_S);
 
+                // Límite de 8 rotaciones
                 if (macro_rotacion >= 8) {
                     macro_cancelar();
                     return;
@@ -435,6 +434,7 @@ void housekeeping_task_user(void) {
                 unregister_code(KC_W);
                 unregister_code(KC_S);
 
+                // Límite de 8 rotaciones
                 if (macro_rotacion >= 8) {
                     macro_cancelar();
                     return;
