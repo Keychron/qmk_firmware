@@ -87,6 +87,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 static bool macro_activo = false;
 static bool macro_y_activo = false;
 static bool macro_c_activo = false;
+static bool macro_l_activo = false;
 
 static uint8_t macro_rotacion = 0;
 static uint8_t macro_estado = 0;
@@ -100,9 +101,15 @@ static uint32_t macro_fin_y = 0;
 static uint32_t macro_proximo_c = 0;
 static uint32_t macro_fin_c = 0;
 
+static uint32_t macro_proximo_l = 0;
+static uint32_t macro_fin_l = 0;
+
 static uint32_t macro_proximo_sws = 0;
 
+static uint8_t macro_conteo_l = 0; // Conteo de L dentro de la rotación
+
 static void macro_liberar_teclas(void) {
+    unregister_code(KC_L);
     unregister_code(KC_F1);
     unregister_code(KC_LSFT);
     unregister_code(KC_W);
@@ -115,6 +122,9 @@ static void macro_liberar_teclas(void) {
 
     macro_c_activo = false;
     macro_fin_c = 0;
+
+    macro_l_activo = false;
+    macro_fin_l = 0;
 }
 
 static void macro_cancelar(void) {
@@ -130,7 +140,9 @@ static void macro_cancelar(void) {
 
     macro_proximo_y = 0;
     macro_proximo_c = 0;
+    macro_proximo_l = 0;
     macro_proximo_sws = 0;
+    macro_conteo_l = 0;
 }
 
 static void macro_nueva_rotacion(void) {
@@ -142,7 +154,9 @@ static void macro_nueva_rotacion(void) {
 
     macro_proximo_evento = ahora;
 
-    macro_estado = 1;
+    macro_conteo_l = 0; // Resetear el conteo de L para la nueva rotación
+
+    macro_estado = 0; // Iniciar en estado 0 para L antes de F1
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -171,7 +185,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 macro_fin_c = 0;
                 macro_c_activo = false;
 
+                macro_proximo_l = 0;
+                macro_fin_l = 0;
+                macro_l_activo = false;
+
                 macro_proximo_sws = 0;
+                macro_conteo_l = 0;
 
                 macro_nueva_rotacion();
             }
@@ -198,18 +217,25 @@ void housekeeping_task_user(void) {
 
     uint32_t ahora = timer_read32();
 
-    // Liberar tecla Y de forma asíncrona
+    // Liberación asíncrona de Y
     if (macro_y_activo && timer_expired32(ahora, macro_fin_y)) {
         unregister_code(KC_Y);
         macro_y_activo = false;
         macro_fin_y = 0;
     }
 
-    // Liberar tecla C de forma asíncrona
+    // Liberación asíncrona de C
     if (macro_c_activo && timer_expired32(ahora, macro_fin_c)) {
         unregister_code(KC_C);
         macro_c_activo = false;
         macro_fin_c = 0;
+    }
+
+    // Liberación asíncrona de L
+    if (macro_l_activo && timer_expired32(ahora, macro_fin_l)) {
+        unregister_code(KC_L);
+        macro_l_activo = false;
+        macro_fin_l = 0;
     }
 
     if (!timer_expired32(ahora, macro_proximo_evento)) {
@@ -219,13 +245,35 @@ void housekeeping_task_user(void) {
     switch (macro_estado) {
 
         /* ----------------------------------------------------
-         * 1. F1 DOWN -> Agendar C para 60-63s tras este evento
+         * 0. L DOWN (Primera L antes de F1)
+         * ---------------------------------------------------- */
+        case 0:
+            register_code(KC_L);
+            macro_l_activo = true;
+            macro_fin_l = ahora + 90 + (rand() % 31);
+            
+            macro_conteo_l = 1;
+            // Programa la segunda L para 35 - 40 segundos después
+            macro_proximo_l = ahora + 35000 + (rand() % 5001);
+
+            macro_proximo_evento = ahora + 800 + (rand() % 701); // Espera 0.8s a 1.5s antes de F1
+            macro_estado = 01;
+            break;
+
+        case 01:
+            unregister_code(KC_L);
+            macro_l_activo = false;
+            macro_fin_l = 0;
+            macro_estado = 1;
+            break;
+
+        /* ----------------------------------------------------
+         * 1. F1 DOWN -> Agendar C para 60-63s tras F1
          * ---------------------------------------------------- */
         case 1:
             register_code(KC_F1);
             macro_proximo_evento = ahora + 80 + (rand() % 31);
             
-            // C se ejecutará por primera vez entre 60s y 63s después de presionar F1
             macro_proximo_c = ahora + 60000 + (rand() % 3001);
 
             macro_estado = 2;
@@ -264,7 +312,26 @@ void housekeeping_task_user(void) {
          * ==================================================== */
 
         case 10:
-            // 1. Revisar si toca la tecla Y (cada 60-63s)
+            // 1. Revisar si toca la tecla L (intercalada limpiamente)
+            if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
+                register_code(KC_L);
+                macro_l_activo = true;
+                macro_fin_l = ahora + 100 + (rand() % 41);
+                
+                if (macro_conteo_l == 1) {
+                    macro_conteo_l = 2;
+                    // Programa la tercera L para 40 - 45 segundos después
+                    macro_proximo_l = ahora + 40000 + (rand() % 5001);
+                } else {
+                    macro_proximo_l = 0; // No más L en esta rotación
+                }
+
+                macro_proximo_evento = macro_fin_l;
+                macro_estado = 16;
+                break;
+            }
+
+            // 2. Revisar si toca la tecla Y (cada 60-63s)
             if (macro_proximo_y != 0 && timer_expired32(ahora, macro_proximo_y)) {
                 register_code(KC_Y);
                 macro_y_activo = true;
@@ -275,7 +342,7 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 2. Revisar si toca la tecla C (60-63s tras F1, luego en bucle)
+            // 3. Revisar si toca la tecla C (60-63s tras F1)
             if (macro_proximo_c != 0 && timer_expired32(ahora, macro_proximo_c)) {
                 register_code(KC_C);
                 macro_c_activo = true;
@@ -286,7 +353,7 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 3. Revisar si toca Shift + W + S (Modificado a cada 7s)
+            // 4. Revisar si toca Shift + W + S (Cada 7s)
             if (macro_proximo_sws != 0 && timer_expired32(ahora, macro_proximo_sws)) {
                 register_code(KC_LSFT);
                 macro_proximo_evento = ahora + 120 + (rand() % 35);
@@ -294,7 +361,7 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 4. Shift + W normal
+            // 5. Shift + W normal
             register_code(KC_LSFT);
             macro_proximo_evento = ahora + 120 + (rand() % 35);
             macro_estado = 11;
@@ -361,7 +428,6 @@ void housekeeping_task_user(void) {
         case 24:
             unregister_code(KC_S);
 
-            // Re-programado a 7 segundos (7000ms a 7500ms)
             macro_proximo_sws = ahora + 7000 + (rand() % 501);
 
             if (timer_expired32(ahora, macro_fin_rotacion)) {
@@ -395,6 +461,14 @@ void housekeeping_task_user(void) {
             unregister_code(KC_C);
             macro_c_activo = false;
             macro_fin_c = 0;
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
+
+        case 16:
+            unregister_code(KC_L);
+            macro_l_activo = false;
+            macro_fin_l = 0;
             macro_proximo_evento = ahora + 900 + (rand() % 201);
             macro_estado = 10;
             break;
