@@ -18,6 +18,11 @@
 
 #include "eeconfig_kb.h"
 
+/* Model identifier reported in KC_GET_BATTERY (data[6]) so the host can show
+ * the keyboard model even over the 2.4 GHz dongle. Defined here (config.h) so
+ * every translation unit, including the shared keychron_raw_hid.c, sees it. */
+#define KC_BATTERY_MODEL_ID 1
+
 /* External EEPROM Configuration*/
 #define I2C_DRIVER I2CD3
 #define I2C1_SCL_PIN A8

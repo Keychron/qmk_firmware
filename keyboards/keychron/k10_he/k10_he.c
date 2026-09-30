@@ -15,12 +15,22 @@
  */
 
 #include "keychron.h"
+#ifdef LK_WIRELESS_ENABLE
+#    include "keychron_raw_hid.h"
+#endif
 
 #ifndef POWER_ON_LED_DURATION
 #    define POWER_ON_LED_DURATION 3000
 #endif
 
 static uint32_t power_on_indicator_timer;
+
+#ifdef LK_WIRELESS_ENABLE
+#    ifndef BATTERY_PUSH_INTERVAL
+#        define BATTERY_PUSH_INTERVAL 2000
+#    endif
+static uint32_t battery_push_timer = 0;
+#endif
 
 #ifdef DIP_SWITCH_ENABLE
 bool dip_switch_update_kb(uint8_t index, bool active) {
@@ -89,6 +99,16 @@ void keychron_task_kb(void) {
 #endif
         }
     }
+
+#ifdef LK_WIRELESS_ENABLE
+    /* Push the battery state to the host over the wireless link (PUSH model). */
+    if (timer_elapsed32(battery_push_timer) > BATTERY_PUSH_INTERVAL) {
+        battery_push_timer = timer_read32();
+        if ((get_transport() & TRANSPORT_WIRELESS) && wireless_get_state() == WT_CONNECTED) {
+            kc_battery_push();
+        }
+    }
+#endif
 }
 
 #ifdef LK_WIRELESS_ENABLE
