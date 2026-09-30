@@ -136,7 +136,9 @@ static HSV SPLASH_math(HSV hsv, int16_t dx, int16_t dy, uint8_t dist, uint16_t t
 }
 
 bool per_key_rgb_reactive_splash(effect_params_t *params) {
-    return per_key_rgb_effect_runner_reactive_splash(qsub8(g_last_hit_tracker.count, 1), params, &SPLASH_math);
+    // Start from 0 so every remembered hit keeps rendering: a new keypress adds
+    // a splash instead of replacing the one still fading out.
+    return per_key_rgb_effect_runner_reactive_splash(0, params, &SPLASH_math);
 }
 
 bool per_key_rgb(effect_params_t *params) {
