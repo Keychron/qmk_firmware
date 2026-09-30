@@ -153,13 +153,14 @@ static void macro_nueva_rotacion(void) {
 
     macro_rotacion++;
 
-    macro_fin_rotacion = ahora + 120000 + (rand() % 5001);
+    // Duración de rotación: 1 min 54s a 1 min 57s (114,000ms a 117,000ms)
+    macro_fin_rotacion = ahora + 114000 + (rand() % 3001);
 
     macro_proximo_evento = ahora;
 
     macro_combos_realizados = 0;
     macro_conteo_l = 0;
-    macro_proximo_l = 0; // Se programa dinámicamente tras 2 combos
+    macro_proximo_l = 0;
 
     macro_estado = 0;
 }
@@ -251,7 +252,7 @@ void housekeeping_task_user(void) {
     switch (macro_estado) {
 
         /* ----------------------------------------------------
-         * 0. INICIO ROTACIÓN -> F1 (Limpio como el original)
+         * 0. INICIO ROTACIÓN -> F1
          * ---------------------------------------------------- */
         case 0:
             register_code(KC_F1);
@@ -296,7 +297,7 @@ void housekeeping_task_user(void) {
          * ==================================================== */
 
         case 10:
-            // 1. Revisar si toca la tecla L (3 pulsaciones distribuidas: ~15s, ~55s, ~95s)
+            // 1. Revisar si toca la tecla L (3 pulsaciones distribuidas en ~115s: ~15s, ~50s, ~85s)
             if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
                 register_code(KC_L);
                 macro_l_activo = true;
@@ -304,11 +305,10 @@ void housekeeping_task_user(void) {
 
                 macro_conteo_l++;
 
-                // Repetir 3 veces distribuidas de manera equitativa (~40s entre cada una)
                 if (macro_conteo_l < 3) {
-                    macro_proximo_l = ahora + 40000 + (rand() % 5001); // +40 a 45s con variación de ms
+                    macro_proximo_l = ahora + 35000 + (rand() % 4001); // +35s a +39s con variación aleatoria
                 } else {
-                    macro_proximo_l = 0; // Fin de las L en esta rotación
+                    macro_proximo_l = 0;
                 }
 
                 macro_proximo_evento = macro_fin_l;
@@ -367,10 +367,8 @@ void housekeeping_task_user(void) {
         case 13:
             unregister_code(KC_W);
 
-            // Contar combos de Shift+W para activar la 1ª L con seguridad
             macro_combos_realizados++;
             if (macro_conteo_l == 0 && macro_combos_realizados >= 2) {
-                // Programa la 1ª L justo después de terminar los primeros 2 combos (+500ms a +1.5s aleatorio)
                 macro_proximo_l = ahora + 500 + (rand() % 1001);
             }
 
@@ -379,8 +377,8 @@ void housekeeping_task_user(void) {
                 unregister_code(KC_W);
                 unregister_code(KC_S);
 
-                // Límite de 5 rotaciones
-                if (macro_rotacion >= 5) {
+                // Límite de 9 rotaciones (Cubriendo ~17 min y 20s en total)
+                if (macro_rotacion >= 9) {
                     macro_cancelar();
                     return;
                 }
@@ -428,8 +426,8 @@ void housekeeping_task_user(void) {
                 unregister_code(KC_W);
                 unregister_code(KC_S);
 
-                // Límite de 5 rotaciones
-                if (macro_rotacion >= 5) {
+                // Límite de 9 rotaciones (Cubriendo ~17 min y 20s en total)
+                if (macro_rotacion >= 9) {
                     macro_cancelar();
                     return;
                 }
