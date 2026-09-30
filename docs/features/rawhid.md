@@ -12,6 +12,11 @@ Add the following to your `rules.mk`:
 RAW_ENABLE = yes
 ```
 
+Keychron wireless keyboards can route raw HID reports received over the wireless
+transport through the normal `raw_hid_receive()` handler by defining
+`WIRELESS_RAW_ENABLE`. Keychron's command `KC_GET_BATTERY_LEVEL` (`0xA4`)
+returns the cached battery percentage in byte 1 of the response.
+
 ## Basic Configuration {#basic-configuration}
 
 By default, the HID Usage Page and Usage ID for the Raw HID interface are `0xFF60` and `0x61`. However, they can be changed if necessary by adding the following to your `config.h`:
