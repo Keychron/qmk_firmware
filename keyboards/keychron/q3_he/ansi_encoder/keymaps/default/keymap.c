@@ -273,48 +273,25 @@ void housekeeping_task_user(void) {
     switch (macro_estado) {
 
         /* ----------------------------------------------------
-         * 0. INICIO ROTACIÓN -> HOME RÁPIDO -> F1 RÁPIDO
+         * 0. INICIO ROTACIÓN -> F1 -> Y -> SHIFT+W -> HOME
          * ---------------------------------------------------- */
         case 0:
-            register_code(KC_HOME);
-            macro_home_activo = true;
-            // Pulsación rápida de Home (30 ms a 50 ms)
-            macro_fin_home = ahora + 30 + (rand() % 21);
-
-            // Programar el siguiente bucle de HOME (1m 40s a 1m 42s)
-            macro_proximo_home = ahora + 100000 + (rand() % 2001);
-
-            macro_proximo_evento = macro_fin_home;
-            macro_estado = 1;
-            break;
-
-        case 1:
-            unregister_code(KC_HOME);
-            macro_home_activo = false;
-            macro_fin_home = 0;
-
-            // Transición rápida antes de F1 (80 ms a 150 ms)
-            macro_proximo_evento = ahora + 80 + (rand() % 71);
-            macro_estado = 101;
-            break;
-
-        case 101:
             register_code(KC_F1);
             macro_proximo_evento = ahora + 80 + (rand() % 31);
 
             // C agendada para 60-63s tras F1
             macro_proximo_c = ahora + 60000 + (rand() % 3001);
 
+            macro_estado = 1;
+            break;
+
+        case 1:
+            unregister_code(KC_F1);
+            macro_proximo_evento = ahora + 1000 + (rand() % 1001);
             macro_estado = 2;
             break;
 
         case 2:
-            unregister_code(KC_F1);
-            macro_proximo_evento = ahora + 1000 + (rand() % 1001);
-            macro_estado = 3;
-            break;
-
-        case 3:
             register_code(KC_Y);
             macro_y_activo = true;
             macro_fin_y = ahora + 100 + (rand() % 41);
@@ -322,15 +299,59 @@ void housekeeping_task_user(void) {
             macro_proximo_y = ahora + 60000 + (rand() % 3001);
 
             macro_proximo_evento = macro_fin_y;
-            macro_estado = 4;
+            macro_estado = 3;
             break;
 
-        case 4:
+        case 3:
             unregister_code(KC_Y);
             macro_y_activo = false;
             macro_fin_y = 0;
 
-            macro_proximo_sws = ahora;
+            macro_proximo_evento = ahora + 400 + (rand() % 101);
+            macro_estado = 4;
+            break;
+
+        // Primer combo de la rotación: Shift + W
+        case 4:
+            register_code(KC_LSFT);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_estado = 5;
+            break;
+
+        case 5:
+            unregister_code(KC_LSFT);
+            macro_proximo_evento = ahora + 800 + (rand() % 201);
+            macro_estado = 6;
+            break;
+
+        case 6:
+            register_code(KC_W);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_estado = 7;
+            break;
+
+        case 7:
+            unregister_code(KC_W);
+            macro_combos_realizados++;
+
+            // Presión de HOME inmediatamente después de la primera secuencia
+            register_code(KC_HOME);
+            macro_home_activo = true;
+            macro_fin_home = ahora + 60 + (rand() % 21);
+
+            // Se programa la repetición periódica de HOME (1m 40s a 1m 42s)
+            macro_proximo_home = ahora + 100000 + (rand() % 2001);
+
+            macro_proximo_sws = ahora + 7000 + (rand() % 501);
+
+            macro_proximo_evento = macro_fin_home;
+            macro_estado = 8;
+            break;
+
+        case 8:
+            unregister_code(KC_HOME);
+            macro_home_activo = false;
+            macro_fin_home = 0;
 
             macro_proximo_evento = ahora + 900 + (rand() % 201);
             macro_estado = 10;
@@ -345,8 +366,7 @@ void housekeeping_task_user(void) {
             if (macro_proximo_home != 0 && timer_expired32(ahora, macro_proximo_home)) {
                 register_code(KC_HOME);
                 macro_home_activo = true;
-                // Pulsación rápida de Home en bucle (30 ms a 50 ms)
-                macro_fin_home = ahora + 30 + (rand() % 21);
+                macro_fin_home = ahora + 60 + (rand() % 21);
                 macro_proximo_home = ahora + 100000 + (rand() % 2001);
                 macro_proximo_evento = macro_fin_home;
                 macro_estado = 17;
@@ -523,9 +543,7 @@ void housekeeping_task_user(void) {
             unregister_code(KC_HOME);
             macro_home_activo = false;
             macro_fin_home = 0;
-
-            // Retorno rápido al bucle principal (100 ms a 200 ms)
-            macro_proximo_evento = ahora + 100 + (rand() % 101);
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
             macro_estado = 10;
             break;
 
