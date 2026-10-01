@@ -120,6 +120,7 @@ static void macro_liberar_teclas(void) {
     unregister_code(KC_F1);
     unregister_code(KC_LSFT);
     unregister_code(KC_W);
+    unregister_code(KC_Q);
     unregister_code(KC_S);
     unregister_code(KC_Y);
     unregister_code(KC_C);
@@ -341,10 +342,9 @@ void housekeeping_task_user(void) {
             // Forzado explícito de envío de HOME
             register_code(KC_HOME);
             macro_home_activo = true;
-            // Mayor tiempo de sostén (120ms - 160ms) para garantizar registro
             macro_fin_home = ahora + 120 + (rand() % 41);
 
-            // Se programa el siguiente ciclo de HOME (1m 40s a 1m 43s)
+            // Programar el siguiente ciclo de HOME (1m 40s a 1m 43s)
             macro_proximo_home = ahora + 100000 + (rand() % 3001);
 
             macro_proximo_sws = ahora + 7000 + (rand() % 501);
@@ -428,10 +428,15 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 5. Shift + W normal
+            // 5. Elección dinámica: Shift + Q (si faltan 10s o menos para Home) o Shift + W
             register_code(KC_LSFT);
             macro_proximo_evento = ahora + 120 + (rand() % 35);
-            macro_estado = 11;
+
+            if (macro_proximo_home != 0 && (macro_proximo_home - ahora <= 10000)) {
+                macro_estado = 30; // Ruta Shift + Q
+            } else {
+                macro_estado = 11; // Ruta Shift + W estándar
+            }
             break;
 
         case 11:
@@ -457,6 +462,49 @@ void housekeeping_task_user(void) {
             if (timer_expired32(ahora, macro_fin_rotacion)) {
                 unregister_code(KC_LSFT);
                 unregister_code(KC_W);
+                unregister_code(KC_Q);
+                unregister_code(KC_S);
+
+                // Se ejecutan 9 rotaciones completas para superar los 16-17 minutos
+                if (macro_rotacion >= 9) {
+                    macro_cancelar();
+                    return;
+                }
+
+                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
+                macro_estado = 100;
+                return;
+            }
+
+            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_estado = 10;
+            break;
+
+        /* --- Ruta Shift + Q (10 segundos antes de Home) --- */
+        case 30:
+            unregister_code(KC_LSFT);
+            macro_proximo_evento = ahora + 800 + (rand() % 201);
+            macro_estado = 31;
+            break;
+
+        case 31:
+            register_code(KC_Q);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_estado = 32;
+            break;
+
+        case 32:
+            unregister_code(KC_Q);
+
+            macro_combos_realizados++;
+            if (macro_conteo_l == 0 && macro_combos_realizados >= 2) {
+                macro_proximo_l = ahora + 500 + (rand() % 1001);
+            }
+
+            if (timer_expired32(ahora, macro_fin_rotacion)) {
+                unregister_code(KC_LSFT);
+                unregister_code(KC_W);
+                unregister_code(KC_Q);
                 unregister_code(KC_S);
 
                 if (macro_rotacion >= 9) {
@@ -505,6 +553,7 @@ void housekeeping_task_user(void) {
             if (timer_expired32(ahora, macro_fin_rotacion)) {
                 unregister_code(KC_LSFT);
                 unregister_code(KC_W);
+                unregister_code(KC_Q);
                 unregister_code(KC_S);
 
                 if (macro_rotacion >= 9) {
