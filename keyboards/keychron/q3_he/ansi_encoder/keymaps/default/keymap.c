@@ -1,4 +1,4 @@
-/* Copyright 2024 ~ 2026 @ Keychron (https://wwwKeychron.com)
+/* Copyright 2024 ~ 2026 @ Keychron (https://www.keychron.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -273,14 +273,12 @@ void housekeeping_task_user(void) {
     switch (macro_estado) {
 
         /* ----------------------------------------------------
-         * SECUENCIA INICIAL EXCLUSIVA
-         * F1 -> Y -> SHIFT+W -> ESPACIO LIMPIO -> HOME -> ESPACIO LIMPIO
+         * SECUENCIA INICIAL: F1 -> Y -> SHIFT+W -> HOME DEDICADO
          * ---------------------------------------------------- */
         case 0:
             register_code(KC_F1);
             macro_proximo_evento = ahora + 80 + (rand() % 31);
 
-            // C programada para 60-63s tras F1
             macro_proximo_c = ahora + 60000 + (rand() % 3001);
 
             macro_estado = 1;
@@ -312,7 +310,6 @@ void housekeeping_task_user(void) {
             macro_estado = 4;
             break;
 
-        // Primer combo de la rotación: Shift + W
         case 4:
             register_code(KC_LSFT);
             macro_proximo_evento = ahora + 120 + (rand() % 35);
@@ -335,18 +332,19 @@ void housekeeping_task_user(void) {
             unregister_code(KC_W);
             macro_combos_realizados++;
 
-            // Margen previo limpio para evitar superposición con W
-            macro_proximo_evento = ahora + 250 + (rand() % 101);
+            // Pausa limpia antes de la pulsación de Home
+            macro_proximo_evento = ahora + 350 + (rand() % 101);
             macro_estado = 8;
             break;
 
         case 8:
-            // Presión limpia de HOME
+            // Forzado explícito de envío de HOME
             register_code(KC_HOME);
             macro_home_activo = true;
-            macro_fin_home = ahora + 60 + (rand() % 21);
+            // Mayor tiempo de sostén (120ms - 160ms) para garantizar registro
+            macro_fin_home = ahora + 120 + (rand() % 41);
 
-            // Siguiente repetición periódica de HOME (1m 40s a 1m 43s)
+            // Se programa el siguiente ciclo de HOME (1m 40s a 1m 43s)
             macro_proximo_home = ahora + 100000 + (rand() % 3001);
 
             macro_proximo_sws = ahora + 7000 + (rand() % 501);
@@ -360,8 +358,8 @@ void housekeeping_task_user(void) {
             macro_home_activo = false;
             macro_fin_home = 0;
 
-            // Margen posterior limpio antes de continuar la rotación
-            macro_proximo_evento = ahora + 250 + (rand() % 101);
+            // Pausa posterior limpia antes de continuar con la rotación
+            macro_proximo_evento = ahora + 350 + (rand() % 101);
             macro_estado = 10;
             break;
 
@@ -374,7 +372,7 @@ void housekeeping_task_user(void) {
             if (macro_proximo_home != 0 && timer_expired32(ahora, macro_proximo_home)) {
                 register_code(KC_HOME);
                 macro_home_activo = true;
-                macro_fin_home = ahora + 60 + (rand() % 21);
+                macro_fin_home = ahora + 120 + (rand() % 41);
                 macro_proximo_home = ahora + 100000 + (rand() % 3001);
                 macro_proximo_evento = macro_fin_home;
                 macro_estado = 17;
@@ -551,8 +549,7 @@ void housekeeping_task_user(void) {
             unregister_code(KC_HOME);
             macro_home_activo = false;
             macro_fin_home = 0;
-            // Margen de seguridad tras Home en bucle periódico
-            macro_proximo_evento = ahora + 200 + (rand() % 101);
+            macro_proximo_evento = ahora + 300 + (rand() % 101);
             macro_estado = 10;
             break;
 
