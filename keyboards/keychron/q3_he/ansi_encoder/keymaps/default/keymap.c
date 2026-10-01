@@ -115,6 +115,7 @@ static uint32_t macro_proximo_sws = 0;
 static uint8_t macro_combos_realizados = 0;
 static uint8_t macro_conteo_l = 0;
 
+// Función de limpieza total antes de aislar HOME
 static void macro_liberar_teclas(void) {
     unregister_code(KC_HOME);
     unregister_code(KC_F1);
@@ -274,93 +275,104 @@ void housekeeping_task_user(void) {
     switch (macro_estado) {
 
         /* ----------------------------------------------------
-         * SECUENCIA INICIAL: F1 -> Y -> SHIFT+W -> HOME DEDICADO
+         * SECUENCIA INICIAL CON AISLAMIENTO DE HOME
          * ---------------------------------------------------- */
         case 0:
-            register_code(KC_F1);
-            macro_proximo_evento = ahora + 80 + (rand() % 31);
-
-            macro_proximo_c = ahora + 60000 + (rand() % 3001);
-
+            // Limpieza preventiva total de la matriz
+            macro_liberar_teclas();
+            macro_proximo_evento = ahora + 150; // Pausa limpia inicial
             macro_estado = 1;
             break;
 
         case 1:
-            unregister_code(KC_F1);
-            macro_proximo_evento = ahora + 1000 + (rand() % 1001);
+            register_code(KC_F1);
+            macro_proximo_evento = ahora + 80 + (rand() % 31);
+            macro_proximo_c = ahora + 60000 + (rand() % 3001);
             macro_estado = 2;
             break;
 
         case 2:
-            register_code(KC_Y);
-            macro_y_activo = true;
-            macro_fin_y = ahora + 100 + (rand() % 41);
-
-            macro_proximo_y = ahora + 60000 + (rand() % 3001);
-
-            macro_proximo_evento = macro_fin_y;
+            unregister_code(KC_F1);
+            macro_proximo_evento = ahora + 1000 + (rand() % 1001);
             macro_estado = 3;
             break;
 
         case 3:
-            unregister_code(KC_Y);
-            macro_y_activo = false;
-            macro_fin_y = 0;
-
-            macro_proximo_evento = ahora + 400 + (rand() % 101);
+            register_code(KC_Y);
+            macro_y_activo = true;
+            macro_fin_y = ahora + 100 + (rand() % 41);
+            macro_proximo_y = ahora + 60000 + (rand() % 3001);
+            macro_proximo_evento = macro_fin_y;
             macro_estado = 4;
             break;
 
         case 4:
-            register_code(KC_LSFT);
-            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            unregister_code(KC_Y);
+            macro_y_activo = false;
+            macro_fin_y = 0;
+            macro_proximo_evento = ahora + 400 + (rand() % 101);
             macro_estado = 5;
             break;
 
         case 5:
-            unregister_code(KC_LSFT);
-            macro_proximo_evento = ahora + 800 + (rand() % 201);
+            register_code(KC_LSFT);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
             macro_estado = 6;
             break;
 
         case 6:
-            register_code(KC_W);
-            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            unregister_code(KC_LSFT);
+            macro_proximo_evento = ahora + 800 + (rand() % 201);
             macro_estado = 7;
             break;
 
         case 7:
-            unregister_code(KC_W);
-            macro_combos_realizados++;
-
-            // Pausa limpia antes de la pulsación de Home
-            macro_proximo_evento = ahora + 350 + (rand() % 101);
+            register_code(KC_W);
+            macro_proximo_evento = ahora + 120 + (rand() % 35);
             macro_estado = 8;
             break;
 
         case 8:
-            // Forzado explícito de envío de HOME
+            unregister_code(KC_W);
+            macro_combos_realizados++;
+            
+            // Pausa limpia garantizada antes del primer HOME
+            macro_proximo_evento = ahora + 200 + (rand() % 51);
+            macro_estado = 50; // Salta al ejecutor dedicado de HOME
+            break;
+
+        /* ====================================================
+         * ESTADOS DEDICADOS PARA AISLAMIENTO Y EJECUCIÓN DE HOME
+         * ==================================================== */
+        case 50:
+            // Asegurar liberación limpia previa
+            macro_liberar_teclas();
+            macro_proximo_evento = ahora + 150; // Tiempo de aclarado de buffer
+            macro_estado = 51;
+            break;
+
+        case 51:
+            // Pulsación de HOME garantizada
             register_code(KC_HOME);
             macro_home_activo = true;
-            macro_fin_home = ahora + 120 + (rand() % 41);
+            macro_fin_home = ahora + 140 + (rand() % 41); // Mantener presionado suficiente tiempo
 
-            // Programar el siguiente ciclo de HOME (1m 40s a 1m 43s)
+            // Reprogramar el temporizador del siguiente HOME (1m 40s a 1m 43s)
             macro_proximo_home = ahora + 100000 + (rand() % 3001);
-
             macro_proximo_sws = ahora + 7000 + (rand() % 501);
 
             macro_proximo_evento = macro_fin_home;
-            macro_estado = 9;
+            macro_estado = 52;
             break;
 
-        case 9:
+        case 52:
             unregister_code(KC_HOME);
             macro_home_activo = false;
             macro_fin_home = 0;
 
-            // Pausa posterior limpia antes de continuar con la rotación
-            macro_proximo_evento = ahora + 350 + (rand() % 101);
-            macro_estado = 10;
+            // Pausa de aclarado posterior a HOME
+            macro_proximo_evento = ahora + 200 + (rand() % 51);
+            macro_estado = 10; // Iniciar bucle principal
             break;
 
         /* ====================================================
@@ -368,18 +380,13 @@ void housekeeping_task_user(void) {
          * ==================================================== */
 
         case 10:
-            // 0. Revisar si toca la tecla Home (cada 1m 40s a 1m 43s)
+            // 0. PRIORIDAD ABSOLUTA: Revisar si toca la tecla Home
             if (macro_proximo_home != 0 && timer_expired32(ahora, macro_proximo_home)) {
-                register_code(KC_HOME);
-                macro_home_activo = true;
-                macro_fin_home = ahora + 120 + (rand() % 41);
-                macro_proximo_home = ahora + 100000 + (rand() % 3001);
-                macro_proximo_evento = macro_fin_home;
-                macro_estado = 17;
+                macro_estado = 50; // Redirigir al aislador de HOME
                 break;
             }
 
-            // 1. Revisar si toca la tecla L (3 pulsaciones distribuidas)
+            // 1. Revisar si toca la tecla L
             if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
                 register_code(KC_L);
                 macro_l_activo = true;
@@ -398,7 +405,7 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 2. Revisar si toca la tecla Y (cada 60-63s)
+            // 2. Revisar si toca la tecla Y
             if (macro_proximo_y != 0 && timer_expired32(ahora, macro_proximo_y)) {
                 register_code(KC_Y);
                 macro_y_activo = true;
@@ -409,7 +416,7 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 3. Revisar si toca la tecla C (60-63s tras F1)
+            // 3. Revisar si toca la tecla C
             if (macro_proximo_c != 0 && timer_expired32(ahora, macro_proximo_c)) {
                 register_code(KC_C);
                 macro_c_activo = true;
@@ -435,7 +442,7 @@ void housekeeping_task_user(void) {
             if (macro_proximo_home != 0 && (macro_proximo_home - ahora <= 10000)) {
                 macro_estado = 30; // Ruta Shift + Q
             } else {
-                macro_estado = 11; // Ruta Shift + W estándar
+                macro_estado = 11; // Ruta Shift + W
             }
             break;
 
@@ -460,12 +467,8 @@ void housekeeping_task_user(void) {
             }
 
             if (timer_expired32(ahora, macro_fin_rotacion)) {
-                unregister_code(KC_LSFT);
-                unregister_code(KC_W);
-                unregister_code(KC_Q);
-                unregister_code(KC_S);
+                macro_liberar_teclas();
 
-                // Se ejecutan 9 rotaciones completas para superar los 16-17 minutos
                 if (macro_rotacion >= 9) {
                     macro_cancelar();
                     return;
@@ -502,10 +505,7 @@ void housekeeping_task_user(void) {
             }
 
             if (timer_expired32(ahora, macro_fin_rotacion)) {
-                unregister_code(KC_LSFT);
-                unregister_code(KC_W);
-                unregister_code(KC_Q);
-                unregister_code(KC_S);
+                macro_liberar_teclas();
 
                 if (macro_rotacion >= 9) {
                     macro_cancelar();
@@ -551,10 +551,7 @@ void housekeeping_task_user(void) {
             macro_proximo_sws = ahora + 7000 + (rand() % 501);
 
             if (timer_expired32(ahora, macro_fin_rotacion)) {
-                unregister_code(KC_LSFT);
-                unregister_code(KC_W);
-                unregister_code(KC_Q);
-                unregister_code(KC_S);
+                macro_liberar_teclas();
 
                 if (macro_rotacion >= 9) {
                     macro_cancelar();
@@ -591,14 +588,6 @@ void housekeeping_task_user(void) {
             macro_l_activo = false;
             macro_fin_l = 0;
             macro_proximo_evento = ahora + 900 + (rand() % 201);
-            macro_estado = 10;
-            break;
-
-        case 17:
-            unregister_code(KC_HOME);
-            macro_home_activo = false;
-            macro_fin_home = 0;
-            macro_proximo_evento = ahora + 300 + (rand() % 101);
             macro_estado = 10;
             break;
 
