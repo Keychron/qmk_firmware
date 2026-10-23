@@ -41,8 +41,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_ESC,   KC_BRID,  KC_BRIU,  KC_MCTRL, KC_LNPAD, UG_VALD, UG_VALU, KC_MPRV, KC_MPLY, KC_MNXT, KC_MUTE, KC_VOLD, KC_VOLU, KC_MUTE, KC_SNAP, KC_SIRI, UG_NEXT,
         KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS, KC_EQL,  KC_BSPC, KC_INS, KC_HOME, KC_PGUP,
         KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC, KC_RBRC, KC_BSLS, KC_DEL, KC_END, KC_PGDN,
-        KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN, KC_QUOT,             KC_ENT,
-        KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM, KC_DOT,  KC_SLSH,             KC_RSFT,              KC_UP,
+        KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN, KC_QUOT,              KC_ENT,
+        KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM, KC_DOT,  KC_SLSH,              KC_RSFT,              KC_UP,
         KC_LCTL,  KC_LOPTN, KC_LCMMD,                               KC_SPC,                                 KC_RCMMD, KC_ROPTN, FN_MAC, KC_RCTL, KC_LEFT, KC_DOWN, KC_RGHT
     ),
 
@@ -61,7 +61,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, KC_DEL,  KC_END,   KC_PGDN,
         KC_CAPS, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,
         KC_LSFT,          KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,          KC_RSFT,           KC_UP,
-        KC_LCTL, KC_LWIN, KC_LALT,                   KC_SPC,                             KC_RALT, KC_RWIN, FN_WIN,  KC_RCTL, KC_LEFT, KC_DOWN,  KC_RGHT
+        KC_LCTL, KC_LWIN, KC_LALT,                    KC_SPC,                               KC_RALT, KC_RWIN, FN_WIN,  KC_RCTL, KC_LEFT, KC_DOWN,  KC_RGHT
     ),
 
     [WIN_FN] = LAYOUT_ansi_87(
@@ -115,7 +115,6 @@ static uint32_t macro_proximo_sws = 0;
 static uint8_t macro_combos_realizados = 0;
 static uint8_t macro_conteo_l = 0;
 
-// Función de limpieza total antes de aislar HOME
 static void macro_liberar_teclas(void) {
     unregister_code(KC_HOME);
     unregister_code(KC_F1);
@@ -278,9 +277,8 @@ void housekeeping_task_user(void) {
          * SECUENCIA INICIAL CON AISLAMIENTO DE HOME
          * ---------------------------------------------------- */
         case 0:
-            // Limpieza preventiva total de la matriz
             macro_liberar_teclas();
-            macro_proximo_evento = ahora + 150; // Pausa limpia inicial
+            macro_proximo_evento = ahora + 150;
             macro_estado = 1;
             break;
 
@@ -314,21 +312,23 @@ void housekeeping_task_user(void) {
             macro_estado = 5;
             break;
 
+        // Primer combo de la rotación: Shift + W (Acelerado)
         case 5:
             register_code(KC_LSFT);
-            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_proximo_evento = ahora + 40 + (rand() % 25);
             macro_estado = 6;
             break;
 
         case 6:
             unregister_code(KC_LSFT);
-            macro_proximo_evento = ahora + 800 + (rand() % 201);
+            // OPTIMIZADO: Espera de Chaos Lock a Infernal Concussion (250ms - 281ms)
+            macro_proximo_evento = ahora + 250 + (rand() % 31);
             macro_estado = 7;
             break;
 
         case 7:
             register_code(KC_W);
-            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_proximo_evento = ahora + 90 + (rand() % 21);
             macro_estado = 8;
             break;
 
@@ -336,28 +336,24 @@ void housekeeping_task_user(void) {
             unregister_code(KC_W);
             macro_combos_realizados++;
             
-            // Pausa limpia garantizada antes del primer HOME
             macro_proximo_evento = ahora + 200 + (rand() % 51);
-            macro_estado = 50; // Salta al ejecutor dedicado de HOME
+            macro_estado = 50;
             break;
 
         /* ====================================================
          * ESTADOS DEDICADOS PARA AISLAMIENTO Y EJECUCIÓN DE HOME
          * ==================================================== */
         case 50:
-            // Asegurar liberación limpia previa
             macro_liberar_teclas();
-            macro_proximo_evento = ahora + 150; // Tiempo de aclarado de buffer
+            macro_proximo_evento = ahora + 150;
             macro_estado = 51;
             break;
 
         case 51:
-            // Pulsación de HOME garantizada
             register_code(KC_HOME);
             macro_home_activo = true;
-            macro_fin_home = ahora + 140 + (rand() % 41); // Mantener presionado suficiente tiempo
+            macro_fin_home = ahora + 140 + (rand() % 41);
 
-            // Reprogramar el temporizador del siguiente HOME (1m 40s a 1m 43s)
             macro_proximo_home = ahora + 100000 + (rand() % 3001);
             macro_proximo_sws = ahora + 7000 + (rand() % 501);
 
@@ -370,9 +366,8 @@ void housekeeping_task_user(void) {
             macro_home_activo = false;
             macro_fin_home = 0;
 
-            // Pausa de aclarado posterior a HOME
             macro_proximo_evento = ahora + 200 + (rand() % 51);
-            macro_estado = 10; // Iniciar bucle principal
+            macro_estado = 10;
             break;
 
         /* ====================================================
@@ -382,7 +377,7 @@ void housekeeping_task_user(void) {
         case 10:
             // 0. PRIORIDAD ABSOLUTA: Revisar si toca la tecla Home
             if (macro_proximo_home != 0 && timer_expired32(ahora, macro_proximo_home)) {
-                macro_estado = 50; // Redirigir al aislador de HOME
+                macro_estado = 50;
                 break;
             }
 
@@ -430,14 +425,14 @@ void housekeeping_task_user(void) {
             // 4. Revisar si toca Shift + W + S (Cada 7s)
             if (macro_proximo_sws != 0 && timer_expired32(ahora, macro_proximo_sws)) {
                 register_code(KC_LSFT);
-                macro_proximo_evento = ahora + 120 + (rand() % 35);
+                macro_proximo_evento = ahora + 40 + (rand() % 25);
                 macro_estado = 20;
                 break;
             }
 
-            // 5. Elección dinámica: Shift + Q (si faltan 10s o menos para Home) o Shift + W
+            // 5. Shift + Q (si faltan 10s o menos para Home) o Shift + W
             register_code(KC_LSFT);
-            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_proximo_evento = ahora + 40 + (rand() % 25);
 
             if (macro_proximo_home != 0 && (macro_proximo_home - ahora <= 10000)) {
                 macro_estado = 30; // Ruta Shift + Q
@@ -448,13 +443,14 @@ void housekeeping_task_user(void) {
 
         case 11:
             unregister_code(KC_LSFT);
-            macro_proximo_evento = ahora + 800 + (rand() % 201);
+            // OPTIMIZADO: Espera de Chaos Lock a Infernal Concussion (250ms - 281ms)
+            macro_proximo_evento = ahora + 250 + (rand() % 31);
             macro_estado = 12;
             break;
 
         case 12:
             register_code(KC_W);
-            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_proximo_evento = ahora + 90 + (rand() % 21);
             macro_estado = 13;
             break;
 
@@ -479,20 +475,22 @@ void housekeeping_task_user(void) {
                 return;
             }
 
-            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            // OPTIMIZADO: Espera al siguiente Chaos Lock (400ms - 441ms)
+            macro_proximo_evento = ahora + 400 + (rand() % 41);
             macro_estado = 10;
             break;
 
         /* --- Ruta Shift + Q (10 segundos antes de Home) --- */
         case 30:
             unregister_code(KC_LSFT);
-            macro_proximo_evento = ahora + 800 + (rand() % 201);
+            // OPTIMIZADO: Espera de Chaos Lock a Infernal Concussion (250ms - 281ms)
+            macro_proximo_evento = ahora + 250 + (rand() % 31);
             macro_estado = 31;
             break;
 
         case 31:
             register_code(KC_Q);
-            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_proximo_evento = ahora + 90 + (rand() % 21);
             macro_estado = 32;
             break;
 
@@ -517,31 +515,35 @@ void housekeeping_task_user(void) {
                 return;
             }
 
-            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            // OPTIMIZADO: Espera al siguiente Chaos Lock (400ms - 441ms)
+            macro_proximo_evento = ahora + 400 + (rand() % 41);
             macro_estado = 10;
             break;
 
+        /* --- Ruta Shift + W + S --- */
         case 20:
             unregister_code(KC_LSFT);
-            macro_proximo_evento = ahora + 400 + (rand() % 101);
+            // OPTIMIZADO: Espera tras Shift antes de W (250ms - 281ms)
+            macro_proximo_evento = ahora + 250 + (rand() % 31);
             macro_estado = 21;
             break;
 
         case 21:
             register_code(KC_W);
-            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_proximo_evento = ahora + 90 + (rand() % 21);
             macro_estado = 22;
             break;
 
         case 22:
             unregister_code(KC_W);
-            macro_proximo_evento = ahora + 200 + (rand() % 101);
+            // OPTIMIZADO: Espera tras W antes de S (200ms - 241ms)
+            macro_proximo_evento = ahora + 200 + (rand() % 41);
             macro_estado = 23;
             break;
 
         case 23:
             register_code(KC_S);
-            macro_proximo_evento = ahora + 120 + (rand() % 35);
+            macro_proximo_evento = ahora + 90 + (rand() % 21);
             macro_estado = 24;
             break;
 
@@ -563,7 +565,8 @@ void housekeeping_task_user(void) {
                 return;
             }
 
-            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            // OPTIMIZADO: Espera al siguiente Chaos Lock (400ms - 441ms)
+            macro_proximo_evento = ahora + 400 + (rand() % 41);
             macro_estado = 10;
             break;
 
@@ -571,7 +574,7 @@ void housekeeping_task_user(void) {
             unregister_code(KC_Y);
             macro_y_activo = false;
             macro_fin_y = 0;
-            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_proximo_evento = ahora + 200 + (rand() % 51);
             macro_estado = 10;
             break;
 
@@ -579,7 +582,7 @@ void housekeeping_task_user(void) {
             unregister_code(KC_C);
             macro_c_activo = false;
             macro_fin_c = 0;
-            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_proximo_evento = ahora + 200 + (rand() % 51);
             macro_estado = 10;
             break;
 
@@ -587,7 +590,7 @@ void housekeeping_task_user(void) {
             unregister_code(KC_L);
             macro_l_activo = false;
             macro_fin_l = 0;
-            macro_proximo_evento = ahora + 900 + (rand() % 201);
+            macro_proximo_evento = ahora + 200 + (rand() % 51);
             macro_estado = 10;
             break;
 
