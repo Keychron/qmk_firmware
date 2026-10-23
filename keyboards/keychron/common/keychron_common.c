@@ -339,7 +339,6 @@ void keychron_common_task(void) {
 #endif
 }
 
-
 #if defined(ENCODER_ENABLE) && (PAL_USE_CALLBACKS == TRUE)
 static void encoder_pad_pins(void *param) {
     uint8_t     index = (uint32_t)param;
