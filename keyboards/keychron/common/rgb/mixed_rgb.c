@@ -65,6 +65,14 @@ void update_mixed_rgb_effect_count(void) {
 
 bool mixed_rgb(effect_params_t *params) {
     bool ret;
+    /* The per-zone effects below drive their colour through the *global*
+     * rgb_matrix_config via rgb_matrix_sethsv_noeeprom()/set_speed_noeeprom()
+     * while rendering. QMK never restores it afterwards, so the last zone's
+     * hue/sat/speed leaks into single-colour modes (e.g. Solid Color) once
+     * this effect is cycled away from. Snapshot the user's values here and
+     * restore them after the frame is composed. */
+    HSV     saved_hsv   = rgb_matrix_get_hsv();
+    uint8_t saved_speed = rgb_matrix_get_speed();
 
     extern uint8_t rgb_regions[RGB_MATRIX_LED_COUNT];
     if (params->init) {
@@ -78,6 +86,10 @@ bool mixed_rgb(effect_params_t *params) {
         params->region = i;
         ret            = multiple_rgb_effect_runner(params);
     }
+
+    /* Undo the global-state leak (rendering for this frame is already done). */
+    rgb_matrix_sethsv_noeeprom(saved_hsv.h, saved_hsv.s, saved_hsv.v);
+    rgb_matrix_set_speed_noeeprom(saved_speed);
 
     return ret;
 }
