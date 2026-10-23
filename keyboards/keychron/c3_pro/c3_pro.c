@@ -15,6 +15,7 @@
  */
 
 #include "c3_pro.h"
+#include "keychron_common.h"
 
 void keyboard_post_init_kb(void) {
     gpio_set_pin_output_push_pull(LED_MAC_OS_PIN);
@@ -22,18 +23,15 @@ void keyboard_post_init_kb(void) {
     gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
     gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
     
+#ifdef LED_OS_TIMEOUT
+    keychron_os_led_trigger();
+#endif
+
     keyboard_post_init_user();
 }
 
 void housekeeping_task_kb(void) {
-    if (get_highest_layer(default_layer_state) == 0) {
-        gpio_write_pin(LED_MAC_OS_PIN, LED_OS_PIN_ON_STATE);
-        gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
-    }
-    if (get_highest_layer(default_layer_state) == 2) {
-        gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
-        gpio_write_pin(LED_WIN_OS_PIN, LED_OS_PIN_ON_STATE);
-    }
+    keychron_os_led_process();
 }
 
 bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
@@ -81,11 +79,11 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 #endif
         case KC_OSSW:
             if (record->event.pressed) {
-                // Switches default layer between `MAC_BASE` and `WIN_BASE` (0 and 2)
-                if (get_highest_layer(default_layer_state) == 2 ) {
-                    set_single_persistent_default_layer(0);
+                // Switches default layer between `MAC_BASE_LAYER` and `WIN_BASE_LAYER`
+                if (get_highest_layer(default_layer_state) == WIN_BASE_LAYER ) {
+                    set_single_persistent_default_layer(MAC_BASE_LAYER);
                 } else {
-                    set_single_persistent_default_layer(2);
+                    set_single_persistent_default_layer(WIN_BASE_LAYER);
                 }
             }
             return false;

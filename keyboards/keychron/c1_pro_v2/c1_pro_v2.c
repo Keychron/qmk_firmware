@@ -15,6 +15,7 @@
  */
 
 #include "quantum.h"
+#include "keychron_common.h"
 
 #ifdef DIP_SWITCH_ENABLE
 bool dip_switch_update_kb(uint8_t index, bool active) {
@@ -22,7 +23,7 @@ bool dip_switch_update_kb(uint8_t index, bool active) {
         return false;
     }
     if (index == 0) {
-        default_layer_set(1UL << (active ? 0 : 2));
+        default_layer_set(1UL << (active ? MAC_BASE_LAYER : WIN_BASE_LAYER));
     }
     return true;
 }
@@ -82,18 +83,15 @@ void keyboard_post_init_kb(void) {
     gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
     gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
 
+#ifdef LED_OS_TIMEOUT
+    keychron_os_led_trigger();
+#endif
+
     keyboard_post_init_user();
 }
 
 void housekeeping_task_kb(void) {
-    if (default_layer_state == (1U << 0)) {
-        gpio_write_pin(LED_MAC_OS_PIN, LED_OS_PIN_ON_STATE);
-        gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
-    }
-    if (default_layer_state == (1U << 2)) {
-        gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
-        gpio_write_pin(LED_WIN_OS_PIN, LED_OS_PIN_ON_STATE);
-    }
+    keychron_os_led_process();
 }
 
 void suspend_power_down_kb(void) {

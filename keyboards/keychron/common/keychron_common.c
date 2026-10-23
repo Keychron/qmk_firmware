@@ -388,3 +388,37 @@ bool led_update_kb(led_t led_state) {
     return res;
 }
 #endif
+
+#if defined(LED_MAC_OS_PIN) && defined(LED_WIN_OS_PIN)
+
+#ifdef LED_OS_TIMEOUT
+static layer_state_t prev_default_layer_state = 0;
+static uint32_t layer_switch_timer = 0;
+static bool layer_switch_timer_active = false;
+
+void keychron_os_led_trigger(void) {
+    layer_switch_timer = timer_read32();
+    layer_switch_timer_active = true;
+}
+#endif
+
+void keychron_os_led_process(void) {
+    bool is_mac = (get_highest_layer(default_layer_state) == MAC_BASE_LAYER);
+    bool led_active = true;
+
+#ifdef LED_OS_TIMEOUT
+    if (prev_default_layer_state != default_layer_state) {
+        prev_default_layer_state = default_layer_state;
+        keychron_os_led_trigger();
+    }
+
+    if (layer_switch_timer_active && timer_elapsed32(layer_switch_timer) >= LED_OS_TIMEOUT) {
+        layer_switch_timer_active = false;
+    }
+    led_active = layer_switch_timer_active;
+#endif
+
+    gpio_write_pin(LED_MAC_OS_PIN, (led_active && is_mac) ? LED_OS_PIN_ON_STATE : !LED_OS_PIN_ON_STATE);
+    gpio_write_pin(LED_WIN_OS_PIN, (led_active && !is_mac) ? LED_OS_PIN_ON_STATE : !LED_OS_PIN_ON_STATE);
+}
+#endif
