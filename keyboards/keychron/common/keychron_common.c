@@ -116,7 +116,7 @@ void keychron_common_init(void) {
 
 void gui_toggle(void) {
 #ifdef WIN_BASE_LAYER
-    if (get_highest_layer(default_layer_state) != WIN_BASE_LAYER && !keymap_config.no_gui) {
+    if (get_highest_layer(default_layer_state) != WIN_BASE_LAYER) {
         return;
     }
 #endif
