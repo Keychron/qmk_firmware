@@ -182,13 +182,13 @@ static void macro_nueva_rotacion(void) {
 
     macro_combos_realizados = 0;
 
-    // L (Sol Janus Dawn): Carga 1 inicial agendada a los ~20s
+    // L (Sol Janus Dawn): Carga 1 agendada a los ~20s
     macro_conteo_l = 0;
     if (macro_rotacion == 1) {
         macro_proximo_l = ahora + 20000 + (rand() % 2001);
     }
 
-    // G: Primera pulsación agendada a los ~25s
+    // G: 1.ª pulsación a los ~25s
     macro_conteo_g = 0;
     macro_proximo_g = ahora + 25000 + (rand() % 1001);
 
@@ -327,7 +327,7 @@ void housekeeping_task_user(void) {
             register_code(KC_Y);
             macro_y_activo = true;
             macro_fin_y = ahora + 120 + (rand() % 31);
-            macro_proximo_y = ahora + 60000 + (rand() % 3001); // Recast a los 60-63s
+            macro_proximo_y = ahora + 60000 + (rand() % 3001); // Recast 60-63s
             macro_proximo_evento = macro_fin_y;
             macro_estado = 4;
             break;
@@ -397,11 +397,11 @@ void housekeeping_task_user(void) {
             break;
 
         /* ====================================================
-         * BUCLE PRINCIPAL (EVALUACIÓN POR PRIORIDAD)
+         * BUCLE PRINCIPAL (JERARQUÍA Y PRIORIDAD)
          * ==================================================== */
 
         case 10:
-            // 1. HOME (Prioridad Maxima)
+            // 1. HOME (Prioridad Máxima)
             if (macro_proximo_home != 0 && timer_expired32(ahora, macro_proximo_home)) {
                 macro_estado = 50;
                 break;
@@ -441,24 +441,139 @@ void housekeeping_task_user(void) {
 
             // 6. Shift + W + S (Cada 7s)
             if (macro_proximo_sws != 0 && timer_expired32(ahora, macro_proximo_sws)) {
-                register_code(KC_LSFT);
-                macro_proximo_evento = ahora + 40 + (rand() % 25);
                 macro_estado = 20;
                 break;
             }
 
-            // 7. Combos base: Shift + Q (si faltan <=10s para Home) o Shift + W
-            register_code(KC_LSFT);
-            macro_proximo_evento = ahora + 40 + (rand() % 25);
-
+            // 7. Seleccionar combo de combate base
             if (macro_proximo_home != 0 && (macro_proximo_home - ahora <= 10000)) {
-                macro_estado = 30; // Shift + Q
+                macro_estado = 30; // Ruta Shift + Q (10s antes de Home)
             } else {
-                macro_estado = 11; // Shift + W
+                macro_estado = 11; // Ruta Shift + W
             }
             break;
 
-        /* --- SOL JANUS DAWN (L): CARGA INDIVIDUAL + VUELTA AL COMBO --- */
+        /* --- RUTA SHIFT + W (COMBO BASE DIRECTO Y CONTINUO) --- */
+        case 11:
+            register_code(KC_LSFT);
+            macro_proximo_evento = ahora + 40 + (rand() % 25);
+            macro_estado = 12;
+            break;
+
+        case 12:
+            register_code(KC_W);
+            macro_proximo_evento = ahora + 100 + (rand() % 25);
+            macro_estado = 13;
+            break;
+
+        case 13:
+            unregister_code(KC_W);
+            unregister_code(KC_LSFT);
+
+            macro_combos_realizados++;
+
+            if (timer_expired32(ahora, macro_fin_rotacion)) {
+                macro_liberar_teclas();
+
+                if (macro_rotacion >= 9) {
+                    macro_cancelar();
+                    return;
+                }
+
+                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
+                macro_estado = 100;
+                return;
+            }
+
+            macro_proximo_evento = ahora + 650 + (rand() % 151);
+            macro_estado = 10;
+            break;
+
+        /* --- RUTA SHIFT + Q (10 SECONDS ANTES DE HOME) --- */
+        case 30:
+            register_code(KC_LSFT);
+            macro_proximo_evento = ahora + 40 + (rand() % 25);
+            macro_estado = 31;
+            break;
+
+        case 31:
+            register_code(KC_Q);
+            macro_proximo_evento = ahora + 100 + (rand() % 25);
+            macro_estado = 32;
+            break;
+
+        case 32:
+            unregister_code(KC_Q);
+            unregister_code(KC_LSFT);
+
+            macro_combos_realizados++;
+
+            if (timer_expired32(ahora, macro_fin_rotacion)) {
+                macro_liberar_teclas();
+
+                if (macro_rotacion >= 9) {
+                    macro_cancelar();
+                    return;
+                }
+
+                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
+                macro_estado = 100;
+                return;
+            }
+
+            macro_proximo_evento = ahora + 650 + (rand() % 151);
+            macro_estado = 10;
+            break;
+
+        /* --- RUTA SHIFT + W + S (CADA 7 SEG) --- */
+        case 20:
+            register_code(KC_LSFT);
+            macro_proximo_evento = ahora + 40 + (rand() % 25);
+            macro_estado = 21;
+            break;
+
+        case 21:
+            register_code(KC_W);
+            macro_proximo_evento = ahora + 100 + (rand() % 25);
+            macro_estado = 22;
+            break;
+
+        case 22:
+            unregister_code(KC_W);
+            macro_proximo_evento = ahora + 150 + (rand() % 81);
+            macro_estado = 23;
+            break;
+
+        case 23:
+            register_code(KC_S);
+            macro_proximo_evento = ahora + 100 + (rand() % 25);
+            macro_estado = 24;
+            break;
+
+        case 24:
+            unregister_code(KC_S);
+            unregister_code(KC_LSFT);
+
+            macro_proximo_sws = ahora + 7000 + (rand() % 501);
+
+            if (timer_expired32(ahora, macro_fin_rotacion)) {
+                macro_liberar_teclas();
+
+                if (macro_rotacion >= 9) {
+                    macro_cancelar();
+                    return;
+                }
+
+                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
+                macro_estado = 100;
+                return;
+            }
+
+            macro_proximo_evento = ahora + 650 + (rand() % 151);
+            macro_estado = 10;
+            break;
+
+        /* --- SOL JANUS DAWN (L): CARGA INDIVIDUAL + RETORNO --- */
         case 60:
             register_code(KC_L);
             macro_l_activo = true;
@@ -474,16 +589,16 @@ void housekeeping_task_user(void) {
             macro_conteo_l++;
 
             if (macro_conteo_l < 3) {
-                // Programa la siguiente carga de L tras 5 a 7 segundos de combate con Shift + W
+                // Programa la siguiente carga tras 5 a 7s de combate
                 macro_proximo_l = ahora + 5000 + (rand() % 2001);
             } else {
-                // Tras la 3.ª carga, bloquea L durante 60 a 63 segundos (Cooldown de Sol Janus)
+                // Cooldown de 60 a 63s de Sol Janus tras colocar las 3 cargas
                 macro_proximo_l = ahora + 60000 + (rand() % 3001);
                 macro_conteo_l = 0;
             }
 
             macro_proximo_evento = ahora + 150;
-            macro_estado = 10; // Regresa al bucle de combate normal
+            macro_estado = 10;
             break;
 
         /* --- ERDA SHOWER (Y): SECUENCIA AISLADA --- */
@@ -491,7 +606,7 @@ void housekeeping_task_user(void) {
             register_code(KC_Y);
             macro_y_activo = true;
             macro_fin_y = ahora + 130 + (rand() % 31);
-            macro_proximo_y = ahora + 60000 + (rand() % 3001); // Recast cada 60-63s
+            macro_proximo_y = ahora + 60000 + (rand() % 3001); // Recast 60-63s
             macro_proximo_evento = macro_fin_y;
             macro_estado = 91;
             break;
@@ -546,121 +661,6 @@ void housekeeping_task_user(void) {
             macro_c_activo = false;
             macro_fin_c = 0;
             macro_proximo_evento = ahora + 150;
-            macro_estado = 10;
-            break;
-
-        case 11:
-            unregister_code(KC_LSFT);
-            macro_proximo_evento = ahora + 600 + (rand() % 151);
-            macro_estado = 12;
-            break;
-
-        case 12:
-            register_code(KC_W);
-            macro_proximo_evento = ahora + 100 + (rand() % 25);
-            macro_estado = 13;
-            break;
-
-        case 13:
-            unregister_code(KC_W);
-
-            macro_combos_realizados++;
-
-            if (timer_expired32(ahora, macro_fin_rotacion)) {
-                macro_liberar_teclas();
-
-                if (macro_rotacion >= 9) {
-                    macro_cancelar();
-                    return;
-                }
-
-                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
-                macro_estado = 100;
-                return;
-            }
-
-            macro_proximo_evento = ahora + 750 + (rand() % 151);
-            macro_estado = 10;
-            break;
-
-        /* --- Ruta Shift + Q (10s antes de Home) --- */
-        case 30:
-            unregister_code(KC_LSFT);
-            macro_proximo_evento = ahora + 600 + (rand() % 151);
-            macro_estado = 31;
-            break;
-
-        case 31:
-            register_code(KC_Q);
-            macro_proximo_evento = ahora + 100 + (rand() % 25);
-            macro_estado = 32;
-            break;
-
-        case 32:
-            unregister_code(KC_Q);
-
-            macro_combos_realizados++;
-
-            if (timer_expired32(ahora, macro_fin_rotacion)) {
-                macro_liberar_teclas();
-
-                if (macro_rotacion >= 9) {
-                    macro_cancelar();
-                    return;
-                }
-
-                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
-                macro_estado = 100;
-                return;
-            }
-
-            macro_proximo_evento = ahora + 750 + (rand() % 151);
-            macro_estado = 10;
-            break;
-
-        case 20:
-            unregister_code(KC_LSFT);
-            macro_proximo_evento = ahora + 300 + (rand() % 81);
-            macro_estado = 21;
-            break;
-
-        case 21:
-            register_code(KC_W);
-            macro_proximo_evento = ahora + 100 + (rand() % 25);
-            macro_estado = 22;
-            break;
-
-        case 22:
-            unregister_code(KC_W);
-            macro_proximo_evento = ahora + 150 + (rand() % 81);
-            macro_estado = 23;
-            break;
-
-        case 23:
-            register_code(KC_S);
-            macro_proximo_evento = ahora + 100 + (rand() % 25);
-            macro_estado = 24;
-            break;
-
-        case 24:
-            unregister_code(KC_S);
-
-            macro_proximo_sws = ahora + 7000 + (rand() % 501);
-
-            if (timer_expired32(ahora, macro_fin_rotacion)) {
-                macro_liberar_teclas();
-
-                if (macro_rotacion >= 9) {
-                    macro_cancelar();
-                    return;
-                }
-
-                macro_proximo_evento = ahora + 1500 + (rand() % 1001);
-                macro_estado = 100;
-                return;
-            }
-
-            macro_proximo_evento = ahora + 750 + (rand() % 151);
             macro_estado = 10;
             break;
 
