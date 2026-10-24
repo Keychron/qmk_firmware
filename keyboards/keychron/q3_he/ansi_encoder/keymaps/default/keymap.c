@@ -1,12 +1,4 @@
-quantum/keymap_introspection.c: In function 'housekeeping_task_user':
-```[cite: 2]
-
-Falta una llave de cierre **`}`** al final de la función `housekeeping_task_user(void)` en `keymap.c`. Debido a esto, el compilador C asumió que todo el archivo del sistema QMK (`quantum/keymap_introspection.c`) estaba dentro de tu función `housekeeping_task_user`, generando decenas de errores en cascada sobre declaraciones estáticas e introspección de capas[cite: 2, 3].
-
-Sustituye todo el contenido de tu **`keymap.c`** por este código completo con la sintaxis corregida:
-
-```c
-/* Copyright 2024 ~ 2026 @ Keychron (https://www.keychron.com)
+/* Copyright 2024 ~ 2026 @ Keychron ([https://www.keychron.com](https://www.keychron.com))
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +9,7 @@ Sustituye todo el contenido de tu **`keymap.c`** por este código completo con l
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see [http://www.gnu.org/licenses/](http://www.gnu.org/licenses/).
  */
 
 #include QMK_KEYBOARD_H
@@ -190,13 +182,13 @@ static void macro_nueva_rotacion(void) {
 
     macro_combos_realizados = 0;
 
-    // L: 3 presiones concentradas en el medio (~45 segundos tras iniciar)
+    // L: Inicio de las 3 presiones en la mitad de la rotacion (~50s)
     macro_conteo_l = 0;
-    macro_proximo_l = ahora + 45000 + (rand() % 2001);
+    macro_proximo_l = ahora + 50000 + (rand() % 1001);
 
-    // G: 1.ª pulsación agendada a los ~25 segundos del inicio de la rotación
+    // G: Primera pulsacion de G a los ~25s del inicio
     macro_conteo_g = 0;
-    macro_proximo_g = ahora + 25000 + (rand() % 2001);
+    macro_proximo_g = ahora + 25000 + (rand() % 1001);
 
     macro_estado = 0;
 }
@@ -269,35 +261,31 @@ void housekeeping_task_user(void) {
 
     uint32_t ahora = timer_read32();
 
-    // Liberación asíncrona de Y
+    // Liberaciones asincronas de seguridad
     if (macro_y_activo && timer_expired32(ahora, macro_fin_y)) {
         unregister_code(KC_Y);
         macro_y_activo = false;
         macro_fin_y = 0;
     }
 
-    // Liberación asíncrona de C
     if (macro_c_activo && timer_expired32(ahora, macro_fin_c)) {
         unregister_code(KC_C);
         macro_c_activo = false;
         macro_fin_c = 0;
     }
 
-    // Liberación asíncrona de L
     if (macro_l_activo && timer_expired32(ahora, macro_fin_l)) {
         unregister_code(KC_L);
         macro_l_activo = false;
         macro_fin_l = 0;
     }
 
-    // Liberación asíncrona de G
     if (macro_g_activo && timer_expired32(ahora, macro_fin_g)) {
         unregister_code(KC_G);
         macro_g_activo = false;
         macro_fin_g = 0;
     }
 
-    // Liberación asíncrona de Home
     if (macro_home_activo && timer_expired32(ahora, macro_fin_home)) {
         unregister_code(KC_HOME);
         macro_home_activo = false;
@@ -311,7 +299,7 @@ void housekeeping_task_user(void) {
     switch (macro_estado) {
 
         /* ----------------------------------------------------
-         * SECUENCIA INICIAL CON AISLAMIENTO DE HOME
+         * SECUENCIA INICIAL: F1 -> Y -> SHIFT+W -> HOME DEDICADO
          * ---------------------------------------------------- */
         case 0:
             macro_liberar_teclas();
@@ -322,7 +310,7 @@ void housekeeping_task_user(void) {
         case 1:
             register_code(KC_F1);
             macro_proximo_evento = ahora + 80 + (rand() % 31);
-            macro_proximo_c = ahora + 60000 + (rand() % 3001);
+            macro_proximo_c = ahora + 60000 + (rand() % 2001);
             macro_estado = 2;
             break;
 
@@ -336,7 +324,7 @@ void housekeeping_task_user(void) {
             register_code(KC_Y);
             macro_y_activo = true;
             macro_fin_y = ahora + 100 + (rand() % 41);
-            macro_proximo_y = ahora + 60000 + (rand() % 3001);
+            macro_proximo_y = ahora + 60000 + (rand() % 2001);
             macro_proximo_evento = macro_fin_y;
             macro_estado = 4;
             break;
@@ -349,7 +337,6 @@ void housekeeping_task_user(void) {
             macro_estado = 5;
             break;
 
-        // Primer combo: Shift + W (Acelerado)
         case 5:
             register_code(KC_LSFT);
             macro_proximo_evento = ahora + 40 + (rand() % 25);
@@ -377,7 +364,7 @@ void housekeeping_task_user(void) {
             break;
 
         /* ====================================================
-         * ESTADOS DEDICADOS PARA AISLAMIENTO Y EJECUCIÓN DE HOME
+         * HOME DEDICADO Y AISLADO
          * ==================================================== */
         case 50:
             macro_liberar_teclas();
@@ -407,52 +394,52 @@ void housekeeping_task_user(void) {
             break;
 
         /* ====================================================
-         * BUCLE PRINCIPAL (EVALUACIÓN POR PRIORIDAD)
+         * BUCLE PRINCIPAL (JERARQUÍA Y PRIORIDAD)
          * ==================================================== */
 
         case 10:
-            // 0. PRIORIDAD 1: Tecla Home
+            // 1. PRIORIDAD: HOME
             if (macro_proximo_home != 0 && timer_expired32(ahora, macro_proximo_home)) {
                 macro_estado = 50;
                 break;
             }
 
-            // 1. PRIORIDAD 2: Tecla L (Concentrada en la mitad)
-            if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
-                macro_liberar_teclas();
-                macro_proximo_evento = ahora + 100 + (rand() % 31);
-                macro_estado = 60;
-                break;
-            }
-
-            // 2. PRIORIDAD 3: Tecla G (Aislada y garantizada)
+            // 2. PRIORIDAD: G (Aislada, 2 veces por rotacion)
             if (macro_proximo_g != 0 && timer_expired32(ahora, macro_proximo_g)) {
                 macro_liberar_teclas();
-                macro_proximo_evento = ahora + 100 + (rand() % 31);
+                macro_proximo_evento = ahora + 100;
                 macro_estado = 70;
                 break;
             }
 
-            // 3. Revisar si toca la tecla Y
+            // 3. PRIORIDAD: L (3 veces en la mitad de la rotacion)
+            if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
+                macro_liberar_teclas();
+                macro_proximo_evento = ahora + 100;
+                macro_estado = 60;
+                break;
+            }
+
+            // 4. PRIORIDAD: C (Aislada)
+            if (macro_proximo_c != 0 && timer_expired32(ahora, macro_proximo_c)) {
+                macro_liberar_teclas();
+                macro_proximo_evento = ahora + 100;
+                macro_estado = 80;
+                break;
+            }
+
+            // 5. PRIORIDAD: Y
             if (macro_proximo_y != 0 && timer_expired32(ahora, macro_proximo_y)) {
                 register_code(KC_Y);
                 macro_y_activo = true;
                 macro_fin_y = ahora + 100 + (rand() % 41);
-                macro_proximo_y = ahora + 60000 + (rand() % 3001);
+                macro_proximo_y = ahora + 60000 + (rand() % 2001);
                 macro_proximo_evento = macro_fin_y;
                 macro_estado = 14;
                 break;
             }
 
-            // 4. Revisar si toca la tecla C (Aislada)
-            if (macro_proximo_c != 0 && timer_expired32(ahora, macro_proximo_c)) {
-                macro_liberar_teclas();
-                macro_proximo_evento = ahora + 100 + (rand() % 31);
-                macro_estado = 80;
-                break;
-            }
-
-            // 5. Revisar si toca Shift + W + S (Cada 7s)
+            // 6. Shift + W + S (Cada 7s)
             if (macro_proximo_sws != 0 && timer_expired32(ahora, macro_proximo_sws)) {
                 register_code(KC_LSFT);
                 macro_proximo_evento = ahora + 40 + (rand() % 25);
@@ -460,44 +447,18 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 6. Shift + Q (si faltan 10s o menos para Home) o Shift + W
+            // 7. Combos base: Shift + Q (si faltan <=10s para Home) o Shift + W
             register_code(KC_LSFT);
             macro_proximo_evento = ahora + 40 + (rand() % 25);
 
             if (macro_proximo_home != 0 && (macro_proximo_home - ahora <= 10000)) {
-                macro_estado = 30; // Ruta Shift + Q
+                macro_estado = 30; // Shift + Q
             } else {
-                macro_estado = 11; // Ruta Shift + W
+                macro_estado = 11; // Shift + W
             }
             break;
 
-        /* --- ESTADO AISLADO PARA TECLA L --- */
-        case 60:
-            register_code(KC_L);
-            macro_l_activo = true;
-            macro_fin_l = ahora + 130 + (rand() % 31);
-
-            macro_conteo_l++;
-
-            if (macro_conteo_l < 3) {
-                macro_proximo_l = ahora + 5500 + (rand() % 1501);
-            } else {
-                macro_proximo_l = 0;
-            }
-
-            macro_proximo_evento = macro_fin_l;
-            macro_estado = 61;
-            break;
-
-        case 61:
-            unregister_code(KC_L);
-            macro_l_activo = false;
-            macro_fin_l = 0;
-            macro_proximo_evento = ahora + 150 + (rand() % 51);
-            macro_estado = 10;
-            break;
-
-        /* --- ESTADO AISLADO PARA TECLA G --- */
+        /* --- ESTADO AISLADO PARA TECLA G (2 veces por rotacion) --- */
         case 70:
             register_code(KC_G);
             macro_g_activo = true;
@@ -506,7 +467,8 @@ void housekeeping_task_user(void) {
             macro_conteo_g++;
 
             if (macro_conteo_g < 2) {
-                macro_proximo_g = ahora + 40000 + (rand() % 2001);
+                // Segunda G agendada ~55 segundos despues (~80s de la rotacion)
+                macro_proximo_g = ahora + 55000 + (rand() % 2001);
             } else {
                 macro_proximo_g = 0;
             }
@@ -519,7 +481,34 @@ void housekeeping_task_user(void) {
             unregister_code(KC_G);
             macro_g_activo = false;
             macro_fin_g = 0;
-            macro_proximo_evento = ahora + 150 + (rand() % 51);
+            macro_proximo_evento = ahora + 150;
+            macro_estado = 10;
+            break;
+
+        /* --- ESTADO AISLADO PARA TECLA L (3 presiones separadas por 5-6s) --- */
+        case 60:
+            register_code(KC_L);
+            macro_l_activo = true;
+            macro_fin_l = ahora + 130 + (rand() % 31);
+
+            macro_conteo_l++;
+
+            if (macro_conteo_l < 3) {
+                // Intervalo de 5 a 6 segundos entre cada pulsacion de L
+                macro_proximo_l = ahora + 5000 + (rand() % 1001);
+            } else {
+                macro_proximo_l = 0;
+            }
+
+            macro_proximo_evento = macro_fin_l;
+            macro_estado = 61;
+            break;
+
+        case 61:
+            unregister_code(KC_L);
+            macro_l_activo = false;
+            macro_fin_l = 0;
+            macro_proximo_evento = ahora + 150;
             macro_estado = 10;
             break;
 
@@ -528,7 +517,7 @@ void housekeeping_task_user(void) {
             register_code(KC_C);
             macro_c_activo = true;
             macro_fin_c = ahora + 130 + (rand() % 31);
-            macro_proximo_c = ahora + 60000 + (rand() % 3001);
+            macro_proximo_c = ahora + 60000 + (rand() % 2001);
 
             macro_proximo_evento = macro_fin_c;
             macro_estado = 81;
@@ -538,7 +527,7 @@ void housekeeping_task_user(void) {
             unregister_code(KC_C);
             macro_c_activo = false;
             macro_fin_c = 0;
-            macro_proximo_evento = ahora + 150 + (rand() % 51);
+            macro_proximo_evento = ahora + 150;
             macro_estado = 10;
             break;
 
@@ -576,7 +565,7 @@ void housekeeping_task_user(void) {
             macro_estado = 10;
             break;
 
-        /* --- Ruta Shift + Q (10 segundos antes de Home) --- */
+        /* --- Ruta Shift + Q (10s antes de Home) --- */
         case 30:
             unregister_code(KC_LSFT);
             macro_proximo_evento = ahora + 600 + (rand() % 151);
