@@ -1,4 +1,4 @@
-/* Copyright 2024 ~ 2026 @ Keychron ([https://www.keychron.com](https://www.keychron.com))
+/* Copyright 2024 ~ 2026 @ Keychron (https://www.keychron.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -9,7 +9,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see [http://www.gnu.org/licenses/](http://www.gnu.org/licenses/).
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include QMK_KEYBOARD_H
@@ -182,11 +182,11 @@ static void macro_nueva_rotacion(void) {
 
     macro_combos_realizados = 0;
 
-    // L: Inicio de las 3 presiones en la mitad de la rotacion (~50s)
+    // L: Inicio agendado entre los 20 y 30 segundos de la rotacion
     macro_conteo_l = 0;
-    macro_proximo_l = ahora + 50000 + (rand() % 1001);
+    macro_proximo_l = ahora + 20000 + (rand() % 10001);
 
-    // G: Primera pulsacion de G a los ~25s del inicio
+    // G: Primera pulsacion agendada a los ~25s
     macro_conteo_g = 0;
     macro_proximo_g = ahora + 25000 + (rand() % 1001);
 
@@ -412,7 +412,7 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 3. PRIORIDAD: L (3 veces en la mitad de la rotacion)
+            // 3. PRIORIDAD: L (3 casteos en ráfaga a los 20-30s)
             if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
                 macro_liberar_teclas();
                 macro_proximo_evento = ahora + 100;
@@ -458,7 +458,7 @@ void housekeeping_task_user(void) {
             }
             break;
 
-        /* --- ESTADO AISLADO PARA TECLA G (2 veces por rotacion) --- */
+        /* --- ESTADO AISLADO PARA TECLA G --- */
         case 70:
             register_code(KC_G);
             macro_g_activo = true;
@@ -467,7 +467,6 @@ void housekeeping_task_user(void) {
             macro_conteo_g++;
 
             if (macro_conteo_g < 2) {
-                // Segunda G agendada ~55 segundos despues (~80s de la rotacion)
                 macro_proximo_g = ahora + 55000 + (rand() % 2001);
             } else {
                 macro_proximo_g = 0;
@@ -485,7 +484,7 @@ void housekeeping_task_user(void) {
             macro_estado = 10;
             break;
 
-        /* --- ESTADO AISLADO PARA TECLA L (3 presiones separadas por 5-6s) --- */
+        /* --- ESTADO AISLADO PARA TECLA L (3 casteos con CD de 60-63s) --- */
         case 60:
             register_code(KC_L);
             macro_l_activo = true;
@@ -494,10 +493,12 @@ void housekeeping_task_user(void) {
             macro_conteo_l++;
 
             if (macro_conteo_l < 3) {
-                // Intervalo de 5 a 6 segundos entre cada pulsacion de L
-                macro_proximo_l = ahora + 5000 + (rand() % 1001);
+                // Ráfaga humana de 2.5 a 4.5s entre los 3 casteos
+                macro_proximo_l = ahora + 2500 + (rand() % 2001);
             } else {
-                macro_proximo_l = 0;
+                // Cooldown completo de 60 a 63 segundos tras completar las 3 ráfagas
+                macro_proximo_l = ahora + 60000 + (rand() % 3001);
+                macro_conteo_l = 0;
             }
 
             macro_proximo_evento = macro_fin_l;
