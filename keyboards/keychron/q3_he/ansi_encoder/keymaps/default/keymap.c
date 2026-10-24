@@ -182,13 +182,13 @@ static void macro_nueva_rotacion(void) {
 
     macro_combos_realizados = 0;
 
-    // L (Sol Janus): Colocación inicial a los ~20 segundos
+    // L (Sol Janus Dawn): Carga 1 inicial agendada a los ~20s
     macro_conteo_l = 0;
     if (macro_rotacion == 1) {
         macro_proximo_l = ahora + 20000 + (rand() % 2001);
     }
 
-    // G: Primera pulsación a los ~25 segundos
+    // G: Primera pulsación agendada a los ~25s
     macro_conteo_g = 0;
     macro_proximo_g = ahora + 25000 + (rand() % 1001);
 
@@ -327,8 +327,7 @@ void housekeeping_task_user(void) {
             register_code(KC_Y);
             macro_y_activo = true;
             macro_fin_y = ahora + 120 + (rand() % 31);
-            // Re-cast de Erda Shower cada 60 a 63 segundos
-            macro_proximo_y = ahora + 60000 + (rand() % 3001);
+            macro_proximo_y = ahora + 60000 + (rand() % 3001); // Recast a los 60-63s
             macro_proximo_evento = macro_fin_y;
             macro_estado = 4;
             break;
@@ -408,16 +407,15 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 2. SOL JANUS DAWN (L x3): Colocar los 3 orbes
+            // 2. SOL JANUS DAWN (L): Cargas aisladas
             if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
                 macro_liberar_teclas();
-                macro_conteo_l = 0;
                 macro_proximo_evento = ahora + 100;
                 macro_estado = 60;
                 break;
             }
 
-            // 3. ERDA SHOWER (Y): Colocación cada 60-63 segundos
+            // 3. ERDA SHOWER (Y): Colocación cada 60-63s
             if (macro_proximo_y != 0 && timer_expired32(ahora, macro_proximo_y)) {
                 macro_liberar_teclas();
                 macro_proximo_evento = ahora + 100;
@@ -460,11 +458,11 @@ void housekeeping_task_user(void) {
             }
             break;
 
-        /* --- SOL JANUS DAWN (L x3): SECUENCIA DE RÁFAGA DEDICADA --- */
+        /* --- SOL JANUS DAWN (L): CARGA INDIVIDUAL + VUELTA AL COMBO --- */
         case 60:
             register_code(KC_L);
             macro_l_activo = true;
-            macro_fin_l = ahora + 120 + (rand() % 21);
+            macro_fin_l = ahora + 130 + (rand() % 31);
             macro_proximo_evento = macro_fin_l;
             macro_estado = 61;
             break;
@@ -476,15 +474,16 @@ void housekeeping_task_user(void) {
             macro_conteo_l++;
 
             if (macro_conteo_l < 3) {
-                // Tiempo de espera entre cada orbe (350 a 450 ms para permitir animación)
-                macro_proximo_evento = ahora + 350 + (rand() % 101);
-                macro_estado = 60; // Repetir para el siguiente orbe
+                // Programa la siguiente carga de L tras 5 a 7 segundos de combate con Shift + W
+                macro_proximo_l = ahora + 5000 + (rand() % 2001);
             } else {
-                // Tras colocar los 3 orbes, reprogramar el ciclo completo para 60-63 segundos después
+                // Tras la 3.ª carga, bloquea L durante 60 a 63 segundos (Cooldown de Sol Janus)
                 macro_proximo_l = ahora + 60000 + (rand() % 3001);
-                macro_proximo_evento = ahora + 200;
-                macro_estado = 10;
+                macro_conteo_l = 0;
             }
+
+            macro_proximo_evento = ahora + 150;
+            macro_estado = 10; // Regresa al bucle de combate normal
             break;
 
         /* --- ERDA SHOWER (Y): SECUENCIA AISLADA --- */
@@ -492,8 +491,7 @@ void housekeeping_task_user(void) {
             register_code(KC_Y);
             macro_y_activo = true;
             macro_fin_y = ahora + 130 + (rand() % 31);
-            // Reprogramar Erda Shower para 60 a 63 segundos después
-            macro_proximo_y = ahora + 60000 + (rand() % 3001);
+            macro_proximo_y = ahora + 60000 + (rand() % 3001); // Recast cada 60-63s
             macro_proximo_evento = macro_fin_y;
             macro_estado = 91;
             break;
