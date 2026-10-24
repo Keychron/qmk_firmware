@@ -182,11 +182,13 @@ static void macro_nueva_rotacion(void) {
 
     macro_combos_realizados = 0;
 
-    // L: Inicio agendado entre los 20 y 30 segundos de la rotacion
+    // L (Sol Janus): Colocación inicial a los ~20 segundos
     macro_conteo_l = 0;
-    macro_proximo_l = ahora + 20000 + (rand() % 10001);
+    if (macro_rotacion == 1) {
+        macro_proximo_l = ahora + 20000 + (rand() % 2001);
+    }
 
-    // G: Primera pulsacion agendada a los ~25s
+    // G: Primera pulsación a los ~25 segundos
     macro_conteo_g = 0;
     macro_proximo_g = ahora + 25000 + (rand() % 1001);
 
@@ -261,7 +263,7 @@ void housekeeping_task_user(void) {
 
     uint32_t ahora = timer_read32();
 
-    // Liberaciones asincronas de seguridad
+    // Liberaciones asíncronas de seguridad
     if (macro_y_activo && timer_expired32(ahora, macro_fin_y)) {
         unregister_code(KC_Y);
         macro_y_activo = false;
@@ -299,7 +301,7 @@ void housekeeping_task_user(void) {
     switch (macro_estado) {
 
         /* ----------------------------------------------------
-         * SECUENCIA INICIAL: F1 -> Y -> SHIFT+W -> HOME DEDICADO
+         * SECUENCIA INICIAL: F1 -> Y -> SHIFT+W -> HOME
          * ---------------------------------------------------- */
         case 0:
             macro_liberar_teclas();
@@ -320,11 +322,13 @@ void housekeeping_task_user(void) {
             macro_estado = 3;
             break;
 
+        // Erda Shower (Y) Inicial
         case 3:
             register_code(KC_Y);
             macro_y_activo = true;
-            macro_fin_y = ahora + 100 + (rand() % 41);
-            macro_proximo_y = ahora + 60000 + (rand() % 2001);
+            macro_fin_y = ahora + 120 + (rand() % 31);
+            // Re-cast de Erda Shower cada 60 a 63 segundos
+            macro_proximo_y = ahora + 60000 + (rand() % 3001);
             macro_proximo_evento = macro_fin_y;
             macro_estado = 4;
             break;
@@ -394,17 +398,34 @@ void housekeeping_task_user(void) {
             break;
 
         /* ====================================================
-         * BUCLE PRINCIPAL (JERARQUÍA Y PRIORIDAD)
+         * BUCLE PRINCIPAL (EVALUACIÓN POR PRIORIDAD)
          * ==================================================== */
 
         case 10:
-            // 1. PRIORIDAD: HOME
+            // 1. HOME (Prioridad Maxima)
             if (macro_proximo_home != 0 && timer_expired32(ahora, macro_proximo_home)) {
                 macro_estado = 50;
                 break;
             }
 
-            // 2. PRIORIDAD: G (Aislada, 2 veces por rotacion)
+            // 2. SOL JANUS DAWN (L x3): Colocar los 3 orbes
+            if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
+                macro_liberar_teclas();
+                macro_conteo_l = 0;
+                macro_proximo_evento = ahora + 100;
+                macro_estado = 60;
+                break;
+            }
+
+            // 3. ERDA SHOWER (Y): Colocación cada 60-63 segundos
+            if (macro_proximo_y != 0 && timer_expired32(ahora, macro_proximo_y)) {
+                macro_liberar_teclas();
+                macro_proximo_evento = ahora + 100;
+                macro_estado = 90;
+                break;
+            }
+
+            // 4. G (2 veces por rotación)
             if (macro_proximo_g != 0 && timer_expired32(ahora, macro_proximo_g)) {
                 macro_liberar_teclas();
                 macro_proximo_evento = ahora + 100;
@@ -412,30 +433,11 @@ void housekeeping_task_user(void) {
                 break;
             }
 
-            // 3. PRIORIDAD: L (3 casteos en ráfaga a los 20-30s)
-            if (macro_proximo_l != 0 && timer_expired32(ahora, macro_proximo_l)) {
-                macro_liberar_teclas();
-                macro_proximo_evento = ahora + 100;
-                macro_estado = 60;
-                break;
-            }
-
-            // 4. PRIORIDAD: C (Aislada)
+            // 5. C (Aislada)
             if (macro_proximo_c != 0 && timer_expired32(ahora, macro_proximo_c)) {
                 macro_liberar_teclas();
                 macro_proximo_evento = ahora + 100;
                 macro_estado = 80;
-                break;
-            }
-
-            // 5. PRIORIDAD: Y
-            if (macro_proximo_y != 0 && timer_expired32(ahora, macro_proximo_y)) {
-                register_code(KC_Y);
-                macro_y_activo = true;
-                macro_fin_y = ahora + 100 + (rand() % 41);
-                macro_proximo_y = ahora + 60000 + (rand() % 2001);
-                macro_proximo_evento = macro_fin_y;
-                macro_estado = 14;
                 break;
             }
 
@@ -458,7 +460,53 @@ void housekeeping_task_user(void) {
             }
             break;
 
-        /* --- ESTADO AISLADO PARA TECLA G --- */
+        /* --- SOL JANUS DAWN (L x3): SECUENCIA DE RÁFAGA DEDICADA --- */
+        case 60:
+            register_code(KC_L);
+            macro_l_activo = true;
+            macro_fin_l = ahora + 120 + (rand() % 21);
+            macro_proximo_evento = macro_fin_l;
+            macro_estado = 61;
+            break;
+
+        case 61:
+            unregister_code(KC_L);
+            macro_l_activo = false;
+            macro_fin_l = 0;
+            macro_conteo_l++;
+
+            if (macro_conteo_l < 3) {
+                // Tiempo de espera entre cada orbe (350 a 450 ms para permitir animación)
+                macro_proximo_evento = ahora + 350 + (rand() % 101);
+                macro_estado = 60; // Repetir para el siguiente orbe
+            } else {
+                // Tras colocar los 3 orbes, reprogramar el ciclo completo para 60-63 segundos después
+                macro_proximo_l = ahora + 60000 + (rand() % 3001);
+                macro_proximo_evento = ahora + 200;
+                macro_estado = 10;
+            }
+            break;
+
+        /* --- ERDA SHOWER (Y): SECUENCIA AISLADA --- */
+        case 90:
+            register_code(KC_Y);
+            macro_y_activo = true;
+            macro_fin_y = ahora + 130 + (rand() % 31);
+            // Reprogramar Erda Shower para 60 a 63 segundos después
+            macro_proximo_y = ahora + 60000 + (rand() % 3001);
+            macro_proximo_evento = macro_fin_y;
+            macro_estado = 91;
+            break;
+
+        case 91:
+            unregister_code(KC_Y);
+            macro_y_activo = false;
+            macro_fin_y = 0;
+            macro_proximo_evento = ahora + 150;
+            macro_estado = 10;
+            break;
+
+        /* --- TECLA G (2 veces por rotación) --- */
         case 70:
             register_code(KC_G);
             macro_g_activo = true;
@@ -484,36 +532,7 @@ void housekeeping_task_user(void) {
             macro_estado = 10;
             break;
 
-        /* --- ESTADO AISLADO PARA TECLA L (3 casteos con CD de 60-63s) --- */
-        case 60:
-            register_code(KC_L);
-            macro_l_activo = true;
-            macro_fin_l = ahora + 130 + (rand() % 31);
-
-            macro_conteo_l++;
-
-            if (macro_conteo_l < 3) {
-                // Ráfaga humana de 2.5 a 4.5s entre los 3 casteos
-                macro_proximo_l = ahora + 2500 + (rand() % 2001);
-            } else {
-                // Cooldown completo de 60 a 63 segundos tras completar las 3 ráfagas
-                macro_proximo_l = ahora + 60000 + (rand() % 3001);
-                macro_conteo_l = 0;
-            }
-
-            macro_proximo_evento = macro_fin_l;
-            macro_estado = 61;
-            break;
-
-        case 61:
-            unregister_code(KC_L);
-            macro_l_activo = false;
-            macro_fin_l = 0;
-            macro_proximo_evento = ahora + 150;
-            macro_estado = 10;
-            break;
-
-        /* --- ESTADO AISLADO PARA TECLA C --- */
+        /* --- TECLA C --- */
         case 80:
             register_code(KC_C);
             macro_c_activo = true;
@@ -643,14 +662,6 @@ void housekeeping_task_user(void) {
                 return;
             }
 
-            macro_proximo_evento = ahora + 750 + (rand() % 151);
-            macro_estado = 10;
-            break;
-
-        case 14:
-            unregister_code(KC_Y);
-            macro_y_activo = false;
-            macro_fin_y = 0;
             macro_proximo_evento = ahora + 750 + (rand() % 151);
             macro_estado = 10;
             break;
