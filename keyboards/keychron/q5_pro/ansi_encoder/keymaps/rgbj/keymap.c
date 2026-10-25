@@ -73,12 +73,8 @@ enum {
     HOST_GET_FIRMWARE_TYPE     = 0x28,
 };
 
-enum {
-    HOST_DEVICE_ERROR_LED_BOUNDS = 253,
-    HOST_DEVICE_ERROR_LED_COUNT  = 254,
-};
-
 static uint8_t host_packet[32];
+static bool     host_lighting_active = false;
 
 static void host_reply(uint8_t command, uint8_t b1, uint8_t b2, uint8_t b3) {
     memset(host_packet, 0, sizeof(host_packet));
@@ -116,12 +112,9 @@ static void host_led_streaming(uint8_t *data) {
     uint8_t index        = data[1];
     uint8_t numberofleds = data[2];
 
-    if ((uint16_t)index + numberofleds > RGB_MATRIX_LED_COUNT) {
-        host_reply(HOST_STREAM_RGB_DATA, HOST_DEVICE_ERROR_LED_BOUNDS, 0, 0);
-        return;
-    }
-    if (numberofleds >= 10) {
-        host_reply(HOST_STREAM_RGB_DATA, HOST_DEVICE_ERROR_LED_COUNT, 0, 0);
+    /* Stay silent on a bad frame. A reply uses the colour command, and the
+     * next handshake can read that leftover report as its answer. */
+    if ((uint16_t)index + numberofleds > RGB_MATRIX_LED_COUNT || numberofleds >= 10) {
         return;
     }
 
@@ -155,10 +148,12 @@ bool q5_pro_host_lighting_rx(uint8_t *data, uint8_t length) {
             host_led_streaming(data);
             return true;
         case HOST_MODE_ENABLE:
+            host_lighting_active = true;
             rgb_matrix_enable_noeeprom();
             rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_HOSTLIGHT);
             return true;
         case HOST_MODE_DISABLE:
+            host_lighting_active = false;
             rgb_matrix_reload_from_eeprom();
             return true;
         case HOST_GET_TOTAL_LEDS:
@@ -195,4 +190,29 @@ void os_state_indicate(void) {
         rgb_matrix_set_color(SCROLL_LOCK_INDEX, 255, 255, 255);
     }
 #endif
+}
+
+/* While a host is streaming, keep its effect selected. The lighting keys and
+ * the Launcher would otherwise load an onboard effect and the two painters
+ * flicker against each other. */
+bool rgb_matrix_effect_locked(uint8_t mode) {
+    return host_lighting_active && mode != RGB_MATRIX_CUSTOM_HOSTLIGHT;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    (void)record;
+    if (host_lighting_active && IS_RGB_KEYCODE(keycode)) {
+        return false;
+    }
+    return true;
+}
+
+void housekeeping_task_user(void) {
+    if (!host_lighting_active) {
+        return;
+    }
+    if (!rgb_matrix_is_enabled() || rgb_matrix_get_mode() != RGB_MATRIX_CUSTOM_HOSTLIGHT) {
+        rgb_matrix_enable_noeeprom();
+        rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_HOSTLIGHT);
+    }
 }
