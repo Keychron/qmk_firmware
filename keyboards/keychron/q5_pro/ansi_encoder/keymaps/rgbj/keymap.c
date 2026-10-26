@@ -8,7 +8,11 @@
  */
 
 #include QMK_KEYBOARD_H
+#include "eeconfig_kb.h"
+#include "keychron_debounce.h"
 #include "raw_hid.h"
+
+extern void debounce_set(uint8_t new_debounce_type, uint8_t time, bool force);
 
 enum layers {
     MAC_BASE,
@@ -197,6 +201,25 @@ void os_state_indicate(void) {
  * flicker against each other. */
 bool rgb_matrix_effect_locked(uint8_t mode) {
     return host_lighting_active && mode != RGB_MATRIX_CUSTOM_HOSTLIGHT;
+}
+
+/* The running debounce is stored on the keyboard. A flash does not replace
+ * it, so the first boot after this firmware moves the old eager setting
+ * over. A later change in the Launcher is left alone. */
+void keyboard_post_init_user(void) {
+    uint8_t *cfg  = (uint8_t *)EECONFIG_BASE_DYNAMIC_DEBOUNCE;
+    uint8_t  type = eeprom_read_byte(cfg);
+
+    if (type == DEBOUNCE_ASYM_EAGER_DEFER_PER_KEY) {
+        return;
+    }
+    if (type != DEBOUNCE_SYM_EAGER_PER_KEY && type < DEBOUNCE_MAX) {
+        return;
+    }
+
+    debounce_set(DEBOUNCE_ASYM_EAGER_DEFER_PER_KEY, DEBOUNCE, true);
+    eeprom_update_byte(cfg, DEBOUNCE_ASYM_EAGER_DEFER_PER_KEY);
+    eeprom_update_byte(cfg + 1, DEBOUNCE);
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
