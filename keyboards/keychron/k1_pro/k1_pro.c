@@ -225,7 +225,8 @@ void bluetooth_enter_disconnected_kb(uint8_t host_idx) {
     }
     /* CKBT51 bluetooth module boot time is slower, it enters disconnected after boot,
        so we place initialization here. */
-    if (firstDisconnect && sync_timer_read32() < 1000 && get_transport() == TRANSPORT_BLUETOOTH) {
+    /* Apply module params on first BT init regardless of boot timing (slow module boot / late BT switch) */
+    if (firstDisconnect && get_transport() == TRANSPORT_BLUETOOTH) {
         ckbt51_param_init();
         bluetooth_connect();
         firstDisconnect = false;
