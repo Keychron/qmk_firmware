@@ -283,6 +283,14 @@ void battery_calculte_voltage(uint16_t value) {
     battery_set_voltage(voltage);
 }
 
+/* Keymaps that speak the host lighting protocol override this. Stock maps leave it false
+ * so VIA still owns every other command. */
+__attribute__((weak)) bool q5_pro_host_lighting_rx(uint8_t *data, uint8_t length) {
+    (void)data;
+    (void)length;
+    return false;
+}
+
 bool via_command_kb(uint8_t *data, uint8_t length) {
     switch (data[0]) {
 #ifdef KC_BLUETOOTH_ENABLE
@@ -296,6 +304,11 @@ bool via_command_kb(uint8_t *data, uint8_t length) {
             break;
 #endif
         default:
+            /* Claim host lighting commands here. If they fall through, VIA echoes the
+             * packet, and a colour frame (0x24) comes straight back. */
+            if (q5_pro_host_lighting_rx(data, length)) {
+                return true;
+            }
             return false;
     }
 

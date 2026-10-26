@@ -328,6 +328,14 @@ extern const rgb_matrix_driver_t rgb_matrix_driver;
 extern rgb_config_t rgb_matrix_config;
 
 extern uint32_t     g_rgb_timer;
+
+/* Phase that advances with speed. Changing speed keeps the current frame
+ * and only changes how fast the next frames move. */
+uint16_t rgb_matrix_anim_time(uint8_t scale);
+
+/* Keymaps can hold the current effect. Return true to refuse `mode`. */
+bool rgb_matrix_effect_locked(uint8_t mode);
+
 extern led_config_t g_led_config;
 #ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
 extern last_hit_t g_last_hit_tracker;

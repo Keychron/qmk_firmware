@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "eeconfig_kb.h"
+
 /* turn off effects when suspended */
 #define RGB_DISABLE_WHEN_USB_SUSPENDED
 

@@ -23,7 +23,7 @@ bool RAINDROPS(effect_params_t* params) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
     if (!params->init) {
         // Change one LED every tick, make sure speed is not 0
-        if (scale16by8(g_rgb_timer, qadd8(rgb_matrix_config.speed, 16)) % 10 == 0) {
+        if (rgb_matrix_anim_time(qadd8(rgb_matrix_config.speed, 16)) % 10 == 0) {
             raindrops_set_color(random8_max(RGB_MATRIX_LED_COUNT), params);
         }
     } else {
