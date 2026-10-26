@@ -48,7 +48,7 @@ key_combination_t key_comb_list[4] = {
 };
 
 #ifdef KC_BLUETOOTH_ENABLE
-bool firstDisconnect = true;
+bool                   firstDisconnect  = true;
 bool                   bt_factory_reset = false;
 static virtual_timer_t pairing_key_timer;
 
@@ -145,7 +145,7 @@ void keyboard_post_init_kb(void) {
 
     ckbt51_init(false);
     bluetooth_init();
-#    endif
+#endif
 
     power_on_indicator_timer_buffer = sync_timer_read32() | 1;
     gpio_write_pin(BAT_LOW_LED_PIN, BAT_LOW_LED_PIN_ON_STATE);
@@ -170,7 +170,7 @@ void matrix_scan_kb(void) {
 
 #ifdef FACTORY_RESET_TASK
     FACTORY_RESET_TASK();
-#    endif
+#endif
     matrix_scan_user();
 }
 
@@ -184,8 +184,8 @@ static void ckbt51_param_init(void) {
                             .connected_idle_timeout = 7200,
                             .pairing_timeout        = 180,
                             .pairing_mode           = 0,
-                            .reconnect_timeout      = 5,
-                            .report_rate            = 90,
+                            .reconnect_timeout      = 60,
+                            .report_rate            = 133,
                             .vendor_id_source       = 1,
                             .verndor_id             = 0, // Must be 0x3434
                             .product_id             = PRODUCT_ID};
@@ -212,8 +212,8 @@ void ckbt51_default_ack_handler(uint8_t *data, uint8_t len) {
                                 .connected_idle_timeout = 7200,
                                 .pairing_timeout        = 180,
                                 .pairing_mode           = 0,
-                                .reconnect_timeout      = 5,
-                                .report_rate            = 90,
+                                .reconnect_timeout      = 60,
+                                .report_rate            = 133,
                                 .vendor_id_source       = 1,
                                 .verndor_id             = 0, // Must be 0x3434
                                 .product_id             = PRODUCT_ID};
