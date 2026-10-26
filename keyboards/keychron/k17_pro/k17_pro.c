@@ -152,14 +152,13 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 
 #if defined(KC_BLUETOOTH_ENABLE) && defined(ENCODER_ENABLE)
 static void encoders_pins_cb(void *param) {
-    uint8_t index = (uint32_t)param;
+    uint8_t     index = (uint32_t)param;
     extern void encoder_quadrature_handle_inerrupt_read(uint8_t index);
     encoder_quadrature_handle_inerrupt_read(index);
 }
 #endif
 
 void keyboard_post_init_kb(void) {
-
     dip_switch_read(true);
 
 #ifdef KC_BLUETOOTH_ENABLE
@@ -177,7 +176,7 @@ void keyboard_post_init_kb(void) {
 
     power_on_indicator_timer_buffer = sync_timer_read32() | 1;
     gpio_write_pin(BAT_LOW_LED_PIN, BAT_LOW_LED_PIN_ON_STATE);
-    //gpio_write_pin(LED_CAPS_LOCK_PIN, LED_PIN_ON_STATE);
+    // gpio_write_pin(LED_CAPS_LOCK_PIN, LED_PIN_ON_STATE);
 
 #    ifdef ENCODER_ENABLE
     pin_t encoders_pin_a[NUM_ENCODERS] = ENCODER_A_PINS;
@@ -200,10 +199,10 @@ void matrix_scan_kb(void) {
             power_on_indicator_timer_buffer = 0;
 
             gpio_write_pin(BAT_LOW_LED_PIN, !BAT_LOW_LED_PIN_ON_STATE);
-            //if (!host_keyboard_led_state().caps_lock) gpio_write_pin(LED_CAPS_LOCK_PIN, !LED_PIN_ON_STATE);
+            // if (!host_keyboard_led_state().caps_lock) gpio_write_pin(LED_CAPS_LOCK_PIN, !LED_PIN_ON_STATE);
         } else {
             gpio_write_pin(BAT_LOW_LED_PIN, BAT_LOW_LED_PIN_ON_STATE);
-            //gpio_write_pin(LED_CAPS_LOCK_PIN, LED_PIN_ON_STATE);
+            // gpio_write_pin(LED_CAPS_LOCK_PIN, LED_PIN_ON_STATE);
         }
     }
 
@@ -239,8 +238,8 @@ static void ckbt51_param_init(void) {
                             .connected_idle_timeout = 7200,
                             .pairing_timeout        = 180,
                             .pairing_mode           = 0,
-                            .reconnect_timeout      = 5,
-                            .report_rate            = 90,
+                            .reconnect_timeout      = 60,
+                            .report_rate            = 133,
                             .vendor_id_source       = 1,
                             .verndor_id             = 0, // Must be 0x3434
                             .product_id             = PRODUCT_ID};
@@ -268,8 +267,8 @@ void ckbt51_default_ack_handler(uint8_t *data, uint8_t len) {
                                 .connected_idle_timeout = 7200,
                                 .pairing_timeout        = 180,
                                 .pairing_mode           = 0,
-                                .reconnect_timeout      = 5,
-                                .report_rate            = 90,
+                                .reconnect_timeout      = 60,
+                                .report_rate            = 133,
                                 .vendor_id_source       = 1,
                                 .verndor_id             = 0, // Must be 0x3434
                                 .product_id             = PRODUCT_ID};

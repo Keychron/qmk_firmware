@@ -136,7 +136,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 
 #if defined(ENCODER_ENABLE)
 static void encoders_pins_cb(void *param) {
-    uint8_t index = (uint32_t)param;
+    uint8_t     index = (uint32_t)param;
     extern void encoder_quadrature_handle_inerrupt_read(uint8_t index);
     encoder_quadrature_handle_inerrupt_read(index);
 }
@@ -217,8 +217,8 @@ static void ckbt51_param_init(void) {
                             .connected_idle_timeout = 7200,
                             .pairing_timeout        = 180,
                             .pairing_mode           = 0,
-                            .reconnect_timeout      = 5,
-                            .report_rate            = 90,
+                            .reconnect_timeout      = 60,
+                            .report_rate            = 133,
                             .vendor_id_source       = 1,
                             .verndor_id             = 0, // Must be 0x3434
                             .product_id             = PRODUCT_ID};
@@ -246,8 +246,8 @@ void ckbt51_default_ack_handler(uint8_t *data, uint8_t len) {
                                 .connected_idle_timeout = 7200,
                                 .pairing_timeout        = 180,
                                 .pairing_mode           = 0,
-                                .reconnect_timeout      = 5,
-                                .report_rate            = 90,
+                                .reconnect_timeout      = 60,
+                                .report_rate            = 133,
                                 .vendor_id_source       = 1,
                                 .verndor_id             = 0, // Must be 0x3434
                                 .product_id             = PRODUCT_ID};
