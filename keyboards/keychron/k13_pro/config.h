@@ -21,8 +21,7 @@
 #define LED_MATRIX_SLEEP
 
 /* DIP switch */
-#define DIP_SWITCH_PINS \
-    { A8 }
+#define DIP_SWITCH_PINS {A8}
 
 /* Caps lock LED  */
 #define LED_CAPS_LOCK_PIN A0
@@ -51,19 +50,16 @@
 
 #    define HOST_DEVICES_COUNT 3
 
-#    define BT_INDICATION_LED_PIN_LIST \
-        { H3, H3, H3 }
+#    define BT_INDICATION_LED_PIN_LIST {H3, H3, H3}
 #    define BT_INDICATION_LED_ON_STATE 1
 
 #    if defined(RGB_MATRIX_ENABLE) || defined(LED_MATRIX_ENABLE)
 
 #        define SNLED27351_SDB_PIN C14
 
-#        define BT_INDCATION_LED_MATRIX_LIST \
-            { 17, 18, 19 }
+#        define BT_INDCATION_LED_MATRIX_LIST {17, 18, 19}
 
-#        define BAT_LEVEL_LED_LIST \
-            { 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 }
+#        define BAT_LEVEL_LED_LIST {17, 18, 19, 20, 21, 22, 23, 24, 25, 26}
 
 /* Backlit disable timeout when keyboard is disconnected(unit: second) */
 #        define DISCONNECTED_BACKLIGHT_DISABLE_TIMEOUT 40
@@ -74,6 +70,9 @@
 
 /* Keep USB connection in blueooth mode */
 #    define KEEP_USB_CONNECTION_IN_BLUETOOTH_MODE
+
+/* LPM tunables, override here to trade idle battery current against first-keystroke wake latency:
+ * RUN_MODE_PROCESS_TIME (default 1000 ms, lpm.h) and LOW_POWER_MODE (default PM_STOP1, bluetooth.h) */
 
 #endif // KC_BLUETOOTH_ENABLE
 
