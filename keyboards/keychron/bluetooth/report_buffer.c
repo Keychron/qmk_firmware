@@ -45,8 +45,8 @@ uint8_t report_interval = DEFAULT_REPORT_INVERVAL_MS;
 static uint32_t report_timer_buffer = 0;
 uint32_t        retry_time_buffer   = 0;
 report_buffer_t report_buffer_queue[REPORT_BUFFER_QUEUE_SIZE];
-uint16_t         report_buffer_queue_head;
-uint16_t         report_buffer_queue_tail;
+uint16_t        report_buffer_queue_head;
+uint16_t        report_buffer_queue_tail;
 report_buffer_t kb_rpt;
 uint8_t         retry = 0;
 
@@ -102,6 +102,11 @@ uint8_t report_buffer_get_retry(void) {
 
 void report_buffer_set_retry(uint8_t times) {
     retry = times;
+}
+
+/* Restart the 7ms backoff window used by the retry path of report_buffer_task() */
+void report_buffer_reset_retry_timer(void) {
+    retry_time_buffer = sync_timer_read32();
 }
 
 void report_buffer_task(void) {

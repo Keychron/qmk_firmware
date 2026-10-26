@@ -38,9 +38,8 @@ static uint8_t host_index = 0;
 static uint8_t led_state  = 0;
 
 extern bluetooth_transport_t bluetooth_transport;
-static bluetooth_state_t     bt_state                  = BLUETOOTH_RESET;
-static bool                  pincodeEntry              = false;
-uint8_t                      bluetooth_report_protocol = true;
+static bluetooth_state_t     bt_state     = BLUETOOTH_RESET;
+static bool                  pincodeEntry = false;
 
 /* declarations */
 uint8_t bluetooth_keyboard_leds(void);
@@ -144,6 +143,12 @@ void bluetooth_pairing_ex(uint8_t host_idx, void *param) {
 void bluetooth_connect(void) {
     /*  Work around empty report after wakeup, which leads to reconneect/disconnected loop */
     if (battery_is_critical_low() || sync_timer_read32() == 0) return;
+
+    /* Rate limit: each command blocks ~3ms in the transport wake pulses and churns the
+     * module, so don't fire more than one connect command per 500ms */
+    static uint32_t last_connect_time = 0;
+    if (last_connect_time != 0 && sync_timer_elapsed32(last_connect_time) < 500) return;
+    last_connect_time = sync_timer_read32();
 
     bluetooth_transport.connect_ex(0, 0);
     bt_state = BLUETOOTH_RECONNECTING;
@@ -268,17 +273,19 @@ static void bluetooth_exit_pin_code_entry(void) {
     bluetooth_exit_pin_code_entry_kb();
 }
 
-__attribute__((weak)) void bluetooth_enter_reset_kb(uint8_t reason){};
-__attribute__((weak)) void bluetooth_enter_discoverable_kb(uint8_t host_idx){};
-__attribute__((weak)) void bluetooth_enter_reconnecting_kb(uint8_t host_idx){};
-__attribute__((weak)) void bluetooth_enter_connected_kb(uint8_t host_idx){};
-__attribute__((weak)) void bluetooth_enter_disconnected_kb(uint8_t host_idx){};
+__attribute__((weak)) void bluetooth_enter_reset_kb(uint8_t reason) {};
+__attribute__((weak)) void bluetooth_enter_discoverable_kb(uint8_t host_idx) {};
+__attribute__((weak)) void bluetooth_enter_reconnecting_kb(uint8_t host_idx) {};
+__attribute__((weak)) void bluetooth_enter_connected_kb(uint8_t host_idx) {};
+__attribute__((weak)) void bluetooth_enter_disconnected_kb(uint8_t host_idx) {};
 __attribute__((weak)) void bluetooth_enter_pin_code_entry_kb(void) {}
-__attribute__((weak)) void bluetooth_exit_pin_code_entry_kb(void){};
+__attribute__((weak)) void bluetooth_exit_pin_code_entry_kb(void) {};
 
 /*  */
+/* Boot vs report protocol is handled by the bluetooth module itself, there is
+ * nothing to apply on the host side */
 static void bluetooth_hid_set_protocol(bool report_protocol) {
-    bluetooth_report_protocol = false;
+    (void)report_protocol;
 }
 
 uint8_t bluetooth_keyboard_leds(void) {
@@ -414,6 +421,14 @@ void bluetooth_event_queue_task(void) {
                 bluetooth_enter_discoverable(event.params.hostIndex);
                 break;
             case EVT_RECONNECTING:
+#ifndef DISABLE_REPORT_BUFFER
+                /* Drop stale reports that were queued while the link was down to
+                 * avoid blasting the whole backlog right after a reconnect */
+                if (!report_buffer_is_empty()) {
+                    dprintf("Flush report buffer on reconnecting\n");
+                    report_buffer_init();
+                }
+#endif
                 bluetooth_enter_reconnecting(event.params.hostIndex);
                 break;
             case EVT_DISCONNECTED:
@@ -453,7 +468,7 @@ void bluetooth_task(void) {
 }
 
 void send_string_task(void) {
-    if (get_transport() == TRANSPORT_BLUETOOTH && bluetooth_get_state()== BLUETOOTH_CONNECTED) {
+    if (get_transport() == TRANSPORT_BLUETOOTH && bluetooth_get_state() == BLUETOOTH_CONNECTED) {
         bluetooth_transport.task();
 #ifndef DISABLE_REPORT_BUFFER
         report_buffer_task();
