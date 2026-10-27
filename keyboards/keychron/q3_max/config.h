@@ -36,7 +36,9 @@
 #    define SNLED27351_SELECT_PINS \
         { B8, B9 }
 #    define SNLED27351_SPI_DIVISOR 16
-#    define SNLED27351_PHASE_CHANNEL SNLED27351_SCAN_PHASE_9_CHANNEL
+/* The LED map uses CB1..CB12, so all 12 scan phases must be enabled.
+ * (Official v1.1.1 firmware writes 0x00 = 12-channel to the SCAN_PHASE register.) */
+#    define SNLED27351_PHASE_CHANNEL SNLED27351_SCAN_PHASE_12_CHANNEL
 #endif
 
 #ifdef LK_WIRELESS_ENABLE
