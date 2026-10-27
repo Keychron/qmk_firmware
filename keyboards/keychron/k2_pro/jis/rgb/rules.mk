@@ -1,0 +1,1 @@
+KEYCHRON_RGB_ENABLE = yes
