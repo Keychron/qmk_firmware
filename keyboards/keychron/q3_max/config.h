@@ -45,6 +45,9 @@
 #    define RGB_MATRIX_BRIGHTNESS_TURN_OFF_VAL 32
 #endif
 
+/* Matrix unselect delay used by the official firmware (QMK default is 30us) */
+#define MATRIX_IO_DELAY 10
+
 #ifdef LK_WIRELESS_ENABLE
 /* Hardware configuration */
 #    define P24G_MODE_SELECT_PIN A10
