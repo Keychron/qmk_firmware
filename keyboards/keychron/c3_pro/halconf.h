@@ -1,4 +1,4 @@
-/* Copyright 2024 @ Keychron (https://www.keychron.com)
+/* Copyright 2025 ~ 2026 @ Keychron (https://www.keychron.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,5 +17,6 @@
 #pragma once
 
 #define HAL_USE_I2C TRUE
+#define HAL_USE_SPI TRUE
 
 #include_next <halconf.h>

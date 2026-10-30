@@ -1,4 +1,4 @@
-/* Copyright 2024 @ Keychron (https://www.keychron.com)
+/* Copyright 2025 ~ 2026 @ Keychron (https://www.keychron.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,10 +16,18 @@
 
 #pragma once
 
-#include "quantum.h"
+/* Indication led */
+#define LED_MAC_OS_PIN A6
+#define LED_WIN_OS_PIN A7
+#define LED_OS_PIN_ON_STATE 1
 
-enum my_keycodes {
-    KC_OS_SWITCH = QK_KB_11,
-};
+#ifdef RGB_MATRIX_ENABLE
+/* RGB Matrix Driver Configuration */
+#    define SNLED27351_I2C_ADDRESS_1 SNLED27351_I2C_ADDRESS_VDDIO
+#    define SNLED27351_I2C_ADDRESS_2 SNLED27351_I2C_ADDRESS_GND
 
-#define KC_OSSW KC_OS_SWITCH
+/* Set LED driver current */
+#    define SNLED27351_CURRENT_TUNE \
+        { 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30 }
+
+#endif

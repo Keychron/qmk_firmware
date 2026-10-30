@@ -6,19 +6,31 @@ A customizable 87% keyboard.
 
 * Keyboard Maintainer: [Keychron](https://github.com/keychron)
 * Hardware Supported: Keychron C3 Pro
-* Hardware Availability: [Keychron](https://www.keychron.com/)
+* Hardware Availability: [Keychron](https://www.keychron.com/products/keychron-c3-pro-qmk-via-wired-mechanical-keyboard)
 
 ## Option A: Build And Flash Firmware
 
 Make example for this keyboard (after setting up your build environment):
 
-    make keychron/c3_pro/ansi/red:default
-    make keychron/c3_pro/ansi/rgb:default 
+    make keychron/c3_pro/ansi/red:keychron
+    make keychron/c3_pro/ansi/rgb:keychron
+    make keychron/c3_pro/iso/red_pid0431:keychron
+    make keychron/c3_pro/iso/red_pid0534:keychron
+    make keychron/c3_pro/iso/rgb_pid0434:keychron
+    make keychron/c3_pro/iso/rgb_pid0535:keychron
+    make keychron/c3_pro/jis/red:keychron
+    make keychron/c3_pro/jis/rgb:keychron
 
 Flashing example for this keyboard:
 
-    make keychron/c3_pro/ansi/red:default:flash
-    make keychron/c3_pro/ansi/rgb:default:flash
+    make keychron/c3_pro/ansi/red:keychron:flash
+    make keychron/c3_pro/ansi/rgb:keychron:flash
+    make keychron/c3_pro/iso/red_pid0431:keychron:flash
+    make keychron/c3_pro/iso/red_pid0534:keychron:flash
+    make keychron/c3_pro/iso/rgb_pid0434:keychron:flash
+    make keychron/c3_pro/iso/rgb_pid0535:keychron:flash
+    make keychron/c3_pro/jis/red:keychron:flash
+    make keychron/c3_pro/jis/rgb:keychron:flash
 
 ## bootloader
 
