@@ -158,6 +158,18 @@ uint8_t battery_get_percentage(void) {
         return 0;
 }
 
+uint8_t battery_get_charging_state(void) {
+#if defined(BAT_CHARGING_PIN)
+    if (usb_power_connected()) {
+        if (gpio_read_pin(BAT_CHARGING_PIN) == BAT_CHARGING_LEVEL)
+            return BAT_CHARGING;
+        else
+            return BAT_FULL_CHARGED;
+    }
+#endif
+    return BAT_NOT_CHARGING;
+}
+
 bool battery_is_empty(void) {
     return bat_empty > BATTERY_EMPTY_COUNT;
 }
@@ -197,7 +209,10 @@ void battery_timer_reset(void) {
 
 void battery_task(void) {
     uint32_t t = rtc_timer_elapsed_ms(bat_monitor_timer_buffer);
+    bool     monitor_voltage = false;
+
     if ((get_transport() & TRANSPORT_WIRELESS) && (wireless_get_state() == WT_CONNECTED || battery_power_on_sample())) {
+        monitor_voltage = true;
 #if defined(BAT_CHARGING_PIN)
         if (usb_power_connected() && t > VOLTAGE_MEASURE_INTERVAL) {
             if (gpio_read_pin(BAT_CHARGING_PIN) == BAT_CHARGING_LEVEL)
@@ -206,7 +221,14 @@ void battery_task(void) {
                 lkbt51_update_bat_state(BAT_FULL_CHARGED);
         }
 #endif
+    } else if (get_transport() == TRANSPORT_USB && usb_power_connected()) {
+        /* Cable mode: still poll the wireless module for cell voltage (read-only).
+         * Charging state already comes from usb_power + BAT_CHARGING_PIN; this
+         * keeps percentage/mV in sync for host tools over USB raw HID. */
+        monitor_voltage = true;
+    }
 
+    if (monitor_voltage) {
         if ((battery_power_on_sample()
 #if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
              && !indicator_is_enabled()
