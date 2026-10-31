@@ -245,7 +245,7 @@ static bool mixed_rgb_get_effect_list(uint8_t *data) {
     uint8_t start  = data[1];
     uint8_t count  = data[2];
 
-    if (count > 3 || region > EFFECT_LAYERS || start + count > EFFECTS_PER_LAYER) return false;
+    if (count > 3 || region >= EFFECT_LAYERS || start + count > EFFECTS_PER_LAYER) return false;
 
     for (uint8_t i = 0; i < count; i++) {
         data[1 + i * EFFECT_DATA_LEN] = effect_list[region][start + i].effect;
@@ -263,7 +263,7 @@ bool mixed_rgb_set_effect_list(uint8_t *data) {
     uint8_t start  = data[1];
     uint8_t count  = data[2];
 
-    if (count > 3 || region > EFFECT_LAYERS || start + count > EFFECTS_PER_LAYER) return false;
+    if (count > 3 || region >= EFFECT_LAYERS || start + count > EFFECTS_PER_LAYER) return false;
     for (uint8_t i = 0; i < count; i++) {
         if (data[3 + i * EFFECT_DATA_LEN] >= RGB_MATRIX_CUSTOM_MIXED_RGB) return false;
     }
@@ -433,7 +433,7 @@ void os_state_indicate(void) {
     }
 #    endif
 #    if defined(SCROLL_LOCK_INDEX)
-    if (host_keyboard_led_state().compose && !os_ind_cfg.disable.scroll_lock) {
+    if (host_keyboard_led_state().scroll_lock && !os_ind_cfg.disable.scroll_lock) {
         rgb_matrix_set_color(SCROLL_LOCK_INDEX, rgb.r, rgb.g, rgb.b);
     }
 #    endif
