@@ -36,8 +36,17 @@
 #    define SNLED27351_SELECT_PINS \
         { B8, B9 }
 #    define SNLED27351_SPI_DIVISOR 16
-#    define SNLED27351_PHASE_CHANNEL SNLED27351_SCAN_PHASE_9_CHANNEL
+/* The LED map uses CB1..CB12, so all 12 scan phases must be enabled.
+ * (Official v1.1.1 firmware writes 0x00 = 12-channel to the SCAN_PHASE register.) */
+#    define SNLED27351_PHASE_CHANNEL SNLED27351_SCAN_PHASE_12_CHANNEL
+
+/* Official firmware turns the backlight off at brightness < 32 (common default is 48) */
+#    undef RGB_MATRIX_BRIGHTNESS_TURN_OFF_VAL
+#    define RGB_MATRIX_BRIGHTNESS_TURN_OFF_VAL 32
 #endif
+
+/* Matrix unselect delay used by the official firmware (QMK default is 30us) */
+#define MATRIX_IO_DELAY 10
 
 #ifdef LK_WIRELESS_ENABLE
 /* Hardware configuration */
