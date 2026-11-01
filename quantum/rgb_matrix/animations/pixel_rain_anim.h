@@ -13,11 +13,9 @@ void PIXEL_RAIN_init(void) {
 
 bool PIXEL_RAIN(effect_params_t* params) {
     static uint16_t     index[2]     = {RGB_MATRIX_LED_COUNT + 1, RGB_MATRIX_LED_COUNT + 1};
-    static uint8_t      region_mask  = 0;
     static bool         timer_update = false;
 
     if (params->iter == 0) {
-        region_mask |= 0x01 << params->region;
 
         if (timer_elapsed_fast(timer[params->region]) > (320 - rgb_matrix_config.speed)) {
             index[params->region] = random8_max(RGB_MATRIX_LED_COUNT);
@@ -28,7 +26,6 @@ bool PIXEL_RAIN(effect_params_t* params) {
             timer[params->region]        = timer_read_fast();
             timer_update = false;
         }
-        region_mask = 0;
     }
 
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
