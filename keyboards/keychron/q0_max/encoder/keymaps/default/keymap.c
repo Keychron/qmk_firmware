@@ -68,3 +68,17 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
     [L3]   = {ENCODER_CCW_CW(UG_VALD, UG_VALU)},
 };
 #endif // ENCODER_MAP_ENABLE
+
+layer_state_t layer_state_set_user(layer_state_t state) {
+    switch (get_highest_layer(state)) {
+        case BASE:
+            break;
+        case FN:
+            break;
+        case L2:
+            break;
+        case L3:
+            break;
+    }
+    return state;
+}
