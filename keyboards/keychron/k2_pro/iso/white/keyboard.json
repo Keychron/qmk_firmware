@@ -1,0 +1,31 @@
+{
+    "features": {
+        "led_matrix": true
+    },
+    "led_matrix": {
+        "animations": {
+            "band_pinwheel": true,
+            "band_spiral": true,
+            "breathing": true,
+            "cycle_left_right": true,
+            "cycle_out_in": true,
+            "cycle_up_down": true,
+            "dual_beacon": true,
+            "effect_max": true,
+            "none": true,
+            "solid": true,
+            "solid_reactive_multinexus": true,
+            "solid_reactive_multiwide": true,
+            "solid_reactive_simple": true,
+            "solid_splash": true,
+            "wave_left_right": true,
+            "wave_up_down": true
+        },
+        "driver": "snled27351",
+        "sleep": true
+    },
+    "usb": {
+        "device_version": "1.0.0",
+        "pid": "0x0224"
+    }
+}
