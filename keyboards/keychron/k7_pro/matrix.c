@@ -143,7 +143,8 @@ void matrix_read_rows_on_col(matrix_row_t current_matrix[], uint8_t current_col)
         return;                     // skip NO_PIN col
     }
 
-    HC595_delay(100);
+    /* Longer settle time (was 100) for the shared HC595 bus to avoid ghosting */
+    HC595_delay(200);
 
     // For each row...
     for (uint8_t row_index = 0; row_index < MATRIX_ROWS; row_index++) {
@@ -159,7 +160,7 @@ void matrix_read_rows_on_col(matrix_row_t current_matrix[], uint8_t current_col)
     }
 
     unselect_col(current_col);
-    HC595_delay(100);
+    HC595_delay(200);
 }
 
 void matrix_init_custom(void) {

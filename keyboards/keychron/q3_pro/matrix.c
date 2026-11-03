@@ -95,7 +95,7 @@ static bool select_col(uint8_t col) {
         if (power_on_indicator_timer_buffer) {
             if (sync_timer_elapsed32(power_on_indicator_timer_buffer) > POWER_ON_LED_DURATION) {
                 power_on_indicator_timer_buffer = 0;
-                HC595_output((~(0x1 << (21 - col - 1))) & (7 << 0));
+                HC595_output((~(0x1 << (21 - col - 1))) & ~(7 << 0));
             } else {
                 HC595_output((~(0x1 << (21 - col - 1))));
             }

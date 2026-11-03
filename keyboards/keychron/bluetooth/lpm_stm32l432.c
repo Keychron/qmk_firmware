@@ -30,6 +30,9 @@
 #include "transport.h"
 #include "battery.h"
 #include "report_buffer.h"
+#ifdef CKBT51_RESET_PIN
+#    include "ckbt51.h"
+#endif
 #include "stm32_bd.inc"
 #include "debounce.h"
 
@@ -180,6 +183,11 @@ static inline void lpm_wakeup(void) {
     chSysUnlock();
 
     if (bluetooth_transport.init) bluetooth_transport.init(true);
+
+#ifdef CKBT51_RESET_PIN
+    /* The UART was re-initialised: discard any partial frame left in the parser */
+    ckbt51_parser_reset();
+#endif
 
     chSysLock();
     SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;

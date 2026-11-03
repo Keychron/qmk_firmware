@@ -125,6 +125,11 @@ bluetooth_transport_t bluetooth_transport = {
     ckbt51_task
 };
 // clang-format on
+
+#ifndef CKBT51_RX_FRAME_TIMEOUT_MS
+#    define CKBT51_RX_FRAME_TIMEOUT_MS 20
+#endif
+
 void ckbt51_init(bool wakeup_from_low_power_mode) {
 #if (HAL_USE_SERIAL == TRUE)
     SerialConfig config = {460800, 0, USART_CR2_STOP1_BITS, 0};
@@ -457,8 +462,9 @@ void ckbt51_dfu_rx(uint8_t *data, uint8_t length) {
         uint16_t checksum    = 0;
         uint8_t  payload_len = data[2];
 
-        /* Check payload_len validity */
+        /* Check payload_len validity: command byte + 2 checksum bytes, inside the received report */
         if (payload_len > RAW_EPSIZE - PACKECT_HEADER_LEN) return;
+        if (payload_len < 3 || PACKECT_HEADER_LEN + payload_len > length) return;
 
         uint8_t *payload = &data[PACKECT_HEADER_LEN];
 
@@ -601,11 +607,27 @@ static void ckbt51_event_handler(uint8_t evt_type, uint8_t *data, uint8_t len, u
     if (event.evt_type) bluetooth_event_queue_enqueue(event);
 }
 
-void ckbt51_task(void) {
-    static bool    wait_for_new_pkt = true;
-    static uint8_t len              = 0xff;
-    static uint8_t sn               = 0;
+static bool     wait_for_new_pkt = true;
+static uint8_t  len              = 0xff;
+static uint8_t  sn               = 0;
+static uint32_t rx_hdr_time      = 0;
 
+/* Reset the UART frame parser state. Called after the UART is re-initialised
+ * on wake-up so a truncated frame cannot consume the next header. */
+void ckbt51_parser_reset(void) {
+    wait_for_new_pkt = true;
+    len              = 0xff;
+    sn               = 0;
+    rx_hdr_time      = 0;
+}
+
+/* True when no frame is half-parsed and no RX byte is pending. Used by LPM so
+ * STOP1 cannot truncate a frame or lose a pending report ACK. */
+bool ckbt51_rx_idle(void) {
+    return wait_for_new_pkt && WT_DRIVER.iqueue.q_counter == 0;
+}
+
+void ckbt51_task(void) {
     if (wait_for_new_pkt && WT_DRIVER.iqueue.q_counter >= PACKECT_HEADER_LEN) {
         uint8_t buf[32] = {0};
 
@@ -618,13 +640,19 @@ void ckbt51_task(void) {
                 // 3 byte sub-header and are read into the payload buffer below, so it
                 // must stay within [3, PACKET_MAX_LEN], otherwise discard and resync
                 if ((~buf[0] & 0xFF) == buf[1] && buf[0] >= 3 && buf[0] <= PACKET_MAX_LEN) {
-                    len = buf[0];
-                    sn  = buf[2];
+                    len         = buf[0];
+                    sn          = buf[2];
+                    rx_hdr_time = timer_read32();
 
                     wait_for_new_pkt = false;
                 }
             }
         }
+    }
+
+    /* Drop a frame whose payload never completes (lost bytes) and resync on the next header */
+    if (!wait_for_new_pkt && WT_DRIVER.iqueue.q_counter < len && timer_elapsed32(rx_hdr_time) > CKBT51_RX_FRAME_TIMEOUT_MS) {
+        ckbt51_parser_reset();
     }
 
     if (!wait_for_new_pkt && WT_DRIVER.iqueue.q_counter >= len) {

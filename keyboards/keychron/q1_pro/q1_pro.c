@@ -50,8 +50,11 @@ bool                   firstDisconnect  = true;
 bool                   bt_factory_reset = false;
 static virtual_timer_t pairing_key_timer;
 
+static volatile uint8_t pairing_host_pending = 0;
+
+/* Virtual timer callback runs in ISR context: only flag the request, the UART command is sent from bluetooth_pre_task() */
 static void pairing_key_timer_cb(void *arg) {
-    bluetooth_pairing_ex(*(uint8_t *)arg, NULL);
+    pairing_host_pending = *(uint8_t *)arg;
 }
 #endif
 
@@ -107,7 +110,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
                 if (record->event.pressed) {
                     host_idx = keycode - BT_HST1 + 1;
                     chVTSet(&pairing_key_timer, TIME_MS2I(2000), (vtfunc_t)pairing_key_timer_cb, &host_idx);
-                    bluetooth_connect_ex(host_idx, 0);
+                    bluetooth_switch_host(host_idx);
                 } else {
                     host_idx = 0;
                     chVTReset(&pairing_key_timer);
@@ -160,8 +163,9 @@ void keyboard_post_init_kb(void) {
     dip_switch_read(true);
 
 #ifdef KC_BLUETOOTH_ENABLE
-    gpio_set_pin_output_push_pull(A9);
-    gpio_write_pin_low(A9);
+    /* Same as the other CKBT51 boards: reset pin released (high). Needs schematic/HW confirmation */
+    palSetLineMode(CKBT51_RESET_PIN, PAL_MODE_OUTPUT_PUSHPULL);
+    palWriteLine(CKBT51_RESET_PIN, PAL_HIGH);
     /* IMPORTANT: DO NOT enable internal pull-up resistor
      * as there is an external pull-down resistor.
      */
@@ -255,6 +259,12 @@ void ckbt51_default_ack_handler(uint8_t *data, uint8_t len) {
 
 void bluetooth_pre_task(void) {
     static uint8_t mode = 1;
+
+    if (pairing_host_pending) {
+        uint8_t idx          = pairing_host_pending;
+        pairing_host_pending = 0;
+        bluetooth_pairing_ex(idx, NULL);
+    }
 
     if (gpio_read_pin(USB_BT_MODE_SELECT_PIN) != mode) {
         if (gpio_read_pin(USB_BT_MODE_SELECT_PIN) != mode) {

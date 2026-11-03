@@ -45,6 +45,7 @@ typedef struct {
 } report_buffer_t;
 
 void    report_buffer_init(void);
+void    report_buffer_enqueue_empty_keyboard(void);
 bool    report_buffer_enqueue(report_buffer_t *report);
 bool    report_buffer_dequeue(report_buffer_t *report);
 bool    report_buffer_is_empty(void);

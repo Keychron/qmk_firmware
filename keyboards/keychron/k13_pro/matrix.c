@@ -59,7 +59,8 @@ static inline void HC595_delay(uint16_t n) {
 
 static void HC595_output(uint16_t data) {
     ATOMIC_BLOCK_FORCEON {
-        for (uint8_t i = 0; i < MATRIX_COLS; i++) {
+        /* Only columns 1..16 are on the shift registers (column 0 is a GPIO): shift 16 bits, not 17 */
+        for (uint8_t i = 0; i < MATRIX_COLS - 1; i++) {
             if (data & 0x1) {
                 gpio_write_pin_high(HC595_DS);
             } else {
@@ -68,6 +69,7 @@ static void HC595_output(uint16_t data) {
 
             data = data >> 1;
 
+            HC595_delay(1); /* DS setup time before the SHCP rising edge */
             gpio_write_pin_high(HC595_SHCP);
             HC595_delay(1);
             gpio_write_pin_low(HC595_SHCP);
@@ -88,6 +90,7 @@ static void HC595_output_oneBit(uint8_t data) {
             gpio_write_pin_low(HC595_DS);
         }
 
+        HC595_delay(1); /* DS setup time before the SHCP rising edge */
         gpio_write_pin_high(HC595_SHCP);
         HC595_delay(1);
         gpio_write_pin_low(HC595_SHCP);

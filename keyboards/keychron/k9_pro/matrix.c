@@ -68,6 +68,7 @@ static void HC595_output(uint16_t data) {
 
             data = data >> 1;
 
+            HC595_delay(1); /* DS setup time before the SHCP rising edge */
             gpio_write_pin_high(HC595_SHCP);
             HC595_delay(1);
             gpio_write_pin_low(HC595_SHCP);
@@ -88,6 +89,7 @@ static void HC595_output_oneBit(uint8_t data) {
             gpio_write_pin_low(HC595_DS);
         }
 
+        HC595_delay(1); /* DS setup time before the SHCP rising edge */
         gpio_write_pin_high(HC595_SHCP);
         HC595_delay(1);
         gpio_write_pin_low(HC595_SHCP);

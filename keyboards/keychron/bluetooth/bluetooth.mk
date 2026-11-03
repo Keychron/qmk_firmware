@@ -1,6 +1,11 @@
 
 OPT_DEFS += -DKC_BLUETOOTH_ENABLE
 OPT_DEFS += -DBLUETOOTH_NKRO_ENABLE
+# Give the host time to complete USB enumeration before RGB/BT init runs.
+# This avoids the first-boot-after-DFU SET_CONFIGURATION race on CKBT51 boards.
+OPT_DEFS += -DUSB_ENUMERATION_WAIT_MS=500
+# The encoder pins are also read from a pin ISR (encoder_quadrature_handle_inerrupt_read()).
+OPT_DEFS += -DENCODER_QUADRATURE_ATOMIC_READ
 
 BLUETOOTH_DIR = bluetooth
 SRC += \

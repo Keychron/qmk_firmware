@@ -31,6 +31,7 @@
 #include "lpm.h"
 #include "transport.h"
 #include "battery.h"
+#include "ckbt51.h"
 #include "report_buffer.h"
 
 extern matrix_row_t          matrix[MATRIX_ROWS];
@@ -93,6 +94,8 @@ void lpm_task(void) {
         && rgb_matrix_is_driver_shutdown()
 #endif
         && !lpm_any_matrix_action() && !battery_power_on_sample()
+        /* Don't stop the UART/MCU in the middle of a module frame or while a report still waits for its ACK */
+        && ckbt51_rx_idle()
 #ifndef DISABLE_REPORT_BUFFER
         && report_buffer_is_empty() && report_buffer_get_retry() == 0
 #endif

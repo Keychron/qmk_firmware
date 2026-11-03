@@ -164,9 +164,40 @@ void bluetooth_connect_ex(uint8_t host_idx, uint16_t timeout) {
         if (host_index == host_idx && bt_state == BLUETOOTH_CONNECTED) return;
         host_index = host_idx;
         led_state  = 0;
+#ifndef DISABLE_REPORT_BUFFER
+        /* Reports queued for the previous host must not reach the new one */
+        report_buffer_init();
+#endif
     }
     bluetooth_transport.connect_ex(host_idx, timeout);
     bt_state = BLUETOOTH_RECONNECTING;
+}
+
+/* Switch to another paired host without leaving keys or stale reports
+ * behind: drop the old host backlog, send a synchronous empty report to
+ * the current host, clear the QMK state and then switch. */
+/*
+ * Called from the report paths while not connected. Every key report would otherwise
+ * re-send CONNECT to the module while it is already reconnecting.
+ */
+static void bluetooth_connect_on_activity(void) {
+    static uint32_t last_connect = 0;
+
+    if (bt_state == BLUETOOTH_RECONNECTING && last_connect && sync_timer_elapsed32(last_connect) < 1000) return;
+    last_connect = sync_timer_read32() | 1;
+    bluetooth_connect();
+}
+
+void bluetooth_switch_host(uint8_t host_idx) {
+    if (bt_state == BLUETOOTH_CONNECTED) {
+#ifndef DISABLE_REPORT_BUFFER
+        report_buffer_init();
+        report_keyboard_t empty = {0};
+        if (bluetooth_transport.send_keyboard) bluetooth_transport.send_keyboard(&empty.mods);
+#endif
+    }
+    clear_keyboard();
+    bluetooth_connect_ex(host_idx, 0);
 }
 
 /* Initiate a disconnection */
@@ -197,6 +228,10 @@ static void bluetooth_enter_discoverable(uint8_t host_idx) {
  */
 static void bluetooth_enter_reconnecting(uint8_t host_idx) {
     bt_state = BLUETOOTH_RECONNECTING;
+#ifndef DISABLE_REPORT_BUFFER
+    /* Drop reports queued for the lost link (and any pending retry) so they are not replayed late */
+    report_buffer_init();
+#endif
     indicator_set(bt_state, host_idx);
     bluetooth_enter_reconnecting_kb(host_idx);
 }
@@ -207,11 +242,29 @@ static void bluetooth_enter_reconnecting(uint8_t host_idx) {
  *   - enable bluetooth NKRO is support
  */
 static void bluetooth_enter_connected(uint8_t host_idx) {
+    /* A real (re)connect is a transition into CONNECTED; a duplicated CONNECTED
+     * event must not flush/force reports. Capture the previous state first. */
+    bool reconnected = (bt_state != BLUETOOTH_CONNECTED);
+
     bt_state = BLUETOOTH_CONNECTED;
     indicator_set(bt_state, host_idx);
     host_index = host_idx;
 
+    if (reconnected) {
+#ifndef DISABLE_REPORT_BUFFER
+        /* Drop any backlog that could arrive without a prior EVT_RECONNECTING */
+        report_buffer_init();
+#endif
+    }
+
     clear_keyboard();
+
+    if (reconnected) {
+#ifndef DISABLE_REPORT_BUFFER
+        /* Guarantee a real key-up state reaches the host after (re)connect */
+        report_buffer_enqueue_empty_keyboard();
+#endif
+    }
 
     /* Enable NKRO since it may be disabled in pin code entry */
 #if defined(NKRO_ENABLE) && defined(BLUETOOTH_NKRO_ENABLE)
@@ -304,6 +357,11 @@ void bluetooth_send_keyboard(report_keyboard_t *report) {
     if (bt_state == BLUETOOTH_CONNECTED || (bt_state == BLUETOOTH_PARING && pincodeEntry)) {
         if (bluetooth_transport.send_keyboard) {
 #ifndef DISABLE_REPORT_BUFFER
+            /* report_buffer_task() only sends in CONNECTED state: send pin code keys directly */
+            if (bt_state == BLUETOOTH_PARING) {
+                bluetooth_transport.send_keyboard(&report->mods);
+                return;
+            }
             bool firstBuffer = false;
             if (report_buffer_is_empty() && report_buffer_next_inverval() && report_buffer_get_retry() == 0) {
                 firstBuffer = true;
@@ -323,7 +381,7 @@ void bluetooth_send_keyboard(report_keyboard_t *report) {
 #endif
         }
     } else if (bt_state != BLUETOOTH_RESET) {
-        bluetooth_connect();
+        bluetooth_connect_on_activity();
     }
 }
 void bluetooth_send_nkro(report_nkro_t *report) {
@@ -332,7 +390,7 @@ void bluetooth_send_nkro(report_nkro_t *report) {
     if (bt_state == BLUETOOTH_CONNECTED || (bt_state == BLUETOOTH_PARING && pincodeEntry)) {
         if (bluetooth_transport.send_nkro) {
 #ifndef DISABLE_REPORT_BUFFER
-            if (report_buffer_is_empty() && report_buffer_next_inverval()) {
+            if (report_buffer_is_empty() && report_buffer_next_inverval() && report_buffer_get_retry() == 0) {
                 bluetooth_transport.send_nkro(&report->mods);
                 report_buffer_update_timer();
             } else {
@@ -346,7 +404,7 @@ void bluetooth_send_nkro(report_nkro_t *report) {
 #endif
         }
     } else if (bt_state != BLUETOOTH_RESET) {
-        bluetooth_connect();
+        bluetooth_connect_on_activity();
     }
 }
 
@@ -354,7 +412,7 @@ void bluetooth_send_mouse(report_mouse_t *report) {
     if (bt_state == BLUETOOTH_CONNECTED) {
         if (bluetooth_transport.send_mouse) bluetooth_transport.send_mouse((uint8_t *)report);
     } else if (bt_state != BLUETOOTH_RESET) {
-        bluetooth_connect();
+        bluetooth_connect_on_activity();
     }
 }
 
@@ -362,14 +420,14 @@ void bluetooth_send_system(uint16_t data) {
     if (bt_state == BLUETOOTH_CONNECTED) {
         if (bluetooth_transport.send_system) bluetooth_transport.send_system(data);
     } else if (bt_state != BLUETOOTH_RESET) {
-        bluetooth_connect();
+        bluetooth_connect_on_activity();
     }
 }
 
 void bluetooth_send_consumer(uint16_t data) {
     if (bt_state == BLUETOOTH_CONNECTED) {
 #ifndef DISABLE_REPORT_BUFFER
-        if (report_buffer_is_empty() && report_buffer_next_inverval()) {
+        if (report_buffer_is_empty() && report_buffer_next_inverval() && report_buffer_get_retry() == 0) {
             if (bluetooth_transport.send_consumer) bluetooth_transport.send_consumer(data);
             report_buffer_update_timer();
         } else {
@@ -382,7 +440,7 @@ void bluetooth_send_consumer(uint16_t data) {
         if (bluetooth_transport.send_consumer) bluetooth_transport.send_consumer(data);
 #endif
     } else if (bt_state != BLUETOOTH_RESET) {
-        bluetooth_connect();
+        bluetooth_connect_on_activity();
     }
 }
 
@@ -424,10 +482,8 @@ void bluetooth_event_queue_task(void) {
 #ifndef DISABLE_REPORT_BUFFER
                 /* Drop stale reports that were queued while the link was down to
                  * avoid blasting the whole backlog right after a reconnect */
-                if (!report_buffer_is_empty()) {
-                    dprintf("Flush report buffer on reconnecting\n");
-                    report_buffer_init();
-                }
+                dprintf("Flush report buffer on reconnecting\n");
+                report_buffer_init();
 #endif
                 bluetooth_enter_reconnecting(event.params.hostIndex);
                 break;
