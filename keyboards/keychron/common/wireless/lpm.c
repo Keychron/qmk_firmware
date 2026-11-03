@@ -201,10 +201,6 @@ __attribute__((weak)) void lpm_wakeup(void) {
 
     halInit();
 
-#ifdef ENCODER_ENABLE
-    encoder_cb_init();
-#endif
-
     if (wireless_transport.init) wireless_transport.init(true);
     battery_init();
 
@@ -234,6 +230,11 @@ __attribute__((weak)) void lpm_wakeup(void) {
 #if defined(DIP_SWITCH_PINS)
     dip_switch_init();
     dip_switch_read(true);
+#endif
+
+#ifdef ENCODER_ENABLE
+    /* After the palDisableLineEvent() calls above: a mode pin may share an EXTI line with an encoder pin */
+    encoder_cb_init();
 #endif
 
     /* Call debounce_free() to avoiding memory leak of debounce_counters as debounce_init()

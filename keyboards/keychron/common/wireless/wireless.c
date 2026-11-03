@@ -162,6 +162,10 @@ void wireless_connect_ex(uint8_t host_idx, uint16_t timeout) {
 
         host_index = host_idx;
         led_state  = 0;
+#ifndef DISABLE_REPORT_BUFFER
+        /* Reports queued for the previous host must not reach the new one */
+        report_buffer_init();
+#endif
     }
     wireless_transport.connect_ex(host_idx, timeout);
     wireless_state = WT_RECONNECTING;
@@ -203,6 +207,10 @@ static void wireless_enter_reconnecting(uint8_t host_idx) {
 
     kc_printf("wireless_reconnecting %d\n\r", host_idx);
     wireless_state = WT_RECONNECTING;
+#ifndef DISABLE_REPORT_BUFFER
+    /* Drop reports queued for the lost link (and any pending retry) so they are not replayed late */
+    report_buffer_init();
+#endif
     indicator_set(wireless_state, host_idx);
     wireless_enter_reconnecting_kb(host_idx);
 }
@@ -297,6 +305,9 @@ static void wireless_enter_sleep(void) {
 
     if (wireless_state == WT_CONNECTED || wireless_state == WT_PARING) {
         wireless_state = WT_SUSPEND;
+#ifndef DISABLE_REPORT_BUFFER
+        report_buffer_init();
+#endif
         kc_printf("WT_SUSPEND\n\r");
         lpm_timer_reset();
 
@@ -403,7 +414,7 @@ void wireless_send_system(uint16_t data) {
 void wireless_send_consumer(uint16_t data) {
     if (wireless_state == WT_CONNECTED) {
 #ifndef DISABLE_REPORT_BUFFER
-        if (report_buffer_is_empty() && report_buffer_next_inverval()) {
+        if (report_buffer_is_empty() && report_buffer_next_inverval() && report_buffer_get_retry() == 0) {
             if (wireless_transport.send_consumer) wireless_transport.send_consumer(data);
             report_buffer_update_timer();
         } else {
