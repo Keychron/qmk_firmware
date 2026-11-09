@@ -42,7 +42,7 @@ bool per_key_rgb_solid(effect_params_t *params) {
 bool per_key_rgb_breahting(effect_params_t *params) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
     HSV hsv;
-    uint16_t time = scale16by8(g_rgb_timer, rgb_matrix_config.speed / 8);
+    uint16_t time = rgb_matrix_anim_time(rgb_matrix_config.speed / 8);
 
     for (uint8_t i = led_min; i < led_max; i++) {
         hsv = per_key_led[i];
@@ -116,7 +116,7 @@ static HSV solid_reactive_wide_math(HSV hsv, int16_t dx, int16_t dy, uint8_t dis
     uint16_t effect = tick + dist * 5;
     if (effect > 255) effect = 255;
 #            ifdef RGB_MATRIX_SOLID_REACTIVE_GRADIENT_MODE
-    hsv.h = scale16by8(g_rgb_timer, qadd8(rgb_matrix_config.speed, 8) >> 4);
+    hsv.h = rgb_matrix_anim_time(qadd8(rgb_matrix_config.speed, 8) >> 4);
 #            endif
     hsv.v = qadd8(hsv.v, 255 - effect);
     return hsv;

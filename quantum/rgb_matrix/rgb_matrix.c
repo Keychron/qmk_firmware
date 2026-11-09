@@ -66,6 +66,26 @@ __attribute__((weak)) RGB rgb_matrix_hsv_to_rgb(HSV hsv) {
 // globals
 rgb_config_t rgb_matrix_config; // TODO: would like to prefix this with g_ for global consistancy, do this in another pr
 uint32_t     g_rgb_timer;
+
+uint16_t rgb_matrix_anim_time(uint8_t scale) {
+    static uint32_t accum;
+    static uint32_t last_ms;
+    static uint32_t last_stamp;
+
+    /* One phase for the running effect. The next frame adds real elapsed
+     * time times the current speed, so a slider does not jump the pattern. */
+    if (g_rgb_timer != last_stamp) {
+        uint32_t now   = sync_timer_read32();
+        uint32_t delta = now - last_ms;
+        if (last_ms != 0 && delta <= 250) {
+            accum += delta * scale;
+        }
+        last_ms    = now;
+        last_stamp = g_rgb_timer;
+    }
+    return (uint16_t)(accum >> 8);
+}
+
 #ifdef RGB_MATRIX_FRAMEBUFFER_EFFECTS
 uint8_t g_rgb_frame_buffer[MATRIX_ROWS][MATRIX_COLS] = {{0}};
 #endif // RGB_MATRIX_FRAMEBUFFER_EFFECTS
@@ -297,12 +317,16 @@ static void rgb_task_timers(void) {
     // Update double buffer last hit timers
 #ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
     uint8_t count = last_hit_buffer.count;
+    /* Age is stored already scaled by speed. A later speed change only
+     * affects the next step, so a splash does not jump. */
+    uint16_t delta16 = deltaTime > 250 ? 16 : (uint16_t)deltaTime;
+    uint16_t step    = scale16by8(delta16, qadd8(rgb_matrix_config.speed, 1));
     for (uint8_t i = 0; i < count; ++i) {
-        if (UINT16_MAX - deltaTime < last_hit_buffer.tick[i]) {
+        if (step > (uint16_t)(UINT16_MAX - last_hit_buffer.tick[i])) {
             last_hit_buffer.count--;
             continue;
         }
-        last_hit_buffer.tick[i] += deltaTime;
+        last_hit_buffer.tick[i] += step;
     }
 #endif // RGB_MATRIX_KEYREACTIVE_ENABLED
 }
@@ -332,10 +356,6 @@ static void rgb_task_render(uint8_t effect) {
     rgb_effect_params.init = (effect != rgb_last_effect) || (rgb_matrix_config.enable != rgb_last_enable);
     if (effect != rgb_last_effect) {
         memset(rgb_regions, 0, RGB_MATRIX_LED_COUNT);
-        rgb_config_t rgb_cfg;
-        eeprom_read_block(&rgb_cfg, EECONFIG_RGB_MATRIX, sizeof(rgb_cfg));
-        rgb_matrix_config.hsv = rgb_cfg.hsv;
-        rgb_matrix_config.speed = rgb_cfg.speed;
     }
 
     if (rgb_effect_params.flags != rgb_matrix_config.flags) {
@@ -608,6 +628,9 @@ void rgb_matrix_disable(void) {
 }
 
 void rgb_matrix_disable_noeeprom(void) {
+    if (rgb_matrix_effect_locked(0)) {
+        return;
+    }
     if (rgb_matrix_config.enable) rgb_task_state = STARTING;
     rgb_matrix_config.enable = 0;
 }
@@ -616,22 +639,34 @@ uint8_t rgb_matrix_is_enabled(void) {
     return rgb_matrix_config.enable;
 }
 
+__attribute__((weak)) bool rgb_matrix_effect_locked(uint8_t mode) {
+    (void)mode;
+    return false;
+}
+
 void rgb_matrix_mode_eeprom_helper(uint8_t mode, bool write_to_eeprom) {
     if (!rgb_matrix_config.enable) {
         return;
     }
-    if (mode < 1) {
-        rgb_matrix_config.mode = 1;
-    } else if (mode >= RGB_MATRIX_EFFECT_MAX) {
-        rgb_matrix_config.mode = RGB_MATRIX_EFFECT_MAX - 1;
-    } else {
-        rgb_matrix_config.mode = mode;
+    uint8_t next = mode;
+    if (next < 1) {
+        next = 1;
+    } else if (next >= RGB_MATRIX_EFFECT_MAX) {
+        next = RGB_MATRIX_EFFECT_MAX - 1;
     }
-    rgb_task_state = STARTING;
+    if (rgb_matrix_effect_locked(next)) {
+        return;
+    }
+    /* Same effect again (the Launcher sends it with every slider tick)
+     * must not restart the animation. */
+    if (rgb_matrix_config.mode != next) {
+        rgb_matrix_config.mode = next;
+        rgb_task_state         = STARTING;
+    }
 
     if (write_to_eeprom) {
-        uint8_t mode = (rgb_matrix_config.mode << 2) | rgb_matrix_config.enable;
-        eeprom_write_byte((uint8_t*)EECONFIG_RGB_MATRIX, mode);
+        uint8_t packed = (rgb_matrix_config.mode << 2) | rgb_matrix_config.enable;
+        eeprom_write_byte((uint8_t*)EECONFIG_RGB_MATRIX, packed);
     }
     dprintf("rgb matrix mode [%s]: %u\n", (write_to_eeprom) ? "EEPROM" : "NOEEPROM", rgb_matrix_config.mode);
 }

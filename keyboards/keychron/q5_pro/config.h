@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "eeconfig_kb.h"
+
 /* turn off effects when suspended */
 #define RGB_DISABLE_WHEN_USB_SUSPENDED
 
@@ -61,9 +63,6 @@
 
 /* Keep USB connection in blueooth mode */
 #    define KEEP_USB_CONNECTION_IN_BLUETOOTH_MODE
-
-/* Enable bluetooth NKRO */
-#    define BLUETOOTH_NKRO_ENABLE
 
 /* Raw hid command for factory test and bluetooth DFU */
 #    define RAW_HID_CMD 0xAA ... 0xAB
