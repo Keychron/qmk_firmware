@@ -78,8 +78,13 @@ enum {
     HOST_GET_FIRMWARE_TYPE     = 0x28,
 };
 
-static uint8_t host_packet[32];
-static bool     host_lighting_active = false;
+static uint8_t  host_packet[32];
+static bool     host_lighting_active      = false;
+static uint32_t host_lighting_last_activity = 0;
+
+#ifndef HOST_LIGHTING_TIMEOUT_MS
+#    define HOST_LIGHTING_TIMEOUT_MS 3000
+#endif
 
 static void host_reply(uint8_t command, uint8_t b1, uint8_t b2, uint8_t b3) {
     memset(host_packet, 0, sizeof(host_packet));
@@ -90,13 +95,22 @@ static void host_reply(uint8_t command, uint8_t b1, uint8_t b2, uint8_t b3) {
     raw_hid_send(host_packet, sizeof(host_packet));
 }
 
+static void host_lighting_leave(void) {
+    if (!host_lighting_active) {
+        return;
+    }
+    host_lighting_active = false;
+    rgb_matrix_reload_from_eeprom();
+}
+
 /* Switch to the host effect and clear the last onboard frame. Without the
  * blackout, HOSTLIGHT keeps flushing the previous animation until the first
  * colour packets arrive, so the board flickers between the two painters. */
 static void host_lighting_enter(void) {
     bool already = host_lighting_active && rgb_matrix_is_enabled() && rgb_matrix_get_mode() == RGB_MATRIX_CUSTOM_HOSTLIGHT;
 
-    host_lighting_active = true;
+    host_lighting_active       = true;
+    host_lighting_last_activity = timer_read32();
     rgb_matrix_enable_noeeprom();
     rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_HOSTLIGHT);
     if (!already) {
@@ -173,8 +187,7 @@ bool q5_pro_host_lighting_rx(uint8_t *data, uint8_t length) {
             host_lighting_enter();
             return true;
         case HOST_MODE_DISABLE:
-            host_lighting_active = false;
-            rgb_matrix_reload_from_eeprom();
+            host_lighting_leave();
             return true;
         case HOST_GET_TOTAL_LEDS:
             host_reply(HOST_GET_TOTAL_LEDS, RGB_MATRIX_LED_COUNT, 0, 0);
@@ -258,6 +271,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 void housekeeping_task_user(void) {
     if (!host_lighting_active) {
+        return;
+    }
+    /* App quit, crash, or sleep: colour frames stop, so give the onboard
+     * effect back instead of freezing on the last host frame. */
+    if (timer_elapsed32(host_lighting_last_activity) > HOST_LIGHTING_TIMEOUT_MS) {
+        host_lighting_leave();
         return;
     }
     if (!rgb_matrix_is_enabled() || rgb_matrix_get_mode() != RGB_MATRIX_CUSTOM_HOSTLIGHT) {

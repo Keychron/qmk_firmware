@@ -14,3 +14,8 @@
  * repeat does not need the bounce window. */
 #define DEFAULT_DEBOUNCE_TYPE DEBOUNCE_SYM_EAGER_PER_KEY
 #define DEBOUNCE 50
+
+/* After this long with no host colour frames, leave host mode and restore
+ * the onboard effect from EEPROM. Long enough that a slow render tick does
+ * not bounce back to hardware mid-effect. */
+#define HOST_LIGHTING_TIMEOUT_MS 3000
