@@ -11,6 +11,7 @@
 #include "eeconfig_kb.h"
 #include "keychron_debounce.h"
 #include "raw_hid.h"
+#include "transport.h"
 
 extern void debounce_set(uint8_t new_debounce_type, uint8_t time, bool force);
 
@@ -89,6 +90,20 @@ static void host_reply(uint8_t command, uint8_t b1, uint8_t b2, uint8_t b3) {
     raw_hid_send(host_packet, sizeof(host_packet));
 }
 
+/* Switch to the host effect and clear the last onboard frame. Without the
+ * blackout, HOSTLIGHT keeps flushing the previous animation until the first
+ * colour packets arrive, so the board flickers between the two painters. */
+static void host_lighting_enter(void) {
+    bool already = host_lighting_active && rgb_matrix_is_enabled() && rgb_matrix_get_mode() == RGB_MATRIX_CUSTOM_HOSTLIGHT;
+
+    host_lighting_active = true;
+    rgb_matrix_enable_noeeprom();
+    rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_HOSTLIGHT);
+    if (!already) {
+        rgb_matrix_set_color_all(0, 0, 0);
+    }
+}
+
 /* Num Lock is LED 32, Caps Lock is LED 55. While that lock is on, both this
  * packet and the indicator task must write the same white. If the packet
  * writes the effect colour instead, it lands after the indicator and the key
@@ -148,13 +163,14 @@ bool q5_pro_host_lighting_rx(uint8_t *data, uint8_t length) {
             return true;
         case HOST_STREAM_RGB_DATA:
             /* No reply. A reply is just our own frame echoed back, and the host
-             * would answer that with another frame. */
+             * would answer that with another frame. Enter host mode on the
+             * first colour frame too: if enable is late, the onboard effect
+             * would keep repainting over these pixels and the board flickers. */
+            host_lighting_enter();
             host_led_streaming(data);
             return true;
         case HOST_MODE_ENABLE:
-            host_lighting_active = true;
-            rgb_matrix_enable_noeeprom();
-            rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_HOSTLIGHT);
+            host_lighting_enter();
             return true;
         case HOST_MODE_DISABLE:
             host_lighting_active = false;
@@ -204,28 +220,38 @@ bool rgb_matrix_effect_locked(uint8_t mode) {
 }
 
 /* The running debounce is stored on the keyboard. A flash does not replace
- * it, so the first boot after this firmware moves the old eager setting
- * over. A later change in the Launcher is left alone. */
+ * it, so boot moves an old asymmetric or shorter eager window up to this
+ * keymap's setting. A longer eager window set in the Launcher is left
+ * alone. */
 void keyboard_post_init_user(void) {
     uint8_t *cfg  = (uint8_t *)EECONFIG_BASE_DYNAMIC_DEBOUNCE;
     uint8_t  type = eeprom_read_byte(cfg);
+    uint8_t  time = eeprom_read_byte(cfg + 1);
 
-    if (type == DEBOUNCE_ASYM_EAGER_DEFER_PER_KEY) {
+    if (type == DEBOUNCE_SYM_EAGER_PER_KEY && time >= DEBOUNCE && time <= 255) {
         return;
     }
-    if (type != DEBOUNCE_SYM_EAGER_PER_KEY && type < DEBOUNCE_MAX) {
+    if (type != DEBOUNCE_SYM_EAGER_PER_KEY && type != DEBOUNCE_ASYM_EAGER_DEFER_PER_KEY && type < DEBOUNCE_MAX) {
         return;
     }
 
-    debounce_set(DEBOUNCE_ASYM_EAGER_DEFER_PER_KEY, DEBOUNCE, true);
-    eeprom_update_byte(cfg, DEBOUNCE_ASYM_EAGER_DEFER_PER_KEY);
+    debounce_set(DEBOUNCE_SYM_EAGER_PER_KEY, DEBOUNCE, true);
+    eeprom_update_byte(cfg, DEBOUNCE_SYM_EAGER_PER_KEY);
     eeprom_update_byte(cfg + 1, DEBOUNCE);
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    (void)record;
     if (host_lighting_active && IS_RGB_KEYCODE(keycode)) {
         return false;
+    }
+    /* Wireless NKRO scrambles reports on this board. Keep Bluetooth on 6KRO
+     * even if Fn+N is pressed. USB NKRO is unchanged. */
+    if (record->event.pressed && get_transport() == TRANSPORT_BLUETOOTH) {
+        switch (keycode) {
+            case QK_MAGIC_TOGGLE_NKRO:
+            case QK_MAGIC_NKRO_ON:
+                return false;
+        }
     }
     return true;
 }
