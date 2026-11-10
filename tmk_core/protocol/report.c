@@ -228,6 +228,7 @@ void clear_keys_from_report(void) {
 #    ifdef APDAPTIVE_NKRO_ENABLE
     if (host_can_send_nkro()) {
         memset(nkro_report->bits, 0, sizeof(nkro_report->bits));
+        nkro_bit_count = 0; // keep the counter in sync with the cleared report
         kb_report_changed |= KB_RPT_NKRO;
     }
 #    else
@@ -239,6 +240,7 @@ void clear_keys_from_report(void) {
 #endif
     memset(keyboard_report->keys, 0, sizeof(keyboard_report->keys));
 #if defined(NKRO_ENABLE) && defined(APDAPTIVE_NKRO_ENABLE)
+    kb_keys_count = 0; // keep the counter in sync with the cleared report
     kb_report_changed |= KB_RPT_STD;
 #endif
 }

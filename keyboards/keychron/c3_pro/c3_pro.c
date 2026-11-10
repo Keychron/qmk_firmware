@@ -15,8 +15,17 @@
  */
 
 #include "keychron.h"
+#include "nvm_eeconfig.h"
 
 void keyboard_post_init_kb(void) {
+    /* Earlier firmware had no keyboard datablock, so on the first boot after
+     * an update this region still holds stale VIA/keymap bytes. Wipe it and
+     * load defaults before the common code reads its settings from it. */
+    if (!eeconfig_is_kb_datablock_valid()) {
+        nvm_eeconfig_init_kb_datablock(); // write version marker, zero the block
+        eeconfig_init_kb_datablock();     // Keychron defaults
+    }
+
     keychron_common_init();
 
     gpio_set_pin_output_push_pull(LED_MAC_OS_PIN);
@@ -28,11 +37,11 @@ void keyboard_post_init_kb(void) {
 }
 
 void keychron_task_kb(void) {
-    if (get_highest_layer(default_layer_state) == 0) {
+    if (get_highest_layer(default_layer_state) == MAC_BASE_LAYER) {
         gpio_write_pin(LED_MAC_OS_PIN, LED_OS_PIN_ON_STATE);
         gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
     }
-    if (get_highest_layer(default_layer_state) == 2) {
+    if (get_highest_layer(default_layer_state) == WIN_BASE_LAYER) {
         gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
         gpio_write_pin(LED_WIN_OS_PIN, LED_OS_PIN_ON_STATE);
     }
@@ -41,5 +50,6 @@ void keychron_task_kb(void) {
 void suspend_power_down_keychron_kb(void) {
     gpio_write_pin(LED_WIN_OS_PIN, !LED_OS_PIN_ON_STATE);
     gpio_write_pin(LED_MAC_OS_PIN, !LED_OS_PIN_ON_STATE);
-    suspend_power_down_user();
+    // suspend_power_down_user() is called by suspend_power_down_kb() in
+    // the Keychron common code right after this hook.
 }

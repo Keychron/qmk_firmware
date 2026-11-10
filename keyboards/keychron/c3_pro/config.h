@@ -16,6 +16,10 @@
 
 #pragma once
 
+/* Reserves the keyboard EEPROM datablock used by the Keychron common code
+ * (language, snap click). Without it that data overlaps VIA's storage. */
+#include "eeconfig_kb.h"
+
 /* I2C driver Configuration */
 #define I2C1_SCL_PIN B8
 #define I2C1_SDA_PIN B9
@@ -30,3 +34,8 @@
 #define KEYCOMBO_OS_TOGGLE_INDICATION_ENABLE
 #define MAC_BASE_LAYER 0
 #define WIN_BASE_LAYER 2
+
+/* Factory test keys: the Fn keys tracked for the Fn+J+Z factory reset and
+ * the Fn+Home+Right backlight test (MAC_FN and WIN_FN layers) */
+#define FN_KEY_1 MO(1)
+#define FN_KEY_2 MO(3)

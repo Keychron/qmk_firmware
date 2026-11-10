@@ -738,24 +738,26 @@ void via_qmk_rgb_matrix_set_value(uint8_t *data) {
 }
 
 void via_qmk_rgb_matrix_save(void) {
-    if (rgb_matrix_value_id_mask == (0x01U << id_qmk_rgb_matrix_brightness)) {
+    // Several values may have been changed before a single save command,
+    // so test each bit rather than comparing the whole mask.
+    if (rgb_matrix_value_id_mask & (0x01U << id_qmk_rgb_matrix_brightness)) {
         uint8_t *addr = (uint8_t*)EECONFIG_RGB_MATRIX + offsetof(rgb_config_t, hsv.v);
         eeprom_write_byte(addr, rgb_matrix_config.hsv.v);
     }
 
-    if (rgb_matrix_value_id_mask == (0x01U << id_qmk_rgb_matrix_effect)) {
+    if (rgb_matrix_value_id_mask & (0x01U << id_qmk_rgb_matrix_effect)) {
         uint8_t mode = (rgb_matrix_config.mode << 2) | rgb_matrix_config.enable;
         eeprom_write_byte((uint8_t*)EECONFIG_RGB_MATRIX, mode);
     }
 
-    if (rgb_matrix_value_id_mask == (0x01U << id_qmk_rgb_matrix_color)) {
+    if (rgb_matrix_value_id_mask & (0x01U << id_qmk_rgb_matrix_color)) {
         uint8_t *addr = (uint8_t*)EECONFIG_RGB_MATRIX + offsetof(rgb_config_t, hsv.h);
         eeprom_write_byte(addr,  rgb_matrix_config.hsv.h);
         addr = (uint8_t*)EECONFIG_RGB_MATRIX + offsetof(rgb_config_t, hsv.s);
         eeprom_write_byte(addr,  rgb_matrix_config.hsv.s);
     }
 
-    if (rgb_matrix_value_id_mask == (0x01U << id_qmk_rgb_matrix_effect_speed)) {
+    if (rgb_matrix_value_id_mask & (0x01U << id_qmk_rgb_matrix_effect_speed)) {
         uint8_t *addr = (uint8_t*)EECONFIG_RGB_MATRIX + offsetof(rgb_config_t, speed);
         eeprom_write_byte(addr, rgb_matrix_config.speed);
     }

@@ -465,7 +465,7 @@ void clear_weak_override_mods(void) {
  */
 void set_suppressed_override_mods(uint8_t mods) {
 #    if defined(NKRO_ENABLE) && defined(APDAPTIVE_NKRO_ENABLE)
-    if (weak_override_mods != mods) suppressed_mods |= KB_RPT_STD;
+    if (suppressed_mods != mods) kb_report_changed |= KB_RPT_STD;
 #    endif
     suppressed_mods = mods;
 }
@@ -494,6 +494,9 @@ void add_oneshot_mods(uint8_t mods) {
         oneshot_time = timer_read();
 #    endif
         oneshot_mods |= mods;
+#    if defined(NKRO_ENABLE) && defined(APDAPTIVE_NKRO_ENABLE)
+        kb_report_changed |= KB_RPT_STD;
+#    endif
         oneshot_mods_changed_kb(mods);
     }
 }
@@ -501,6 +504,9 @@ void add_oneshot_mods(uint8_t mods) {
 void del_oneshot_mods(uint8_t mods) {
     if (oneshot_mods & mods) {
         oneshot_mods &= ~mods;
+#    if defined(NKRO_ENABLE) && defined(APDAPTIVE_NKRO_ENABLE)
+        kb_report_changed |= KB_RPT_STD;
+#    endif
 #    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
         oneshot_time = oneshot_mods ? timer_read() : 0;
 #    endif
@@ -519,6 +525,9 @@ void set_oneshot_mods(uint8_t mods) {
             oneshot_time = timer_read();
 #    endif
             oneshot_mods = mods;
+#    if defined(NKRO_ENABLE) && defined(APDAPTIVE_NKRO_ENABLE)
+            kb_report_changed |= KB_RPT_STD;
+#    endif
             oneshot_mods_changed_kb(mods);
         }
     }
@@ -531,6 +540,9 @@ void set_oneshot_mods(uint8_t mods) {
 void clear_oneshot_mods(void) {
     if (oneshot_mods) {
         oneshot_mods = 0;
+#    if defined(NKRO_ENABLE) && defined(APDAPTIVE_NKRO_ENABLE)
+        kb_report_changed |= KB_RPT_STD;
+#    endif
 #    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
         oneshot_time = 0;
 #    endif
