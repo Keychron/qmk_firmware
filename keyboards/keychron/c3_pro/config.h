@@ -16,6 +16,10 @@
 
 #pragma once
 
+/* Reserves the keyboard EEPROM datablock used by the Keychron common code
+ * (language, snap click). Without it that data overlaps VIA's storage. */
+#include "eeconfig_kb.h"
+
 /* I2C driver Configuration */
 #define I2C1_SCL_PIN B8
 #define I2C1_SDA_PIN B9

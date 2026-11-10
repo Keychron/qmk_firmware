@@ -14,6 +14,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* config.h is force-included, so this is only undefined when the keyboard's
+ * config.h forgot to include eeconfig_kb.h. In that case no datablock is
+ * reserved and the offsets below land on VIA's EEPROM data. */
+#ifndef EECONFIG_KB_DATA_SIZE
+#    error "Keychron common code requires #include \"eeconfig_kb.h\" in the keyboard's config.h"
+#endif
+
 #include <string.h>
 #include "eeconfig_kb.h"
 #include "raw_hid.h"
@@ -22,6 +29,9 @@
 #include "matrix.h"
 #include "quantum.h"
 #include "keychron_raw_hid.h"
+#include "nvm_eeprom_eeconfig_internal.h"
+
+_Static_assert(EECONFIG_BASE_LANGUAGE == EECONFIG_BASE_SIZE, "EECONFIG_BASE_LANGUAGE must match the start of the keyboard datablock");
 
 static uint8_t lang;
 

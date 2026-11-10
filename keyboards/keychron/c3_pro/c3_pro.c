@@ -15,8 +15,17 @@
  */
 
 #include "keychron.h"
+#include "nvm_eeconfig.h"
 
 void keyboard_post_init_kb(void) {
+    /* Earlier firmware had no keyboard datablock, so on the first boot after
+     * an update this region still holds stale VIA/keymap bytes. Wipe it and
+     * load defaults before the common code reads its settings from it. */
+    if (!eeconfig_is_kb_datablock_valid()) {
+        nvm_eeconfig_init_kb_datablock(); // write version marker, zero the block
+        eeconfig_init_kb_datablock();     // Keychron defaults
+    }
+
     keychron_common_init();
 
     gpio_set_pin_output_push_pull(LED_MAC_OS_PIN);
