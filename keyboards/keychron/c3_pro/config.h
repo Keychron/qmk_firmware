@@ -34,3 +34,8 @@
 #define KEYCOMBO_OS_TOGGLE_INDICATION_ENABLE
 #define MAC_BASE_LAYER 0
 #define WIN_BASE_LAYER 2
+
+/* Factory test keys: the Fn keys tracked for the Fn+J+Z factory reset and
+ * the Fn+Home+Right backlight test (MAC_FN and WIN_FN layers) */
+#define FN_KEY_1 MO(1)
+#define FN_KEY_2 MO(3)
