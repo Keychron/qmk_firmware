@@ -6,7 +6,6 @@
     "processor": "STM32F401",
     "bootloader": "stm32-dfu",
     "usb": {
-        "device_version": "1.0.1",
         "vid": "0x3434"
     },
     "diode_direction": "ROW2COL",
