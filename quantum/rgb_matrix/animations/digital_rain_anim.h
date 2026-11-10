@@ -14,12 +14,14 @@ bool DIGITAL_RAIN(effect_params_t* params) {
     const uint8_t drop_ticks           = 28;
     const uint8_t pure_green_intensity = (((uint16_t)rgb_matrix_config.hsv.v) * 3) >> 2;
     const uint8_t max_brightness_boost = (((uint16_t)rgb_matrix_config.hsv.v) * 3) >> 2;
-    uint8_t max_intensity        = rgb_matrix_config.hsv.v;
+    const uint8_t max_intensity        = rgb_matrix_config.hsv.v;
     const uint8_t decay_ticks          = 0xff / max_intensity;
 
     static uint8_t drop  = 0;
     static uint8_t decay = 0;
     static bool render = true;
+    // brightness the frame buffer was last rendered with
+    static uint8_t last_max_intensity = 0;
 
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
 
@@ -31,18 +33,16 @@ bool DIGITAL_RAIN(effect_params_t* params) {
 
     if (params->iter == 0) {
 
-        if (max_intensity != rgb_matrix_config.hsv.v) {
-            // Check if value is decreased
-            if (max_intensity > rgb_matrix_config.hsv.v) {
-                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                        rain_rgb_frame_buffer[row][col] = rain_rgb_frame_buffer[row][col] * (uint16_t)rgb_matrix_config.hsv.v / max_intensity;
-                    }
+        // If brightness was decreased, scale the frame buffer down so no
+        // pixel is left above the new maximum.
+        if (last_max_intensity > max_intensity) {
+            for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                    rain_rgb_frame_buffer[row][col] = rain_rgb_frame_buffer[row][col] * (uint16_t)max_intensity / last_max_intensity;
                 }
             }
-
-            max_intensity = rgb_matrix_config.hsv.v;
         }
+        last_max_intensity = max_intensity;
 
         if (render)
             decay++;

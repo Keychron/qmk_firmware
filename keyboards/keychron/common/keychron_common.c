@@ -131,8 +131,10 @@ void gui_toggle(void) {
 
 #ifdef KEYCOMBO_OS_TOGGLE_ENABLE
 void os_toggle(void) {
-    default_layer_xor(1U << MAC_BASE_LAYER);
-    default_layer_xor(1U << WIN_BASE_LAYER);
+    // Switch in one step so the default layer never passes through an
+    // invalid intermediate state (none or both base layers active).
+    uint8_t target = (get_highest_layer(default_layer_state) == MAC_BASE_LAYER) ? WIN_BASE_LAYER : MAC_BASE_LAYER;
+    default_layer_set((layer_state_t)1 << target);
     eeconfig_update_default_layer(default_layer_state);
 #    ifdef KEYCOMBO_OS_TOGGLE_INDICATION_ENABLE
     if (get_highest_layer(default_layer_state) == MAC_BASE_LAYER) {

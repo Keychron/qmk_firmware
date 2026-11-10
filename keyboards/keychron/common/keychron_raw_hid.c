@@ -257,6 +257,9 @@ bool kc_raw_hid_rx(uint8_t src, uint8_t *data, uint8_t length) {
                 return true;
 #    endif
             }
+            // Not handled here: let the caller send the "unhandled" reply
+            // instead of falling through into the factory test command.
+            return false;
 #    ifdef FACTORY_TEST_ENABLE
         case 0xAB:
             factory_test_rx(src == RAW_HID_SRC_USB, data, length);

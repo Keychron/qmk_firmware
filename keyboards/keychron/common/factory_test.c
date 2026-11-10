@@ -530,7 +530,7 @@ void factory_test_rx(bool usb, uint8_t *data, uint8_t length) {
                 payload[len++] = '.';
                 itoa((DEVICE_VER >> 4) & 0xF, (char *)&payload[len++], 16);
                 payload[len++] = '.';
-                itoa((DEVICE_VER >> 4) & 0xF, (char *)&payload[len++], 16);
+                itoa(DEVICE_VER & 0xF, (char *)&payload[len++], 16);
                 payload[len++] = ' ';
                 memcpy(&payload[len], QMK_BUILDDATE, sizeof(QMK_BUILDDATE));
                 len += sizeof(QMK_BUILDDATE);
@@ -540,9 +540,7 @@ void factory_test_rx(bool usb, uint8_t *data, uint8_t length) {
             case FACTORY_TEST_CMD_GET_DEVICE_ID:
                 payload[len++] = FACTORY_TEST_CMD_GET_DEVICE_ID;
                 payload[len++] = 12; // UUID length
-                memcpy(&payload[len], (uint32_t *)UID_BASE, 4);
-                memcpy(&payload[len + 4], (uint32_t *)UID_BASE + 4, 4);
-                memcpy(&payload[len + 8], (uint32_t *)UID_BASE + 8, 4);
+                memcpy(&payload[len], (const uint8_t *)UID_BASE, 12);
 
                 len += 12;
                 factory_test_send(usb, payload, len);
