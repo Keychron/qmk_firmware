@@ -465,7 +465,7 @@ void clear_weak_override_mods(void) {
  */
 void set_suppressed_override_mods(uint8_t mods) {
 #    if defined(NKRO_ENABLE) && defined(APDAPTIVE_NKRO_ENABLE)
-    if (weak_override_mods != mods) suppressed_mods |= KB_RPT_STD;
+    if (suppressed_mods != mods) kb_report_changed |= KB_RPT_STD;
 #    endif
     suppressed_mods = mods;
 }
