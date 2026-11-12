@@ -183,6 +183,7 @@ bool profile_get_raw_data(uint8_t prof_idx, uint16_t offset, uint8_t size, uint8
 
     memset(data, 0, size);
 
+    if (offset >= PROFILE_SIZE) return true; // nothing to copy; avoids size underflow below
     if (offset + size > PROFILE_SIZE) size = PROFILE_SIZE - offset;
     memcpy(data, (uint8_t *)(&profile[prof_idx]) + offset, size);
 
