@@ -39,6 +39,9 @@
 #endif
 
 #ifdef LK_WIRELESS_ENABLE
+/* 启用已有的无线配置入口；宏名沿用上游拼写，仅影响 Q5 Max。 */
+#    define WILRESS_RAW_ENABLE
+
 /* Hardware configuration */
 #    define P24G_MODE_SELECT_PIN A10
 #    define BT_MODE_SELECT_PIN A9
