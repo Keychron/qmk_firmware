@@ -58,6 +58,9 @@
 
 /* Wireless Configuration */
 #ifdef LK_WIRELESS_ENABLE
+/* Accept raw HID commands from the host over the wireless link */
+#    define WILRESS_RAW_ENABLE
+
 /* Hardware Configuration */
 #    define SPI_SCK_PIN A5
 #    define SPI_MISO_PIN A6
