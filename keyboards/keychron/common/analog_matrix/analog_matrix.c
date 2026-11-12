@@ -883,7 +883,8 @@ void analog_matrix_rx(uint8_t *data, uint8_t length) {
             uint8_t  index  = data[2];
             uint16_t offset = (data[4] << 8) | data[3];
             uint8_t  size   = data[5];
-            success         = profile_get_raw_data(index, offset, size, &data[6]);
+            // The reply payload starts at data[6]; never write past the packet
+            success         = (length >= 6 && size <= length - 6) && profile_get_raw_data(index, offset, size, &data[6]);
         } break;
 
         case AMC_SET_PROFILE_NAME:
