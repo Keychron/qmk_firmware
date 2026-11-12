@@ -877,10 +877,16 @@ static void lkbt51_event_handler(uint8_t evt_type, uint8_t* data, uint8_t len, u
             break;
         case LKBT51_CMD_RAW_HID_RX: {
             kc_printf("LKBT51_CMD_RAW_HID_RX\n");
+#if defined(RAW_ENABLE) && defined(WILRESS_RAW_ENABLE)
+            if (!wireless_event_set_raw_hid(&event, data, len)) {
+                break;
+            }
+#else
             static uint8_t raw_hid_data[64];
             memcpy(raw_hid_data, data, len);
             event.evt_type            = EVT_RAW_HID;
             event.params.raw_hid_data = raw_hid_data;
+#endif
         } break;
 
         default:
