@@ -63,6 +63,7 @@ bool bluetooth_event_queue_enqueue(bluetooth_event_t event);
 
 void bluetooth_connect(void);
 void bluetooth_connect_ex(uint8_t host_idx, uint16_t timeout);
+void bluetooth_switch_host(uint8_t host_idx);
 void bluetooth_disconnect(void);
 
 void bluetooth_pairing(void);

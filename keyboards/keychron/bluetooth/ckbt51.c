@@ -125,6 +125,11 @@ bluetooth_transport_t bluetooth_transport = {
     ckbt51_task
 };
 // clang-format on
+
+#ifndef CKBT51_RX_FRAME_TIMEOUT_MS
+#    define CKBT51_RX_FRAME_TIMEOUT_MS 20
+#endif
+
 void ckbt51_init(bool wakeup_from_low_power_mode) {
 #if (HAL_USE_SERIAL == TRUE)
     SerialConfig config = {460800, 0, USART_CR2_STOP1_BITS, 0};
@@ -145,7 +150,7 @@ void ckbt51_init(bool wakeup_from_low_power_mode) {
     gpio_write_pin_high(CKBT51_INT_INPUT_PIN);
 }
 
-void ckbt51_send_cmd(uint8_t* payload, uint8_t len, bool ack_enable, bool retry) {
+void ckbt51_send_cmd(uint8_t *payload, uint8_t len, bool ack_enable, bool retry) {
     static uint8_t sn = 0;
     uint8_t        i;
     uint8_t        pkt[PACKET_MAX_LEN] = {0};
@@ -156,12 +161,33 @@ void ckbt51_send_cmd(uint8_t* payload, uint8_t len, bool ack_enable, bool retry)
 
     systime_t start = 0;
 
+#ifdef CKBT51_FAST_WAKE
+    /* Non-blocking fast path: the module only shuts its uart after 3s of inactivity
+     * (see CKBT51_WAKE_WAIT_TIME above), so if it was addressed less than
+     * CKBT51_FAST_WAKE_HOLD_MS ago the INT wake pulses can be skipped while still
+     * sending the packet normally. Disabled unless CKBT51_FAST_WAKE is defined. */
+#    ifndef CKBT51_FAST_WAKE_HOLD_MS
+#        define CKBT51_FAST_WAKE_HOLD_MS 50
+#    endif
+    static systime_t last_cmd_time = 0;
+
+    if (last_cmd_time == 0 || chTimeI2US(chVTTimeElapsedSinceX(last_cmd_time)) >= CKBT51_FAST_WAKE_HOLD_MS * 1000) {
+        for (i = 0; i < 3; i++) {
+            gpio_write_pin(CKBT51_INT_INPUT_PIN, i % 2);
+            start = chVTGetSystemTime();
+            while (chTimeI2US(chVTTimeElapsedSinceX(start)) < CKBT51_WAKE_WAIT_TIME / 3) {
+            };
+        }
+    }
+    last_cmd_time = chVTGetSystemTime();
+#else
     for (i = 0; i < 3; i++) {
         gpio_write_pin(CKBT51_INT_INPUT_PIN, i % 2);
         start = chVTGetSystemTime();
         while (chTimeI2US(chVTTimeElapsedSinceX(start)) < CKBT51_WAKE_WAIT_TIME / 3) {
         };
     }
+#endif
     gpio_write_pin_high(CKBT51_INT_INPUT_PIN);
 
     uint16_t checksum = 0;
@@ -182,7 +208,7 @@ void ckbt51_send_cmd(uint8_t* payload, uint8_t len, bool ack_enable, bool retry)
     sdWrite(&WT_DRIVER, pkt, i);
 }
 
-void ckbt51_send_keyboard(uint8_t* report) {
+void ckbt51_send_keyboard(uint8_t *report) {
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
@@ -193,7 +219,7 @@ void ckbt51_send_keyboard(uint8_t* report) {
     ckbt51_send_cmd(payload, i, true, false);
 }
 
-void ckbt51_send_nkro(uint8_t* report) {
+void ckbt51_send_nkro(uint8_t *report) {
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
@@ -229,7 +255,7 @@ void ckbt51_send_system(uint16_t report) {
     ckbt51_send_cmd(payload, i, true, false);
 }
 
-void ckbt51_send_mouse(uint8_t* report) {
+void ckbt51_send_mouse(uint8_t *report) {
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
@@ -255,7 +281,7 @@ void ckbt51_send_conn_evt_ack(void) {
     ckbt51_send_cmd(payload, i, false, false);
 }
 
-void ckbt51_become_discoverable(uint8_t host_idx, void* param) {
+void ckbt51_become_discoverable(uint8_t host_idx, void *param) {
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
@@ -264,7 +290,7 @@ void ckbt51_become_discoverable(uint8_t host_idx, void* param) {
     if (param == NULL) {
         param = &default_pairing_param;
     }
-    pairing_param_t* p = (pairing_param_t*)param;
+    pairing_param_t *p = (pairing_param_t *)param;
 
     payload[i++] = CKBT51_CMD_PAIRING; // Cmd type
     payload[i++] = host_idx;           // Host Index
@@ -326,7 +352,7 @@ void ckbt51_read_state_reg(uint8_t reg, uint8_t len) {
     ckbt51_send_cmd(payload, i, false, false);
 }
 
-void ckbt51_get_info(module_info_t* info) {
+void ckbt51_get_info(module_info_t *info) {
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
@@ -334,7 +360,7 @@ void ckbt51_get_info(module_info_t* info) {
     ckbt51_send_cmd(payload, i, false, false);
 }
 
-void ckbt51_set_param(module_param_t* param) {
+void ckbt51_set_param(module_param_t *param) {
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
@@ -345,7 +371,7 @@ void ckbt51_set_param(module_param_t* param) {
     ckbt51_send_cmd(payload, i, true, false);
 }
 
-void ckbt51_get_param(module_param_t* param) {
+void ckbt51_get_param(module_param_t *param) {
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
@@ -354,7 +380,7 @@ void ckbt51_get_param(module_param_t* param) {
     ckbt51_send_cmd(payload, i, false, false);
 }
 
-void ckbt51_set_local_name(const char* name) {
+void ckbt51_set_local_name(const char *name) {
     uint8_t i   = 0;
     uint8_t len = strlen(name);
     memset(payload, 0, PACKET_MAX_LEN);
@@ -402,10 +428,11 @@ void ckbt51_radio_test(uint8_t channel) {
     ckbt51_send_cmd(payload, i, false, false);
 }
 
-void ckbt51_dfu_tx(uint8_t rsp, uint8_t* data, uint8_t len, uint8_t sn) {
-    uint16_t checksum        = 0;
-    uint8_t  buf[RAW_EPSIZE] = {0};
-    uint8_t  i               = 0;
+void ckbt51_dfu_tx(uint8_t rsp, uint8_t *data, uint8_t len, uint8_t sn) {
+    uint8_t buf[RAW_EPSIZE] = {0};
+    uint8_t i               = 0;
+    uint8_t chunk           = len > 25 ? 25 : len;
+    uint8_t off             = chunk;
 
     buf[i++] = 0x03;
     buf[i++] = 0xAA;
@@ -414,33 +441,32 @@ void ckbt51_dfu_tx(uint8_t rsp, uint8_t* data, uint8_t len, uint8_t sn) {
     buf[i++] = ~len;
     buf[i++] = sn;
     buf[i++] = rsp;
-    memcpy(&buf[i], data, len);
-    i += len;
-
-    for (uint8_t k = 0; k < i; k++)
-        checksum += buf[i];
+    /* The first packet can only carry the 25 data bytes that fit RAW_EPSIZE */
+    memcpy(&buf[i], data, chunk);
 
     raw_hid_send(buf, RAW_EPSIZE);
 
-    if (len > 25) {
-        i = 0;
+    /* The rest is sent as continuation packets prefixed with 0x03 */
+    while (off < len) {
         memset(buf, 0, RAW_EPSIZE);
-        buf[i++] = 0x03;
-        memcpy(&buf[i], data + 25, len - 25);
-        i = i + len - 25;
+        buf[0] = 0x03;
+        chunk  = len - off > RAW_EPSIZE - 1 ? RAW_EPSIZE - 1 : len - off;
+        memcpy(&buf[1], data + off, chunk);
         raw_hid_send(buf, RAW_EPSIZE);
+        off += chunk;
     }
 }
 
-void ckbt51_dfu_rx(uint8_t* data, uint8_t length) {
+void ckbt51_dfu_rx(uint8_t *data, uint8_t length) {
     if (data[0] == 0xAA && (data[1] == 0x55 || data[1] == 0x56) && data[2] == (~data[3] & 0xFF)) {
         uint16_t checksum    = 0;
         uint8_t  payload_len = data[2];
 
-        /* Check payload_len validity */
+        /* Check payload_len validity: command byte + 2 checksum bytes, inside the received report */
         if (payload_len > RAW_EPSIZE - PACKECT_HEADER_LEN) return;
+        if (payload_len < 3 || PACKECT_HEADER_LEN + payload_len > length) return;
 
-        uint8_t* payload = &data[PACKECT_HEADER_LEN];
+        uint8_t *payload = &data[PACKECT_HEADER_LEN];
 
         for (uint8_t i = 0; i < payload_len - 2; i++) {
             checksum += payload[i];
@@ -462,9 +488,9 @@ void ckbt51_dfu_rx(uint8_t* data, uint8_t length) {
     }
 }
 
-__attribute__((weak)) void ckbt51_default_ack_handler(uint8_t* data, uint8_t len){};
+__attribute__((weak)) void ckbt51_default_ack_handler(uint8_t *data, uint8_t len) {};
 
-static void ack_handler(uint8_t* data, uint8_t len) {
+static void ack_handler(uint8_t *data, uint8_t len) {
     switch (data[1]) {
         case CKBT51_CMD_SEND_KB:
         case CKBT51_CMD_SEND_KB_NKRO:
@@ -482,6 +508,8 @@ static void ack_handler(uint8_t* data, uint8_t len) {
                     break;
                 case ACK_FIFO_FULL_ERROR:
                     report_buffer_set_retry(10);
+                    // Reset the retry timer so the report isn't re-sent immediately
+                    report_buffer_reset_retry_timer();
                     break;
             }
             break;
@@ -491,7 +519,7 @@ static void ack_handler(uint8_t* data, uint8_t len) {
     }
 }
 
-static void query_rsp_handler(uint8_t* data, uint8_t len) {
+static void query_rsp_handler(uint8_t *data, uint8_t len) {
     if (data[2]) return;
 
     switch (data[1]) {
@@ -508,7 +536,7 @@ static void query_rsp_handler(uint8_t* data, uint8_t len) {
     }
 }
 
-static void ckbt51_event_handler(uint8_t evt_type, uint8_t* data, uint8_t len, uint8_t sn) {
+static void ckbt51_event_handler(uint8_t evt_type, uint8_t *data, uint8_t len, uint8_t sn) {
     bluetooth_event_t event = {0};
 
     switch (evt_type) {
@@ -579,11 +607,27 @@ static void ckbt51_event_handler(uint8_t evt_type, uint8_t* data, uint8_t len, u
     if (event.evt_type) bluetooth_event_queue_enqueue(event);
 }
 
-void ckbt51_task(void) {
-    static bool    wait_for_new_pkt = true;
-    static uint8_t len              = 0xff;
-    static uint8_t sn               = 0;
+static bool     wait_for_new_pkt = true;
+static uint8_t  len              = 0xff;
+static uint8_t  sn               = 0;
+static uint32_t rx_hdr_time      = 0;
 
+/* Reset the UART frame parser state. Called after the UART is re-initialised
+ * on wake-up so a truncated frame cannot consume the next header. */
+void ckbt51_parser_reset(void) {
+    wait_for_new_pkt = true;
+    len              = 0xff;
+    sn               = 0;
+    rx_hdr_time      = 0;
+}
+
+/* True when no frame is half-parsed and no RX byte is pending. Used by LPM so
+ * STOP1 cannot truncate a frame or lose a pending report ACK. */
+bool ckbt51_rx_idle(void) {
+    return wait_for_new_pkt && WT_DRIVER.iqueue.q_counter == 0;
+}
+
+void ckbt51_task(void) {
     if (wait_for_new_pkt && WT_DRIVER.iqueue.q_counter >= PACKECT_HEADER_LEN) {
         uint8_t buf[32] = {0};
 
@@ -592,10 +636,13 @@ void ckbt51_task(void) {
                 for (uint8_t i = 0; i < 3; i++) {
                     buf[i] = sdGet(&WT_DRIVER);
                 }
-                // Check wheather len is valid
-                if ((~buf[0] & 0xFF) == buf[1]) {
-                    len = buf[0];
-                    sn  = buf[2];
+                // Check wheather len is valid: len counts the bytes that follow the
+                // 3 byte sub-header and are read into the payload buffer below, so it
+                // must stay within [3, PACKET_MAX_LEN], otherwise discard and resync
+                if ((~buf[0] & 0xFF) == buf[1] && buf[0] >= 3 && buf[0] <= PACKET_MAX_LEN) {
+                    len         = buf[0];
+                    sn          = buf[2];
+                    rx_hdr_time = timer_read32();
 
                     wait_for_new_pkt = false;
                 }
@@ -603,8 +650,13 @@ void ckbt51_task(void) {
         }
     }
 
+    /* Drop a frame whose payload never completes (lost bytes) and resync on the next header */
+    if (!wait_for_new_pkt && WT_DRIVER.iqueue.q_counter < len && timer_elapsed32(rx_hdr_time) > CKBT51_RX_FRAME_TIMEOUT_MS) {
+        ckbt51_parser_reset();
+    }
+
     if (!wait_for_new_pkt && WT_DRIVER.iqueue.q_counter >= len) {
-        uint8_t buf[32] = {0};
+        uint8_t buf[PACKET_MAX_LEN] = {0};
 
         for (uint8_t i = 0; i < len; i++) {
             buf[i] = sdGetTimeout(&WT_DRIVER, TIME_IMMEDIATE);
@@ -619,7 +671,11 @@ void ckbt51_task(void) {
         if ((checksum & 0xff) == buf[len - 2] && ((checksum >> 8) & 0xff) == buf[len - 1]) {
             ckbt51_event_handler(buf[0], buf + 1, len - 3, sn);
         } else {
-            // TODO: Error handle
+            // Count corrupted frames, dprintf periodically to avoid flooding the console
+            static uint16_t checksum_errors = 0;
+            if (++checksum_errors % 16 == 0) {
+                dprintf("CKBT51: %d checksum errors\n", checksum_errors);
+            }
         }
     }
 }

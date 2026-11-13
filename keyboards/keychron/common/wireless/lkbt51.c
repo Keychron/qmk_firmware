@@ -312,6 +312,8 @@ void lkbt51_read(uint8_t* payload, uint8_t len) {
     pkt[i++] = 0x00;
     pkt[i++] = 0x80;
 
+    /* The exchange (4 header bytes + len) must fit in pkt[] and in the caller's buffer (PACKET_MAX_LEN) */
+    if (len > PACKET_MAX_LEN - i) len = PACKET_MAX_LEN - i;
     i += len;
 
 #if HAL_USE_SPI
@@ -624,9 +626,10 @@ void lkbt51_write_customize_data(uint8_t* data, uint8_t len) {
 }
 #ifdef RAW_ENABLE
 void lkbt51_dfu_tx(uint8_t rsp, uint8_t* data, uint8_t len, uint8_t sn) {
-    uint16_t checksum = 0;
     uint8_t buf[RAW_EPSIZE] = {0};
     uint8_t i               = 0;
+    uint8_t chunk           = len > 25 ? 25 : len;
+    uint8_t off             = chunk;
 
     buf[i++] = 0x03;
     buf[i++] = 0xAA;
@@ -635,21 +638,19 @@ void lkbt51_dfu_tx(uint8_t rsp, uint8_t* data, uint8_t len, uint8_t sn) {
     buf[i++] = ~len;
     buf[i++] = sn;
     buf[i++] = rsp;
-    memcpy(&buf[i], data, len);
-    i += len;
-
-    for (uint8_t k = 0; k < i; k++)
-        checksum += buf[i];
+    /* The first packet can only carry the 25 data bytes that fit RAW_EPSIZE */
+    memcpy(&buf[i], data, chunk);
 
     raw_hid_send(buf, RAW_EPSIZE);
 
-    if (len > 25) {
-        i = 0;
+    /* The rest is sent as continuation packets prefixed with 0x03 */
+    while (off < len) {
         memset(buf, 0, RAW_EPSIZE);
-        buf[i++] = 0x03;
-        memcpy(&buf[i], data + 25, len - 25);
-        i = i + len - 25;
+        buf[0] = 0x03;
+        chunk  = len - off > RAW_EPSIZE - 1 ? RAW_EPSIZE - 1 : len - off;
+        memcpy(&buf[1], data + off, chunk);
         raw_hid_send(buf, RAW_EPSIZE);
+        off += chunk;
     }
 }
 #endif
@@ -658,8 +659,9 @@ void lkbt51_dfu_rx(uint8_t* data, uint8_t length) {
         uint16_t checksum    = 0;
         uint8_t  payload_len = data[2];
 
-        /* Check payload_len validity */
+        /* Check payload_len validity: command byte + 2 checksum bytes, inside the received report */
         if (payload_len > RAW_EPSIZE - PACKECT_HEADER_LEN) return;
+        if (payload_len < 3 || PACKECT_HEADER_LEN + payload_len > length) return;
 
         uint8_t* payload = &data[PACKECT_HEADER_LEN];
 
@@ -855,15 +857,18 @@ void lkbt51_task(void) {
         }
 
         pbuf = buf;
-        if (wait_for_new_pkt) {
-            for (uint8_t i = 10; i < BUFFER_SIZE - 5; i++) {
-                if (buf[i] == 0xAA && buf[i + 1] == 0x57     // Packet Head
-                    && (~buf[i + 2] & 0xFF) == buf[i + 3]) { // Check wheather len is valid
-                    len              = buf[i + 2];
-                    sn               = buf[i + 4];
-                    pbuf             = &buf[i + 5];
-                    wait_for_new_pkt = false;
-                }
+        /* Each SPI read holds whole packets: never carry a half-parsed state into the next read */
+        wait_for_new_pkt = true;
+        for (uint8_t i = 10; i < BUFFER_SIZE - 5; i++) {
+            if (buf[i] == 0xAA && buf[i + 1] == 0x57      // Packet Head
+                && (~buf[i + 2] & 0xFF) == buf[i + 3]     // Check wheather len is valid
+                && buf[i + 2] >= 3                        // event type + 2 checksum bytes
+                && i + 5 + buf[i + 2] <= BUFFER_SIZE) {   // packet must be inside buf[]
+                len              = buf[i + 2];
+                sn               = buf[i + 4];
+                pbuf             = &buf[i + 5];
+                wait_for_new_pkt = false;
+                break;
             }
         }
 

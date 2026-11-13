@@ -31,9 +31,14 @@
 #include "lpm.h"
 #include "transport.h"
 #include "battery.h"
+#include "ckbt51.h"
+#include "report_buffer.h"
 
 extern matrix_row_t          matrix[MATRIX_ROWS];
 extern bluetooth_transport_t bluetooth_transport;
+/* Event queue state (bluetooth.c), not static so it can be checked here */
+extern uint8_t bt_event_queue_head;
+extern uint8_t bt_event_queue_tail;
 
 static uint32_t     lpm_timer_buffer;
 static bool         lpm_time_up               = false;
@@ -60,7 +65,9 @@ void lpm_timer_stop(void) {
     lpm_timer_buffer = 0;
 }
 
-static inline bool lpm_any_matrix_action(void) { return memcmp(matrix, empty_matrix, sizeof(empty_matrix)); }
+static inline bool lpm_any_matrix_action(void) {
+    return memcmp(matrix, empty_matrix, sizeof(empty_matrix));
+}
 
 /* Implement of entering low power mode and wakeup varies per mcu or platform */
 __attribute__((weak)) void enter_power_mode(pm_t mode) {}
@@ -86,7 +93,13 @@ void lpm_task(void) {
 #ifdef RGB_MATRIX_ENABLE
         && rgb_matrix_is_driver_shutdown()
 #endif
-        && !lpm_any_matrix_action() && !battery_power_on_sample())
+        && !lpm_any_matrix_action() && !battery_power_on_sample()
+        /* Don't stop the UART/MCU in the middle of a module frame or while a report still waits for its ACK */
+        && ckbt51_rx_idle()
+#ifndef DISABLE_REPORT_BUFFER
+        && report_buffer_is_empty() && report_buffer_get_retry() == 0
+#endif
+        && bt_event_queue_head == bt_event_queue_tail)
 
         enter_power_mode(LOW_POWER_MODE);
 }

@@ -53,8 +53,11 @@ bool                   firstDisconnect  = true;
 bool                   bt_factory_reset = false;
 static virtual_timer_t pairing_key_timer;
 
+static volatile uint8_t pairing_host_pending = 0;
+
+/* Virtual timer callback runs in ISR context: only flag the request, the UART command is sent from bluetooth_pre_task() */
 static void pairing_key_timer_cb(void *arg) {
-    bluetooth_pairing_ex(*(uint8_t *)arg, NULL);
+    pairing_host_pending = *(uint8_t *)arg;
 }
 #endif
 
@@ -128,7 +131,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
                 if (record->event.pressed) {
                     host_idx = keycode - BT_HST1 + 1;
                     chVTSet(&pairing_key_timer, TIME_MS2I(2000), (vtfunc_t)pairing_key_timer_cb, &host_idx);
-                    bluetooth_connect_ex(host_idx, 0);
+                    bluetooth_switch_host(host_idx);
                 } else {
                     host_idx = 0;
                     chVTReset(&pairing_key_timer);
@@ -152,7 +155,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 
 #if defined(ENCODER_ENABLE)
 static void encoders_pins_cb(void *param) {
-    uint8_t index = (uint32_t)param;
+    uint8_t     index = (uint32_t)param;
     extern void encoder_quadrature_handle_inerrupt_read(uint8_t index);
     encoder_quadrature_handle_inerrupt_read(index);
 }
@@ -234,8 +237,8 @@ static void ckbt51_param_init(void) {
                             .connected_idle_timeout = 7200,
                             .pairing_timeout        = 180,
                             .pairing_mode           = 0,
-                            .reconnect_timeout      = 5,
-                            .report_rate            = 90,
+                            .reconnect_timeout      = 60,
+                            .report_rate            = 133,
                             .vendor_id_source       = 1,
                             .verndor_id             = 0, // Must be 0x3434
                             .product_id             = PRODUCT_ID};
@@ -250,7 +253,8 @@ void bluetooth_enter_disconnected_kb(uint8_t host_idx) {
     }
     /* CKBT51 bluetooth module boot time is slower, it enters disconnected after boot,
        so we place initialization here. */
-    if (firstDisconnect && sync_timer_read32() < 1000 && get_transport() == TRANSPORT_BLUETOOTH) {
+    /* Apply module params on first BT init regardless of boot timing (slow module boot / late BT switch) */
+    if (firstDisconnect && get_transport() == TRANSPORT_BLUETOOTH) {
         ckbt51_param_init();
         bluetooth_connect();
         firstDisconnect = false;
@@ -263,8 +267,8 @@ void ckbt51_default_ack_handler(uint8_t *data, uint8_t len) {
                                 .connected_idle_timeout = 7200,
                                 .pairing_timeout        = 180,
                                 .pairing_mode           = 0,
-                                .reconnect_timeout      = 5,
-                                .report_rate            = 90,
+                                .reconnect_timeout      = 60,
+                                .report_rate            = 133,
                                 .vendor_id_source       = 1,
                                 .verndor_id             = 0, // Must be 0x3434
                                 .product_id             = PRODUCT_ID};
@@ -274,6 +278,12 @@ void ckbt51_default_ack_handler(uint8_t *data, uint8_t len) {
 
 void bluetooth_pre_task(void) {
     static uint8_t mode = 1;
+
+    if (pairing_host_pending) {
+        uint8_t idx          = pairing_host_pending;
+        pairing_host_pending = 0;
+        bluetooth_pairing_ex(idx, NULL);
+    }
 
     if (gpio_read_pin(USB_BT_MODE_SELECT_PIN) != mode) {
         if (gpio_read_pin(USB_BT_MODE_SELECT_PIN) != mode) {

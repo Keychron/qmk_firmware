@@ -164,7 +164,11 @@ void protocol_pre_init(void) {
      * before the USB is completely ready, which sometimes causes
      * HardFaults.
      */
+#if defined(USB_ENUMERATION_WAIT_MS)
+    wait_ms(USB_ENUMERATION_WAIT_MS);
+#else
     wait_ms(50);
+#endif
 
     print("USB configured.\n");
 }

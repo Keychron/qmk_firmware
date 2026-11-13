@@ -154,4 +154,6 @@ void ckbt51_dfu_rx(uint8_t* data, uint8_t length);
 void ckbt51_radio_test(uint8_t channel);
 
 void ckbt51_task(void);
+void ckbt51_parser_reset(void);
+bool ckbt51_rx_idle(void);
 

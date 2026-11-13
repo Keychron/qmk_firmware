@@ -34,13 +34,17 @@ static inline uint8_t readMatrixPin(pin_t pin) {
 }
 
 static inline void setPinOutput_writeLow(pin_t pin) {
-    gpio_set_pin_output_push_pull(pin);
-    gpio_write_pin_low(pin);
+    ATOMIC_BLOCK_FORCEON {
+        gpio_set_pin_output_push_pull(pin);
+        gpio_write_pin_low(pin);
+    }
 }
 
 static inline void setPinOutput_writeHigh(pin_t pin) {
-    gpio_set_pin_output_push_pull(pin);
-    gpio_write_pin_high(pin);
+    ATOMIC_BLOCK_FORCEON {
+        gpio_set_pin_output_push_pull(pin);
+        gpio_write_pin_high(pin);
+    }
 }
 
 static inline void HC595_delay(uint16_t n) {

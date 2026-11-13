@@ -45,18 +45,31 @@ uint8_t report_interval = DEFAULT_REPORT_INVERVAL_MS;
 static uint32_t report_timer_buffer = 0;
 uint32_t        retry_time_buffer   = 0;
 report_buffer_t report_buffer_queue[REPORT_BUFFER_QUEUE_SIZE];
-uint16_t         report_buffer_queue_head;
-uint16_t         report_buffer_queue_tail;
+uint16_t        report_buffer_queue_head;
+uint16_t        report_buffer_queue_tail;
 report_buffer_t kb_rpt;
 uint8_t         retry = 0;
 
 void report_buffer_init(void) {
     // Initialise the report queue
     memset(&report_buffer_queue, 0, sizeof(report_buffer_queue));
+    memset(&kb_rpt, 0, sizeof(kb_rpt));
     report_buffer_queue_head = 0;
     report_buffer_queue_tail = 0;
     retry                    = 0;
     report_timer_buffer      = sync_timer_read32();
+}
+
+/* Force an empty keyboard report into the queue so the host always
+ * receives a key-up state after a (re)connect, bypassing the 6KRO
+ * duplicate suppression in send_6kro_report(). */
+void report_buffer_enqueue_empty_keyboard(void) {
+    report_buffer_t rpt = {0};
+    rpt.type            = REPORT_TYPE_KB;
+    if (!report_buffer_enqueue(&rpt)) {
+        report_buffer_init();
+        report_buffer_enqueue(&rpt);
+    }
 }
 
 bool report_buffer_enqueue(report_buffer_t *report) {
@@ -102,6 +115,11 @@ uint8_t report_buffer_get_retry(void) {
 
 void report_buffer_set_retry(uint8_t times) {
     retry = times;
+}
+
+/* Restart the 7ms backoff window used by the retry path of report_buffer_task() */
+void report_buffer_reset_retry_timer(void) {
+    retry_time_buffer = sync_timer_read32();
 }
 
 void report_buffer_task(void) {

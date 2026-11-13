@@ -89,6 +89,7 @@ static void HC595_output(SIZE_T data, bool bit_flag) {
             } else {
                 gpio_write_pin_low(HC595_DS);
             }
+            HC595_delay(n); /* DS setup time before the SHCP rising edge */
             gpio_write_pin_high(HC595_SHCP);
             HC595_delay(n);
             gpio_write_pin_low(HC595_SHCP);

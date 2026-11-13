@@ -9,6 +9,7 @@
 #include "action.h"
 #include "keycodes.h"
 #include "wait.h"
+#include "atomic_util.h"
 
 #ifdef SPLIT_KEYBOARD
 #    include "split_util.h"
@@ -217,6 +218,14 @@ void encoder_quadrature_handle_inerrupt_read(uint8_t index) {
 
 __attribute__((weak)) void encoder_driver_task(void) {
     for (uint8_t i = 0; i < thisCount; i++) {
+#ifdef ENCODER_QUADRATURE_ATOMIC_READ
+        /* Boards that also call encoder_quadrature_handle_inerrupt_read() from a pin ISR share
+         * encoder_state/encoder_pulses with this path: read and update them atomically */
+        ATOMIC_BLOCK_FORCEON {
+            encoder_quadrature_handle_read(i, encoder_quadrature_read_pin(i, false), encoder_quadrature_read_pin(i, true));
+        }
+#else
         encoder_quadrature_handle_read(i, encoder_quadrature_read_pin(i, false), encoder_quadrature_read_pin(i, true));
+#endif
     }
 }
