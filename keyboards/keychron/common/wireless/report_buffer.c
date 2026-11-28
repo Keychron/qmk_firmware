@@ -32,6 +32,13 @@
 #    define REPORT_BUFFER_QUEUE_SIZE 256
 #endif
 
+/* Overflow recovery queues one live snapshot of each supported buffered type. */
+#if defined(NKRO_ENABLE) && defined(WIRELESS_NKRO_ENABLE) && defined(APDAPTIVE_NKRO_ENABLE)
+_Static_assert(REPORT_BUFFER_QUEUE_SIZE >= 4, "Report queue must hold both keyboard formats and consumer state");
+#else
+_Static_assert(REPORT_BUFFER_QUEUE_SIZE >= 3, "Report queue must hold keyboard and consumer state");
+#endif
+
 extern wt_func_t wireless_transport;
 
 /* report_interval value should be less than bluetooth connection interval because
@@ -118,12 +125,10 @@ void report_buffer_task(void) {
         bool pending_data = false;
 
         if (retry == 0) {
-            if (report_buffer_dequeue(&kb_rpt) && kb_rpt.type != REPORT_TYPE_NONE) {
-                if (timer_read32() > 2) {
-                    pending_data      = true;
-                    retry             = RETPORT_RETRY_COUNT;
-                    retry_time_buffer = timer_read32();
-                }
+            if (timer_read32() > 2 && report_buffer_dequeue(&kb_rpt) && kb_rpt.type != REPORT_TYPE_NONE) {
+                pending_data      = true;
+                retry             = RETPORT_RETRY_COUNT;
+                retry_time_buffer = timer_read32();
             }
         } else {
             if (timer_elapsed32(retry_time_buffer) > REPORT_BUFFER_RETRY_INTERVAL) {

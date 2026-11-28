@@ -43,6 +43,26 @@ static wt_state_t wireless_state           = WT_RESET;
 static bool       pincodeEntry             = false;
 uint8_t           wireless_report_protocol = true;
 
+typedef enum {
+    RESUME_NONE,
+    RESUME_ALLOWED,
+    /* An explicit disconnect must survive later sleep/reconnect notifications. */
+    RESUME_BLOCKED,
+} resume_connection_t;
+
+static resume_connection_t resume_connection;
+static transport_t         connected_transport;
+#ifndef DISABLE_REPORT_BUFFER
+typedef enum {
+    RECONNECT_REPORTS_NONE,
+    RECONNECT_REPORTS_PENDING,
+    RECONNECT_REPORTS_DROPPED,
+} reconnect_reports_t;
+
+static reconnect_reports_t reconnect_reports;
+static uint32_t            reconnect_report_timer;
+#endif
+
 uint16_t backlit_disable_time = CONNECTED_BACKLIGHT_DISABLE_TIMEOUT;
 uint16_t connected_idle_time  = CONNECTED_IDLE_TIME;
 
@@ -50,6 +70,7 @@ uint16_t connected_idle_time  = CONNECTED_IDLE_TIME;
 uint8_t wreless_keyboard_leds(void);
 void    wireless_send_keyboard(report_keyboard_t *report);
 void    wireless_send_nkro(report_nkro_t *report);
+void    wireless_send_consumer(uint16_t usage);
 void    wireless_send_mouse(report_mouse_t *report);
 void    wireless_send_extra(report_extra_t *report);
 void    wireless_send_joystick(report_joystick_t *report);
@@ -77,6 +98,66 @@ uint8_t          wireless_event_queue_head;
 uint8_t          wireless_event_queue_tail;
 
 bool wireless_lpm_set(uint8_t *data);
+
+/* Discard transmission history without clearing physically held keys. */
+static void wireless_discard_reports(void) {
+#ifndef DISABLE_REPORT_BUFFER
+    report_buffer_init();
+    reconnect_reports = RECONNECT_REPORTS_NONE;
+#endif
+}
+
+/* Bypass QMK's unchanged-report cache after dropping queued history. */
+static void wireless_sync_reports(void) {
+#if defined(NKRO_ENABLE) && defined(WIRELESS_NKRO_ENABLE) && !defined(APDAPTIVE_NKRO_ENABLE)
+    if (host_can_send_nkro() && keymap_config.nkro) {
+        wireless_send_nkro(nkro_report);
+    } else
+#endif
+    wireless_send_keyboard(keyboard_report);
+#if defined(NKRO_ENABLE) && defined(WIRELESS_NKRO_ENABLE) && defined(APDAPTIVE_NKRO_ENABLE)
+    /* Either format may contain keys reported before the connection was lost. */
+    wireless_send_nkro(nkro_report);
+#endif
+    wireless_send_consumer(host_last_consumer_usage());
+}
+
+#ifndef DISABLE_REPORT_BUFFER
+/* Later keys must not restart an expired burst's retention window. */
+static void wireless_expire_reports(void) {
+    if (reconnect_reports == RECONNECT_REPORTS_PENDING && timer_elapsed32(reconnect_report_timer) >= WIRELESS_RECONNECT_REPORT_TIMEOUT) {
+        report_buffer_init();
+        reconnect_reports = RECONNECT_REPORTS_DROPPED;
+    }
+}
+
+static bool wireless_retain_report(void) {
+    if (resume_connection != RESUME_ALLOWED || get_transport() != connected_transport) return false;
+
+    if (reconnect_reports == RECONNECT_REPORTS_NONE) {
+        /* Reports from before the radio disconnected belong to the old session. */
+        report_buffer_init();
+        reconnect_report_timer = timer_read32();
+        reconnect_reports      = RECONNECT_REPORTS_PENDING;
+    }
+    wireless_expire_reports();
+    return reconnect_reports == RECONNECT_REPORTS_PENDING;
+}
+
+static void wireless_enqueue_report(report_buffer_t *report) {
+    if (report_buffer_enqueue(report)) return;
+
+    /* An incomplete shortcut must not be replayed with its release missing. */
+    report_buffer_init();
+    if (wireless_state != WT_CONNECTED) {
+        reconnect_reports = RECONNECT_REPORTS_DROPPED;
+        return;
+    }
+
+    /* Recover consumer state too: the discarded backlog may contain its release. */
+    wireless_sync_reports();
+}
+#endif
 
 void wireless_event_queue_init(void) {
     // Initialise the event queue
@@ -146,11 +227,13 @@ void wireless_config_save(void) {
  * Bluetooth init.
  */
 void wireless_init(void) {
-    wireless_state = WT_INITIALIZED;
+    wireless_state      = WT_INITIALIZED;
+    resume_connection   = RESUME_NONE;
+    connected_transport = TRANSPORT_NONE;
 
     wireless_event_queue_init();
 #ifndef DISABLE_REPORT_BUFFER
-    report_buffer_init();
+    wireless_discard_reports();
 #endif
     indicator_init();
 #ifdef BLUETOOTH_INT_INPUT_PIN
@@ -195,6 +278,10 @@ void wireless_pairing_ex(uint8_t host_idx, void *param) {
 #if defined(KC_BLUETOOTH_ENABLE)
     ckbt51_param_init();
 #endif
+
+    resume_connection = RESUME_NONE;
+    wireless_discard_reports();
+
     if (wireless_transport.pairing_ex) wireless_transport.pairing_ex(host_idx, param);
     wireless_state = WT_PARING;
 
@@ -229,6 +316,8 @@ void wireless_connect_ex(uint8_t host_idx, uint16_t timeout) {
         host_index = host_idx;
         led_state  = 0;
     }
+    resume_connection = RESUME_NONE;
+    wireless_discard_reports();
     wireless_transport.connect_ex(host_idx, timeout);
     wireless_state = WT_RECONNECTING;
 }
@@ -236,13 +325,16 @@ void wireless_connect_ex(uint8_t host_idx, uint16_t timeout) {
 /* Initiate a disconnection */
 void wireless_disconnect(void) {
     kc_printf("wireless_disconnect\n\r");
+    resume_connection = RESUME_BLOCKED;
     if (wireless_transport.disconnect) wireless_transport.disconnect();
 }
 
 /* Called when the BT device is reset. */
 static void wireless_enter_reset(uint8_t reason) {
     kc_printf("wireless_enter_reset\n\r");
-    wireless_state = WT_RESET;
+    wireless_state    = WT_RESET;
+    resume_connection = RESUME_NONE;
+    wireless_discard_reports();
     wireless_enter_reset_kb(reason);
 }
 
@@ -252,7 +344,9 @@ static void wireless_enter_reset(uint8_t reason) {
  */
 static void wireless_enter_discoverable(uint8_t host_idx) {
     kc_printf("wireless_enter_discoverable: %d\n\r", host_idx);
-    host_index = host_idx;
+    host_index        = host_idx;
+    resume_connection = RESUME_NONE;
+    wireless_discard_reports();
 
     wireless_state = WT_PARING;
     indicator_set(wireless_state, host_idx);
@@ -265,6 +359,14 @@ static void wireless_enter_discoverable(uint8_t host_idx) {
  *   - set reconnect indication
  */
 static void wireless_enter_reconnecting(uint8_t host_idx) {
+    if (wireless_state == WT_CONNECTED) {
+        if (resume_connection != RESUME_BLOCKED) resume_connection = host_idx == host_index ? RESUME_ALLOWED : RESUME_NONE;
+        wireless_discard_reports();
+    }
+    if (host_idx != host_index) {
+        resume_connection = RESUME_NONE;
+        wireless_discard_reports();
+    }
     host_index = host_idx;
 
     kc_printf("wireless_reconnecting %d\n\r", host_idx);
@@ -281,16 +383,39 @@ static void wireless_enter_reconnecting(uint8_t host_idx) {
 static void wireless_enter_connected(uint8_t host_idx) {
     kc_printf("wireless_connected %d\n\r", host_idx);
 
+    if (wireless_state == WT_CONNECTED && host_idx == host_index && get_transport() == connected_transport && resume_connection != RESUME_BLOCKED) return;
+
+    bool resume = resume_connection == RESUME_ALLOWED && host_idx == host_index && get_transport() == connected_transport;
+    bool replay = false;
+#ifndef DISABLE_REPORT_BUFFER
+    wireless_expire_reports();
+    replay = resume && reconnect_reports == RECONNECT_REPORTS_PENDING;
+#endif
+    if (!replay) wireless_discard_reports();
+    resume_connection = RESUME_NONE;
+#ifndef DISABLE_REPORT_BUFFER
+    reconnect_reports = RECONNECT_REPORTS_NONE;
+#endif
+
     wireless_state = WT_CONNECTED;
     indicator_set(wireless_state, host_idx);
-    host_index = host_idx;
-
-    clear_keyboard();
+    host_index          = host_idx;
+    connected_transport = get_transport();
 
     /* Enable NKRO since it may be disabled in pin code entry */
 #if defined(NKRO_ENABLE) && !defined(WIRELESS_NKRO_ENABLE)
     keymap_config.nkro = false;
 #endif
+
+    if (!resume) {
+        clear_keyboard();
+    } else if (!replay) {
+        /* QMK suppresses unchanged reports; explicitly synchronize this session. */
+        wireless_sync_reports();
+    } else {
+        /* Retained keyboard history does not include consumer changes while offline. */
+        wireless_send_consumer(host_last_consumer_usage());
+    }
 
     wireless_enter_connected_kb(host_idx);
     if (battery_is_empty()) {
@@ -308,7 +433,11 @@ static void wireless_enter_disconnected(uint8_t host_idx, uint8_t reason) {
     kc_printf("wireless_disconnected %d, %d\n\r", host_idx, reason);
 
     uint8_t previous_state = wireless_state;
-    led_state              = 0;
+    if (resume_connection != RESUME_BLOCKED) {
+        bool same_connection = host_idx == host_index && get_transport() == connected_transport;
+        resume_connection    = (previous_state == WT_CONNECTED || resume_connection == RESUME_ALLOWED) && same_connection ? RESUME_ALLOWED : RESUME_NONE;
+    }
+    led_state = 0;
     if (get_transport() & TRANSPORT_WIRELESS) led_update_kb((led_t)led_state);
 
     wireless_state = WT_DISCONNECTED;
@@ -326,7 +455,7 @@ static void wireless_enter_disconnected(uint8_t host_idx, uint8_t reason) {
     }
 #endif
 #ifndef DISABLE_REPORT_BUFFER
-    report_buffer_init();
+    wireless_discard_reports();
 #endif
     retry = 0;
     wireless_enter_disconnected_kb(host_idx, reason);
@@ -369,6 +498,8 @@ static void wireless_enter_sleep(void) {
 
     wireless_state = WT_SUSPEND;
     if (prev_state == WT_CONNECTED || prev_state == WT_PARING) {
+        if (resume_connection != RESUME_BLOCKED) resume_connection = prev_state == WT_CONNECTED ? RESUME_ALLOWED : RESUME_NONE;
+        wireless_discard_reports();
         kc_printf("WT_SUSPEND\n\r");
         lpm_timer_reset();
 
@@ -406,7 +537,12 @@ extern keymap_config_t keymap_config;
 void wireless_send_keyboard(report_keyboard_t *report) {
     if (battery_is_critical_low()) return;
     if (wireless_state == WT_PARING && !pincodeEntry) return;
-    if (wireless_state == WT_CONNECTED || (wireless_state == WT_PARING && pincodeEntry)) {
+
+    bool retain = false;
+#ifndef DISABLE_REPORT_BUFFER
+    if (wireless_state != WT_CONNECTED && wireless_state != WT_PARING && wireless_state != WT_RESET) retain = wireless_retain_report();
+#endif
+    if (wireless_state == WT_CONNECTED || (wireless_state == WT_PARING && pincodeEntry) || retain) {
         if (wireless_transport.send_keyboard) {
 #ifndef DISABLE_REPORT_BUFFER
             bool empty = report_buffer_is_empty();
@@ -414,16 +550,15 @@ void wireless_send_keyboard(report_keyboard_t *report) {
             report_buffer_t report_buffer;
             report_buffer.type = REPORT_TYPE_KB;
             memcpy(&report_buffer.keyboard, report, sizeof(report_keyboard_t));
-            report_buffer_enqueue(&report_buffer);
+            wireless_enqueue_report(&report_buffer);
 
             if (empty) report_buffer_task();
 #else
             wireless_transport.send_keyboard(&report->mods);
 #endif
         }
-    } else if (wireless_state != WT_RESET) {
-        wireless_connect();
     }
+    if (wireless_state != WT_CONNECTED && wireless_state != WT_PARING && wireless_state != WT_RESET) wireless_connect();
 }
 
 void wireless_send_nkro(report_nkro_t *report) {
@@ -431,7 +566,11 @@ void wireless_send_nkro(report_nkro_t *report) {
 
     if (wireless_state == WT_PARING && !pincodeEntry) return;
 
-    if (wireless_state == WT_CONNECTED || (wireless_state == WT_PARING && pincodeEntry)) {
+    bool retain = false;
+#ifndef DISABLE_REPORT_BUFFER
+    if (wireless_state != WT_CONNECTED && wireless_state != WT_PARING && wireless_state != WT_RESET) retain = wireless_retain_report();
+#endif
+    if (wireless_state == WT_CONNECTED || (wireless_state == WT_PARING && pincodeEntry) || retain) {
         if (wireless_transport.send_nkro) {
 #ifndef DISABLE_REPORT_BUFFER
             bool empty = report_buffer_is_empty();
@@ -439,16 +578,15 @@ void wireless_send_nkro(report_nkro_t *report) {
             report_buffer_t report_buffer;
             report_buffer.type = REPORT_TYPE_NKRO;
             memcpy(&report_buffer.nkro, report, sizeof(report_nkro_t));
-            report_buffer_enqueue(&report_buffer);
+            wireless_enqueue_report(&report_buffer);
 
             if (empty) report_buffer_task();
 #else
             wireless_transport.send_nkro(&report->mods);
 #endif
         }
-    } else if (wireless_state != WT_RESET) {
-        wireless_connect();
     }
+    if (wireless_state != WT_CONNECTED && wireless_state != WT_PARING && wireless_state != WT_RESET) wireless_connect();
 }
 
 void wireless_send_mouse(report_mouse_t *report) {
@@ -479,7 +617,7 @@ void wireless_send_consumer(uint16_t data) {
             report_buffer_t report_buffer;
             report_buffer.type     = REPORT_TYPE_CONSUMER;
             report_buffer.consumer = data;
-            report_buffer_enqueue(&report_buffer);
+            wireless_enqueue_report(&report_buffer);
         }
 #else
         if (wireless_transport.send_consumer) wireless_transport.send_consumer(data);
@@ -627,6 +765,7 @@ void wireless_task(void) {
     wireless_transport.task();
     wireless_event_task();
 #ifndef DISABLE_REPORT_BUFFER
+    wireless_expire_reports();
     report_buffer_task();
 #endif
     indicator_task();

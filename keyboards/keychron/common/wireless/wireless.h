@@ -36,6 +36,12 @@
 #    endif
 #endif
 
+/* Maximum age in milliseconds of input retained during automatic same-host reconnect.
+ * Set to zero to synchronize held keys only, without replaying completed taps. */
+#ifndef WIRELESS_RECONNECT_REPORT_TIMEOUT
+#    define WIRELESS_RECONNECT_REPORT_TIMEOUT 1000
+#endif
+
 /* Wake pin used for blueooth module/controller to wake up MCU in low power mode*/
 #ifndef BLUETOOTH_INT_INPUT_PIN
 #    define WAKE_PIN A5
