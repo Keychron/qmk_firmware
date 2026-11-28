@@ -319,6 +319,10 @@ __attribute__((weak)) void lpm_peripheral_enter_low_power(void) {}
 __attribute__((weak)) void lpm_peripheral_exit_low_power(void) {}
 
 bool allow_low_power_mode(pm_t mode) {
+#ifndef DISABLE_REPORT_BUFFER
+    /* Preserve queued key-ups and the radio's unacknowledged report snapshot. */
+    if (!report_buffer_is_empty() || report_buffer_get_retry()) return false;
+#endif
 #if defined(KEEP_USB_CONNECTION_IN_WIRELESS_MODE)
     /* Don't enter low power mode if attached to the host */
     if (mode > PM_SLEEP && usb_power_connected()) return false;
@@ -384,6 +388,6 @@ void lpm_task(void) {
     lpm_wakeup();
     lpm_post_wakeup();
     lpm_timer_reset();
-    report_buffer_init();
+    /* Ordinary MCU wake preserves the radio session and its queued reports. */
     lpm_set(PM_RUN);
 }
